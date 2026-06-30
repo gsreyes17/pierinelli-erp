@@ -1,0 +1,16 @@
+// ============================================================
+//  Pierinelli - Variables de marca (PREPEND, antes del core)
+//  Se asignan SIN !default para ganar a las definiciones del core.
+// ============================================================
+
+// Paleta Pierinelli
+$pierinelli-gold:  #C9962F;   // dorado de la web (acentos)
+$pierinelli-black: #111111;   // negro de fondo
+$pierinelli-white: #FFFFFF;
+
+// Color de marca principal -> de aqui derivan botones, enlaces, activos...
+$o-community-color: $pierinelli-gold;
+$o-enterprise-color: $pierinelli-gold;
+
+// Bootstrap primary
+$primary: $pierinelli-gold;

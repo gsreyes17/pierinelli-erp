@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Activa multi-almacen y multi-ubicacion para usuarios internos
+             (necesario para que los almacenes sean seleccionables en ventas/inventario) -->
+        <record id="base.group_user" model="res.groups">
+            <field name="implied_ids" eval="[
+                (4, ref('stock.group_stock_multi_warehouses')),
+                (4, ref('stock.group_stock_multi_locations')),
+            ]"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,42 @@
+// ============================================================
+//  Pierinelli - Estilos del cliente web (backend)
+// ============================================================
+
+$pierinelli-gold:  #C9962F;
+$pierinelli-black: #111111;
+
+// --- Barra superior negra con acentos dorados ---------------
+.o_main_navbar {
+    background-color: $pierinelli-black !important;
+    border-bottom: 1px solid $pierinelli-gold !important;
+    color: #FFFFFF;
+
+    // Logo/marca y entradas de menu
+    .o_menu_brand,
+    .o_navbar_apps_menu .dropdown-toggle,
+    > .o_menu_sections .o_nav_entry,
+    > .o_menu_sections .dropdown-toggle,
+    .o_menu_systray .dropdown-toggle,
+    .o_menu_systray > a {
+        color: rgba(255, 255, 255, 0.9) !important;
+
+        &:hover,
+        &:focus {
+            color: $pierinelli-gold !important;
+            background-color: rgba(255, 255, 255, 0.06) !important;
+        }
+    }
+
+    // Elemento de menu activo -> subrayado dorado
+    .o_menu_sections .o_nav_entry.active,
+    .o_menu_sections .dropdown-toggle.show {
+        color: $pierinelli-gold !important;
+        box-shadow: inset 0 -2px 0 0 $pierinelli-gold;
+    }
+}
+
+// --- Pequenos acentos de marca ------------------------------
+// Color dorado en enlaces de accion dentro de las vistas
+a:not(.btn):not(.dropdown-item):not(.nav-link) {
+    color: $pierinelli-gold;
+}

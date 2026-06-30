@@ -1,0 +1,40 @@
+# Blueprint de Render para Pierinelli ERP (Odoo 19) — CAPA GRATUITA
+# Importar en Render:  New +  >  Blueprint  >  apuntar a este repo.
+#
+# NOTA HONESTA: el plan free da 512MB RAM. Odoo es pesado; la primera
+# inicializacion puede ser lenta o fallar por memoria. Si falla, sube el
+# servicio web a plan "starter" solo para el primer arranque (ver RENDER.md).
+
+databases:
+  - name: pierinelli-db
+    databaseName: pierinelli
+    user: odoo
+    plan: free            # Postgres gratis (expira ~30 dias)
+
+services:
+  - type: web
+    name: pierinelli-odoo
+    runtime: docker
+    plan: free            # 512MB RAM, se suspende tras inactividad
+    healthCheckPath: /web/health
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: pierinelli-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: pierinelli-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: pierinelli-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: pierinelli-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: pierinelli-db
+          property: database

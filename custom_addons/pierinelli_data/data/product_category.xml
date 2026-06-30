@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="categ_cuarcita" model="product.category">
+            <field name="name">Cuarcita</field>
+            <field name="parent_id" ref="product.product_category_goods"/>
+        </record>
+
+        <record id="categ_granito" model="product.category">
+            <field name="name">Granito</field>
+            <field name="parent_id" ref="product.product_category_goods"/>
+        </record>
+
+        <record id="categ_marmol" model="product.category">
+            <field name="name">Marmol</field>
+            <field name="parent_id" ref="product.product_category_goods"/>
+        </record>
+
+        <record id="categ_onix" model="product.category">
+            <field name="name">Onix</field>
+            <field name="parent_id" ref="product.product_category_goods"/>
+        </record>
+
+        <record id="categ_sinterizada" model="product.category">
+            <field name="name">Piedra Sinterizada</field>
+            <field name="parent_id" ref="product.product_category_goods"/>
+        </record>
+
+        <record id="categ_porcelanico" model="product.category">
+            <field name="name">Porcelanico</field>
+            <field name="parent_id" ref="product.product_category_goods"/>
+        </record>
+
+        <record id="categ_cuarzo" model="product.category">
+            <field name="name">Cuarzo</field>
+            <field name="parent_id" ref="product.product_category_goods"/>
+        </record>
+
+        <record id="categ_solid_surface" model="product.category">
+            <field name="name">Solid Surface</field>
+            <field name="parent_id" ref="product.product_category_goods"/>
+        </record>
+
+    </data>
+</odoo>

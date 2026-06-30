@@ -1,0 +1,22 @@
+# ===== Pierinelli ERP — .gitignore =====
+
+# Nucleo de Odoo: NO se versiona. En despliegue se usa la imagen oficial odoo:19.
+# (En local en Windows ya lo tienes clonado en odoo/)
+/odoo/
+
+# Entorno Python local
+/.venv/
+
+# Datos locales de Odoo (filestore, sesiones, assets compilados)
+/.odoo_data/
+
+# Logs y temporales
+*.log
+*.pyc
+__pycache__/
+
+# Config local con credenciales (usa config/odoo.conf para produccion)
+/odoo.conf
+
+# Imagenes de referencia del cliente (opcional, suelen ser pesadas)
+# /odoo/Pierinelli/

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Renombra el almacen por defecto -> Urban Gallery (Miraflores) -->
+        <record id="stock.warehouse0" model="stock.warehouse">
+            <field name="name">Pierinelli Urban Gallery</field>
+            <field name="code">UG</field>
+        </record>
+
+        <!-- Almacen Principal - Zarate, SJL -->
+        <record id="warehouse_principal" model="stock.warehouse">
+            <field name="name">Almacen Principal (Zarate)</field>
+            <field name="code">PRIN</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <!-- Almacen Villa El Salvador -->
+        <record id="warehouse_ves" model="stock.warehouse">
+            <field name="name">Almacen Villa El Salvador</field>
+            <field name="code">VES</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <!-- Almacen Trujillo -->
+        <record id="warehouse_trujillo" model="stock.warehouse">
+            <field name="name">Almacen Trujillo</field>
+            <field name="code">TRU</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <!-- Almacen Arequipa -->
+        <record id="warehouse_arequipa" model="stock.warehouse">
+            <field name="name">Almacen Arequipa</field>
+            <field name="code">AQP</field>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+    </data>
+</odoo>

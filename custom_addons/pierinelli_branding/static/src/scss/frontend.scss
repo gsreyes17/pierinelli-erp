@@ -1,0 +1,72 @@
+// ============================================================
+//  Pierinelli - Pantalla de login (frontend)
+// ============================================================
+
+$pierinelli-gold:  #C9962F;
+$pierinelli-black: #111111;
+
+body.pierinelli-login-bg {
+    background-color: $pierinelli-black !important;
+    background-image: radial-gradient(circle at 50% 0%, #1c1c1c 0%, #0d0d0d 70%);
+    min-height: 100vh;
+
+    // Tarjeta de login oscura
+    .o_database_list,
+    .card {
+        background-color: #1a1a1a !important;
+        border: 1px solid rgba($pierinelli-gold, 0.35) !important;
+        color: #FFFFFF;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .border-bottom,
+    .border-top {
+        border-color: rgba(255, 255, 255, 0.12) !important;
+    }
+
+    label,
+    .col-form-label,
+    h1, h2, h3, p, span {
+        color: #000000 !important;
+    }
+
+    // Campos de formulario en oscuro
+    .form-control {
+        background-color: #222222;
+        border-color: #3a3a3a;
+        color: #FFFFFF;
+
+        &::placeholder { color: rgba(255, 255, 255, 0.4); }
+        &:focus {
+            background-color: #262626;
+            border-color: $pierinelli-gold;
+            box-shadow: 0 0 0 0.2rem rgba($pierinelli-gold, 0.25);
+        }
+    }
+
+    // Boton principal dorado
+    .btn-primary {
+        background-color: $pierinelli-gold !important;
+        border-color: $pierinelli-gold !important;
+        color: $pierinelli-black !important;
+        font-weight: 600;
+
+        &:hover,
+        &:focus {
+            background-color: darken($pierinelli-gold, 8%) !important;
+            border-color: darken($pierinelli-gold, 8%) !important;
+        }
+    }
+
+    a {
+        color: $pierinelli-gold;
+        &:hover { color: lighten($pierinelli-gold, 10%); }
+    }
+
+    // Logo Pierinelli
+    .pierinelli-login-logo {
+        max-height: 64px;
+        max-width: 100%;
+        width: auto;
+    }
+}

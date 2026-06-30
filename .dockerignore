@@ -1,0 +1,7 @@
+# Mantener la imagen pequena: no copiar el core ni datos locales
+odoo/
+.venv/
+.odoo_data/
+*.log
+.git/
+__pycache__/

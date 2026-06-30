@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Login Pierinelli: fondo oscuro + logo blanco -->
+    <template id="pierinelli_login_layout" inherit_id="web.login_layout" name="Pierinelli Login">
+
+        <!-- Marca el body para aplicar el fondo oscuro -->
+        <xpath expr="//t[@t-set='body_classname']" position="replace">
+            <t t-set="body_classname" t-value="'bg-100 pierinelli-login-bg'"/>
+        </xpath>
+
+        <!-- Reemplaza el logo de la compania por el logo blanco Pierinelli -->
+        <xpath expr="//img" position="attributes">
+            <attribute name="t-attf-src">/pierinelli_branding/static/src/img/logo_blanco.png</attribute>
+            <attribute name="class">pierinelli-login-logo</attribute>
+            <attribute name="style">max-height:64px; max-width:100%; width:auto</attribute>
+        </xpath>
+
+    </template>
+
+</odoo>
