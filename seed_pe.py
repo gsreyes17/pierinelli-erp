@@ -13,7 +13,7 @@ import logging
 from odoo.tools import file_open
 
 _logger = logging.getLogger('pierinelli_seed')
-SEED_VERSION = '5'
+SEED_VERSION = '6'
 LANG = 'es_419'
 
 ICP = env['ir.config_parameter'].sudo()
@@ -84,6 +84,7 @@ else:
                 'name': it['name'], 'default_code': it['code'], 'type': 'consu',
                 'is_storable': True, 'categ_id': C(it['categ']), 'uom_id': m2.id,
                 'list_price': it['price'],
+                'standard_price': round(it['price'] * 0.6, 2),  # costo -> valorizacion de inventario
                 'taxes_id': [(6, 0, sale_tax.ids)] if sale_tax else False,
                 'supplier_taxes_id': [(6, 0, purchase_tax.ids)] if purchase_tax else False,
             })
@@ -114,18 +115,29 @@ else:
     ]
     ciudades = ['San Isidro - Lima', 'Miraflores - Lima', 'Surco - Lima',
                 'Trujillo', 'Arequipa', 'San Borja - Lima']
+    # Terminos de pago (para vencimientos y antiguedad de saldos)
+    terms = [env.ref(x, raise_if_not_found=False) for x in (
+        'account.account_payment_term_immediate',
+        'account.account_payment_term_30days',
+        'account.account_payment_term_45days')]
+    terms = [t for t in terms if t]
+    term_30 = env.ref('account.account_payment_term_30days', raise_if_not_found=False)
+
     clientes = []
     for i, nombre in enumerate(nombres_cli):
         p = Partner.search([('name', '=', nombre)], limit=1)
         if not p:
-            p = Partner.create({
+            vals = {
                 'name': nombre, 'is_company': True, 'lang': LANG,
                 'country_id': pe.id, 'city': ciudades[i % len(ciudades)],
                 'l10n_latam_identification_type_id': ruc_type.id,
                 'vat': ruc_valido('20%08d' % (10200300 + i * 7)),
                 'email': 'ventas%02d@cliente-demo.pe' % i,
                 'customer_rank': 1,
-            })
+            }
+            if terms:
+                vals['property_payment_term_id'] = terms[i % len(terms)].id
+            p = Partner.create(vals)
         clientes.append(p)
     print('Clientes:', len(clientes))
 
@@ -139,14 +151,17 @@ else:
     for i, nombre in enumerate(nombres_prov):
         p = Partner.search([('name', '=', nombre)], limit=1)
         if not p:
-            p = Partner.create({
+            vals = {
                 'name': nombre, 'is_company': True, 'lang': LANG,
                 'country_id': pe.id, 'city': 'Callao - Lima',
                 'l10n_latam_identification_type_id': ruc_type.id,
                 'vat': ruc_valido('20%08d' % (20500600 + i * 13)),
                 'email': 'compras%02d@proveedor-demo.pe' % i,
                 'supplier_rank': 1,
-            })
+            }
+            if term_30:
+                vals['property_supplier_payment_term_id'] = term_30.id
+            p = Partner.create(vals)
         proveedores.append(p)
     print('Proveedores:', len(proveedores))
 
@@ -213,9 +228,28 @@ else:
             _logger.warning('PO %s: %s', tag, e)
     print('Ordenes de compra:', creados_po, '| Facturas de proveedor:', bills)
 
-    # --- 9) Cotizaciones, ventas, facturas (IGV) y pagos ---
+    # --- 9) Cotizaciones, ventas, facturas (IGV), pagos y analitica por obra ---
     SO = env['sale.order']
     warehouses_list = [w for w in almacenes.values() if w]
+
+    # Analitica: plan "Obras / Proyectos" + cuentas por obra (rentabilidad)
+    AAP = env['account.analytic.plan']
+    AAA = env['account.analytic.account']
+    plan = AAP.search([('name', '=', 'Obras / Proyectos')], limit=1)
+    if not plan:
+        plan = AAP.create({'name': 'Obras / Proyectos'})
+    obras_nombres = [
+        'Obra Torre San Isidro', 'Proyecto Casa Playa Asia',
+        'Remodelacion Hotel Barranco', 'Edificio Corporativo Surco',
+        'Showroom Miraflores', 'Condominio Trujillo',
+    ]
+    obras = []
+    for on in obras_nombres:
+        a = AAA.search([('name', '=', on)], limit=1)
+        if not a:
+            a = AAA.create({'name': on, 'plan_id': plan.id})
+        obras.append(a)
+
     creados_so = 0
     cotizaciones = 0
     facturas = 0
@@ -237,6 +271,8 @@ else:
             'order_line': [(0, 0, {
                 'product_id': pr.id,
                 'product_uom_qty': 5 + ((i + k * 3) % 25),
+                'analytic_distribution': ({str(obras[i % len(obras)].id): 100}
+                                          if obras else False),
             }) for k, pr in enumerate(lineas)],
         })
         creados_so += 1
@@ -360,6 +396,94 @@ else:
         except Exception as e:
             _logger.warning('Usuario %s: %s', login, e)
     print('Usuarios de ejemplo:', creados_user)
+    env.cr.commit()
+
+    # --- 12) Trazabilidad: material PADRE (placa) -> HIJOS (piezas) con lote ---
+    if 'mrp.production' in env:
+        BoM = env['mrp.bom']
+        MO = env['mrp.production']
+        Lot = env['stock.lot']
+        unidad = env.ref('uom.product_uom_unit')
+        ubic = env.ref('stock.warehouse0').lot_stock_id
+        ejemplos = [
+            ('Placa Cuarcita Enigma (bloque)', 'PLACA-ENIGMA',
+             'Pieza Cuarcita Enigma cortada', 'PIEZA-ENIGMA', 'cuarcita'),
+            ('Placa Marmol Portoro (bloque)', 'PLACA-PORTORO',
+             'Pieza Marmol Portoro cortada', 'PIEZA-PORTORO', 'marmol'),
+        ]
+        placas_ok = 0
+        piezas_ok = 0
+        for j, (nplaca, cplaca, npieza, cpieza, cat) in enumerate(ejemplos):
+            try:
+                placa = prod(cplaca)
+                if not placa:
+                    placa = Product.create({
+                        'name': nplaca, 'default_code': cplaca, 'type': 'consu',
+                        'is_storable': True, 'tracking': 'lot',
+                        'categ_id': C(cat), 'uom_id': unidad.id,
+                        'standard_price': 1800 + j * 400,
+                    }).product_variant_id
+                pieza = prod(cpieza)
+                if not pieza:
+                    pieza = Product.create({
+                        'name': npieza, 'default_code': cpieza, 'type': 'consu',
+                        'is_storable': True, 'tracking': 'lot',
+                        'categ_id': C(cat), 'uom_id': unidad.id,
+                        'list_price': 600 + j * 150, 'standard_price': 300 + j * 80,
+                        'taxes_id': [(6, 0, sale_tax.ids)] if sale_tax else False,
+                    }).product_variant_id
+                # BoM: 1 placa -> 6 piezas
+                bom = BoM.search([('product_tmpl_id', '=', pieza.product_tmpl_id.id)], limit=1)
+                if not bom:
+                    bom = BoM.create({
+                        'product_tmpl_id': pieza.product_tmpl_id.id,
+                        'product_qty': 6, 'type': 'normal',
+                        'bom_line_ids': [(0, 0, {'product_id': placa.id, 'product_qty': 1})],
+                    })
+                # Stock de la placa madre con su lote
+                lote_placa = Lot.search([('name', '=', 'PL-%s' % cplaca)], limit=1)
+                if not lote_placa:
+                    lote_placa = Lot.create({'name': 'PL-%s' % cplaca,
+                                             'product_id': placa.id})
+                    Quant._update_available_quantity(placa, ubic, 1, lot_id=lote_placa)
+                    placas_ok += 1
+                # Orden de fabricacion: cortar la placa en 6 piezas
+                if not MO.search([('origin', '=', 'CORTE-%s' % cplaca)], limit=1):
+                    mo = MO.create({
+                        'product_id': pieza.id, 'product_qty': 6,
+                        'bom_id': bom.id, 'origin': 'CORTE-%s' % cplaca,
+                    })
+                    mo.action_confirm()
+                    mo.action_assign()
+                    mo.qty_producing = 6
+                    lote_pieza = (Lot.search([('name', '=', 'PZ-%s' % cpieza)], limit=1)
+                                  or Lot.create({'name': 'PZ-%s' % cpieza,
+                                                 'product_id': pieza.id}))
+                    mo.lot_producing_ids = [(6, 0, [lote_pieza.id])]
+                    # Consumo de la PLACA MADRE con su lote (genealogia padre->hijo)
+                    for mv in mo.move_raw_ids:
+                        mv.move_line_ids.unlink()
+                        mv.move_line_ids = [(0, 0, {
+                            'product_id': mv.product_id.id,
+                            'lot_id': lote_placa.id if mv.product_id.id == placa.id else False,
+                            'quantity': mv.product_uom_qty or 1,
+                            'location_id': mv.location_id.id,
+                            'location_dest_id': mv.location_dest_id.id,
+                        })]
+                        mv.picked = True
+                    res = mo.button_mark_done()
+                    if isinstance(res, dict) and res.get('res_model'):
+                        wiz = env[res['res_model']].with_context(
+                            res.get('context', {})).create({})
+                        for meth in ('action_confirm', 'process',
+                                     'action_backorder', 'action_done'):
+                            if hasattr(wiz, meth):
+                                getattr(wiz, meth)()
+                                break
+                    piezas_ok += 6
+            except Exception as e:
+                _logger.warning('Trazabilidad %s: %s', cplaca, e)
+        print('Trazabilidad: placas', placas_ok, '| piezas producidas', piezas_ok)
     env.cr.commit()
 
     ICP.set_param('pierinelli.seed_pe_version', SEED_VERSION)

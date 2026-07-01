@@ -35,6 +35,24 @@ $pierinelli-black: #111111;
     }
 }
 
+// --- Menu de aplicaciones (web_responsive) con fondo de showroom ---
+.app-menu-container {
+    background:
+        linear-gradient(rgba(17, 17, 17, 0.62), rgba(17, 17, 17, 0.80)),
+        url('/pierinelli_branding/static/src/img/login_bg.jpg') !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+
+    // Texto de las apps en BLANCO con sombra fuerte (legibilidad sobre la foto)
+    --app-menu-text-color: #FFFFFF;
+    .o-app-menu-item__name {
+        color: #FFFFFF !important;
+        font-weight: 600;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 3px rgba(0, 0, 0, 0.7) !important;
+    }
+}
+
 // --- Pequenos acentos de marca ------------------------------
 // Color dorado en enlaces de accion dentro de las vistas
 a:not(.btn):not(.dropdown-item):not(.nav-link) {

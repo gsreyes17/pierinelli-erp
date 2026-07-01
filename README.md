@@ -14,7 +14,8 @@ ejemplo reproducibles. (El CRM lo gestiona la empresa en su propio sistema.)
 ## Documentación
 | Documento | Para qué |
 |---|---|
-| **[GUIA.md](GUIA.md)** | Discurso de presentación, guión de demo, cómo usar cada módulo y el seed. |
+| **[PRESENTACION.md](PRESENTACION.md)** | Speech para el cliente, apartado por apartado, con los pasos a mostrar. |
+| **[GUIA.md](GUIA.md)** | Guión de demo, cómo usar cada módulo, usuarios y el seed. |
 | **[LOCAL.md](LOCAL.md)** | Ejecutar en local (Windows) + usuarios de ejemplo. |
 | **[RENDER.md](RENDER.md)** | Desplegar en la nube (Render / Docker / VPS). |
 
