@@ -1,5 +1,6 @@
 // ============================================================
 //  Pierinelli - Pantalla de login (frontend)
+//  Fondo oscuro + tarjeta BLANCA + logo/texto negro + boton dorado
 // ============================================================
 
 $pierinelli-gold:  #C9962F;
@@ -10,35 +11,36 @@ body.pierinelli-login-bg {
     background-image: radial-gradient(circle at 50% 0%, #1c1c1c 0%, #0d0d0d 70%);
     min-height: 100vh;
 
-    // Tarjeta de login oscura
+    // Tarjeta de login BLANCA (el logo negro luce sobre ella)
     .o_database_list,
     .card {
-        background-color: #1a1a1a !important;
-        border: 1px solid rgba($pierinelli-gold, 0.35) !important;
-        color: #FFFFFF;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+        background-color: #FFFFFF !important;
+        border: 1px solid rgba($pierinelli-gold, 0.55) !important;
+        color: $pierinelli-black;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
     }
 
     .border-bottom,
     .border-top {
-        border-color: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(0, 0, 0, 0.10) !important;
     }
 
+    // Texto en negro sobre la card blanca
     label,
     .col-form-label,
     h1, h2, h3, p, span {
-        color: #000000 !important;
+        color: $pierinelli-black !important;
     }
 
-    // Campos de formulario en oscuro
+    // Campos de formulario claros
     .form-control {
-        background-color: #222222;
-        border-color: #3a3a3a;
-        color: #FFFFFF;
+        background-color: #FFFFFF;
+        border-color: #d7d7d7;
+        color: $pierinelli-black;
 
-        &::placeholder { color: rgba(255, 255, 255, 0.4); }
+        &::placeholder { color: rgba(0, 0, 0, 0.4); }
         &:focus {
-            background-color: #262626;
+            background-color: #FFFFFF;
             border-color: $pierinelli-gold;
             box-shadow: 0 0 0 0.2rem rgba($pierinelli-gold, 0.25);
         }
@@ -59,11 +61,11 @@ body.pierinelli-login-bg {
     }
 
     a {
-        color: $pierinelli-gold;
-        &:hover { color: lighten($pierinelli-gold, 10%); }
+        color: darken($pierinelli-gold, 8%);
+        &:hover { color: $pierinelli-gold; }
     }
 
-    // Logo Pierinelli
+    // Logo Pierinelli (negro)
     .pierinelli-login-logo {
         max-height: 64px;
         max-width: 100%;

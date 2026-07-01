@@ -11,7 +11,7 @@
 
         <!-- Reemplaza el logo de la compania por el logo blanco Pierinelli -->
         <xpath expr="//img" position="attributes">
-            <attribute name="t-attf-src">/pierinelli_branding/static/src/img/logo_blanco.png</attribute>
+            <attribute name="t-attf-src">/pierinelli_branding/static/src/img/logo_negro.png</attribute>
             <attribute name="class">pierinelli-login-logo</attribute>
             <attribute name="style">max-height:64px; max-width:100%; width:auto</attribute>
         </xpath>
