@@ -1,164 +1,129 @@
-# Guía — ERP Pierinelli (Odoo 19 Community)
+# Guía Pierinelli ERP — presentación, uso y datos
 
-Backend de gestión para **Pierinelli** (revestimientos de piedra premium), personalizado con
-su identidad visual (negro / blanco / dorado), en **español**, con **Ventas** e **Inventario**
-listos y una **demo funcional** cargada.
+Odoo 19 Community personalizado para **Pierinelli** (revestimientos de piedra): backend en
+español, marca propia, catálogo real por m² con fotos. Foco: **Cotización (Ventas)**,
+**Logística (Inventario)** y **Facturación con IGV + estados financieros (simulación SUNAT)**.
 
----
-
-## 1. Requisitos del entorno
-
-| Componente | Versión / Dato |
-|---|---|
-| Odoo | 19.0 Community (carpeta `odoo/`) |
-| Python | 3.11 (entorno virtual en `.venv/`) |
-| PostgreSQL | 18 (servicio en `localhost:5432`) |
-| Base de datos | `odoo` |
-| Usuario BD | `Odoo` / contraseña `Odoo` |
-| Contraseña maestra | `pierinelli-admin-2026` (en `odoo.conf`) |
-
-> La configuración vive en **`odoo.conf`** (raíz del proyecto). Incluye las rutas de
-> módulos (core + `custom_addons`), la carpeta de datos `.odoo_data/` y el modo desarrollo.
+- Ejecutar en local → **[LOCAL.md](LOCAL.md)** · Desplegar en la nube → **[RENDER.md](RENDER.md)**
+- El CRM no se incluye: lo gestiona la empresa en su propio sistema.
 
 ---
 
-## 2. Cómo arrancar el sistema
+# 1. DISCURSO DE PRESENTACIÓN (para el cliente)
 
-Desde la raíz del proyecto (`f:\Repositorios\Pierinelli`):
+> Léelo de corrido mientras navegas. En cursiva, **a dónde ir**.
 
-```powershell
-.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf
-```
+**Apertura — *(pantalla de login)***
+"Buenos días. Lo que verán es el ERP de Pierinelli: un solo sistema donde vive todo el negocio,
+desde que un cliente pide una cotización hasta que se cobra la factura, con control de inventario
+en las cinco sedes. Fíjense que ya tiene la identidad de Pierinelli —el logo, los colores, el
+español— no es un Odoo genérico."
+*→ Entra al sistema. Aparece el menú de aplicaciones a pantalla completa.*
+"Este es el tablero principal: cada botón es un área del negocio."
 
-Luego abrir en el navegador: **http://localhost:8069**
+**1) La venta empieza por una cotización — *Ventas → Pedidos → Cotizaciones***
+"Todo arranca aquí. El vendedor arma una cotización eligiendo las piedras del catálogo —con su
+foto real y su precio por metro cuadrado— y el sistema calcula el IGV automáticamente. La
+cotización se envía al cliente en un PDF con la marca de Pierinelli."
+*→ Abre una cotización, muestra las líneas, el total y el PDF.*
+"Cuando el cliente aprueba, con un clic la cotización se convierte en pedido y genera la orden
+de entrega. Nadie vuelve a escribir los datos: fluye solo."
 
-Para **detener**: `Ctrl + C` en la terminal.
+**2) La logística y el inventario en las 5 sedes — *Inventario***
+"Al confirmar la venta, el almacén recibe la orden de entrega. Al validarla, el stock se
+descuenta del almacén real."
+*→ Inventario → Informes → Existencias.*
+"Aquí ven el stock de cada material en las cinco sedes: Urban Gallery, Principal, Villa El
+Salvador, Trujillo y Arequipa. Y si falta material en una tienda, se hace una transferencia
+entre sedes —el sistema mueve el inventario y deja el rastro."
+*→ Inventario → Operaciones → Transferencias.*
 
-### Acceso
-- Usuario: `admin`
-- Contraseña: la que definiste al crear la base (la de tu instalación).
+**3) La facturación con IGV — *Contabilidad → Clientes → Facturas***
+"Del pedido se genera la factura electrónica: tipo de comprobante Factura, el RUC del cliente y
+el IGV del 18%, tal como lo exige el Perú. Unas facturas ya están pagadas y otras pendientes,
+así que en todo momento se sabe quién debe."
+*→ Abre una factura pagada; muestra el pago conciliado.*
+"Aclaro con transparencia: esto es una simulación funcional; el envío real a SUNAT se conecta
+después con el certificado digital y un OSE."
 
-La pantalla de **login** ya muestra el fondo oscuro con el **logo blanco Pierinelli** y el botón dorado.
+**4) La foto financiera — *Contabilidad → Informes***
+"Y como cada venta, compra y pago genera su asiento contable automáticamente, la gerencia tiene
+en tiempo real el **Estado de resultados** y el **Balance**: cuánto se vendió, cuánto se debe,
+cuánto hay en caja. Sin Excel, sin doble digitación."
 
----
+**5) El abastecimiento — *Compras***
+"Del otro lado, las compras a las canteras e importadores: se emite la orden, se recibe la
+mercadería —que ingresa al inventario— y se registra la factura del proveedor."
 
-## 3. Idioma
+**6) Cada quien ve lo suyo — *(mencionar)***
+"El sistema es multiusuario con permisos por rol: el vendedor ve Ventas, el almacenero ve
+Inventario, la contadora ve Contabilidad. Cada uno entra y ve solo lo que le corresponde, y se
+comunican dentro del propio sistema."
 
-El sistema está en **Español (Latinoamérica)** (`es_419`):
-- El usuario `admin` y la compañía están en español.
-- Los **nuevos contactos/usuarios** se crean en español por defecto.
+**Cierre**
+"En resumen: un ERP que se ve como Pierinelli y opera como Pierinelli —cotización, entrega,
+factura y finanzas, todo conectado y en un solo lugar."
 
-Para cambiar el idioma de un usuario puntual:
-**Ajustes → Usuarios y Compañías → Usuarios →** (usuario) **→ Preferencias → Idioma**.
-
----
-
-## 4. Estructura del proyecto
-
-> **Regla de oro:** nunca se edita el núcleo de Odoo (`odoo/addons/*`). Toda la
-> personalización vive en **`custom_addons/`**, para poder actualizar Odoo sin perder nada.
-
-```
-Pierinelli/
-├── odoo/                  # Núcleo de Odoo 19 (no tocar)
-├── custom_addons/         # Personalización propia
-│   ├── pierinelli_branding/   # Identidad visual (negro/blanco/dorado + logo)
-│   └── pierinelli_data/       # Datos del negocio (compañía, almacenes, productos)
-├── .venv/                 # Entorno Python
-├── odoo.conf              # Configuración
-└── GUIA.md                # Este documento
-```
-
-### `pierinelli_branding` — identidad visual
-- Acento **dorado `#C9962F`** en botones, enlaces y elementos activos.
-- Barra superior **negra**.
-- **Login** con fondo oscuro y logo blanco.
-
-### `pierinelli_data` — datos del negocio
-- **Compañía:** Pierinelli (Miraflores), `info@pierinelli.com`, +51 960 750 867, moneda **PEN**.
-- **5 almacenes:** Urban Gallery (UG), Principal/Zárate (PRIN), Villa El Salvador (VES),
-  Trujillo (TRU), Arequipa (AQP).
-- **8 categorías** de piedra: Cuarcita, Granito, Mármol, Ónix, Piedra Sinterizada,
-  Porcelánico, Cuarzo, Solid Surface.
-- **6 productos** de muestra, vendidos por **m²**, con stock inicial en Urban Gallery.
-- Multi-almacén activado.
+> **Tip:** antes de empezar, ten abiertas en pestañas las apps **Ventas, Inventario y
+> Contabilidad**, y haz un `Ctrl+F5` en el login.
 
 ---
 
-## 5. Datos cargados (catálogo de muestra)
+# 2. CÓMO USAR CADA MÓDULO (navegación)
 
-| Código | Producto | Categoría | Precio (S/ por m²) |
-|---|---|---|---|
-| CUA-ENIGMA | Cuarcita Enigma | Cuarcita | 850 |
-| ONX-ORO | Ónix Oro | Ónix | 1200 |
-| GRA-MAORI | Granito Maori | Granito | 650 |
-| MAR-PORTORO | Mármol Portoro | Mármol | 1500 |
-| SIN-AMAZONICO | Piedra Sinterizada Amazónico | Sinterizada | 900 |
-| CRZ-CALACATTA | Cuarzo Silestone Calacatta Gold | Cuarzo | 780 |
+> Activa el **Modo desarrollador**: **Ajustes → Activar el modo de desarrollador**.
 
----
+| Área | Dónde | Qué hay |
+|---|---|---|
+| **Ventas / Cotización** | Ventas → Pedidos (Cotizaciones / Pedidos), Clientes, Productos | 10 cotizaciones + 38 pedidos, 18 clientes con RUC, 33 productos reales (con foto) por m² |
+| **Inventario / Logística** | Inventario → Operaciones (Entregas, Recepciones, Transferencias), Informes → Existencias | 5 almacenes, 37 entregas, 3 transferencias |
+| **Compras** | Compras → Pedidos, Proveedores | 5 compras recibidas y facturadas |
+| **Facturación** | Contabilidad → Clientes/Proveedores → Facturas | 26 facturas cliente (pagadas/pendientes) + 5 de proveedor, IGV 18% |
+| **Estados financieros** | Contabilidad → Informes (Balance, Estado de resultados) | Asientos de ventas, compras y pagos |
 
-## 6. Demo funcional para mostrar al cliente
-
-Ya está cargada una **venta completa de extremo a extremo**:
-
-- **Cliente:** Constructora Andina Demo S.A.C.
-- **Pedido:** `S00002` — confirmado — **Total: S/ 50,800**
-  - Mármol Portoro × 15 m²
-  - Cuarcita Enigma × 22 m²
-  - Ónix Oro × 8 m²
-- **Entrega:** `UG/OUT/00002` — **validada (Hecho)** → el stock se descontó del almacén.
-
-### Recorrido sugerido en la reunión
-1. **Login** → mostrar la marca (logo + dorado).
-2. **Ventas → Pedidos** → abrir `S00002` (cotización confirmada con total y líneas).
-3. **Inventario → Operaciones** → abrir la entrega `UG/OUT/00002` (estado *Hecho*).
-4. **Inventario → Productos** → abrir un producto y ver el **stock disponible** por almacén.
-5. **Inventario → Reportes → Existencias** → mostrar las cantidades por almacén.
+### Flujos usables
+- **Cotización → venta:** Cotización → Confirmar → Pedido.
+- **Logística:** Pedido → Entrega (validar) → descuenta stock; Recepción de compra (validar) → ingresa stock; Transferencia interna entre sedes.
+- **Facturación:** Pedido → Crear factura → Confirmar (IGV) → Registrar pago.
 
 ---
 
-## 7. Cómo registrar una venta (paso a paso)
+# 3. USUARIOS Y ROLES (referencia)
 
-1. **Ventas → Pedidos → Nuevo**.
-2. Elegir o crear el **Cliente**.
-3. En **Otra información**, confirmar el **Almacén** de despacho (UG, PRIN, etc.).
-4. Agregar **líneas de producto** (cantidad en **m²**).
-5. **Confirmar** → Odoo genera automáticamente la **entrega** en Inventario.
-6. Ir a la **entrega** (botón *Entrega* arriba del pedido) → **Validar** para descontar stock.
+El sistema es multiusuario con permisos por rol: cada usuario ve **solo sus apps**. Vienen
+creados estos de ejemplo (contraseña **`pierinelli`**; el `admin` conserva la tuya):
 
----
+| Login | Rol | Ve |
+|---|---|---|
+| `gerente` | Gerente General | Todo (Ventas, Inventario, Compras, Contabilidad — nivel responsable) |
+| `vendedor` | Vendedor | Ventas |
+| `almacen` | Almacenero | Inventario |
+| `compras` | Comprador | Compras |
+| `contabilidad` | Contadora | Contabilidad |
 
-## 8. Mantenimiento
-
-### Reaplicar cambios de un módulo (tras editar código/SCSS/datos)
-```powershell
-# Actualizar módulo de marca
-.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf -d odoo -u pierinelli_branding --stop-after-init
-
-# Actualizar datos del negocio
-.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf -d odoo -u pierinelli_data --stop-after-init
-```
-> En modo desarrollo (`dev_mode` ya activo en `odoo.conf`), los cambios de **SCSS y plantillas**
-> se recargan sin reiniciar; basta refrescar el navegador.
-
-### Respaldo de la base de datos
-Desde **http://localhost:8069/web/database/manager** (contraseña maestra `pierinelli-admin-2026`),
-o por línea de comandos con `pg_dump`.
+Crear/editar usuarios: **Ajustes → Usuarios y compañías → Usuarios**. La comunicación interna
+es por **Conversaciones (Discuss)** y por el **chatter** al pie de cada documento (notas,
+menciones @, seguidores, actividades).
 
 ---
 
-## 9. Pendientes / próximos pasos sugeridos
+# 4. LOS DATOS DE EJEMPLO (el seed)
 
-- **Localización Perú (SUNAT):** facturación electrónica, RUC, tipos de comprobante.
-- **Logo para PDFs:** el logo blanco no se ve sobre fondo blanco de facturas/cotizaciones;
-  preparar una versión en negro o sobre banda oscura.
-- **Atributos de producto:** acabado, espesor, formato/placa.
-- **Control por placa/lote** (trazabilidad de cada placa de piedra).
-- **Usuarios y permisos** por rol (vendedor, almacenero, administrador).
-- **Catálogo completo** importado desde su web/listas reales.
+Se cargan con **[seed_pe.py](seed_pe.py)** (post-instalación). En Render corre **solo**; en local
+se ejecuta a mano (ver [LOCAL.md](LOCAL.md)).
+
+**Qué carga:** plan contable peruano (**IGV 18%**), RUC, **33 productos reales con foto**
+(traídos de la web de Pierinelli, en `static/products.json` + `static/img/products/`), 18
+clientes con RUC, 5 proveedores, stock en 5 almacenes, 5 compras + 5 facturas de proveedor,
+48 ventas (10 cotizaciones + 38 pedidos), 26 facturas de cliente (≈13 pagadas), 13 pagos,
+3 transferencias y 5 usuarios por rol.
+
+**Idempotente:** guarda `pierinelli.seed_pe_version`; con la misma versión no duplica. Para
+recargar con cambios, sube `SEED_VERSION` y vuelve a correrlo.
 
 ---
 
-*Toda la personalización está aislada en `custom_addons/`; el núcleo de Odoo permanece intacto
-y actualizable.*
+# 5. LA MARCA
+- **Login:** foto de showroom difuminada + card blanca + logo negro + botón dorado.
+- **Backend:** acento dorado + barra superior negra. **PDF:** logo + colores Pierinelli.
+- **Idioma:** Español (Latinoamérica). **Colores:** negro `#111111` · blanco `#FFFFFF` · dorado `#C9962F`.

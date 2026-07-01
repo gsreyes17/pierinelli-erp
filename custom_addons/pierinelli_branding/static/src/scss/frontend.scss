@@ -8,7 +8,14 @@ $pierinelli-black: #111111;
 
 body.pierinelli-login-bg {
     background-color: $pierinelli-black !important;
-    background-image: radial-gradient(circle at 50% 0%, #1c1c1c 0%, #0d0d0d 70%);
+    // Fondo: foto del showroom difuminada + velo oscuro para contraste
+    background-image:
+        linear-gradient(rgba(17, 17, 17, 0.55), rgba(17, 17, 17, 0.72)),
+        url('/pierinelli_branding/static/src/img/login_bg.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     min-height: 100vh;
 
     // Tarjeta de login BLANCA (el logo negro luce sobre ella)

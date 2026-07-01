@@ -14,7 +14,7 @@ Carga inicial de datos para el negocio de Pierinelli (revestimientos de piedra):
     'author': 'Pierinelli',
     'website': 'https://pierinelli.com',
     'license': 'LGPL-3',
-    'depends': ['sale_management', 'stock', 'uom', 'crm'],
+    'depends': ['sale_management', 'stock', 'uom'],
     'data': [
         'data/res_company.xml',
         'data/stock_warehouse.xml',

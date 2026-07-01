@@ -1,94 +1,64 @@
-# Desplegar la demo en Render (capa gratuita)
+# Desplegar en RENDER (nube)
 
-Guía paso a paso para subir la demo de Pierinelli ERP a **Render** usando el plan **free**.
+El proyecto se **auto-inicializa**: en el primer arranque crea la BD, instala los módulos,
+carga el idioma y corre el seed (catálogo real + IGV + facturas + pagos + usuarios). No hay
+que ejecutar comandos manuales.
 
-> El repo ya está preparado para **auto-inicializarse**: en el primer arranque crea la base de
-> datos e instala los módulos + la demo (clientes, ventas, CRM) + el idioma español. No necesitas
-> restaurar ningún respaldo.
+> Se usa la imagen oficial `odoo:19`; solo se versiona `custom_addons/` + los archivos de
+> despliegue. El núcleo de Odoo NO se sube (lo excluye `.gitignore`).
 
----
-
-## ⚠️ Lee esto primero (honestidad sobre el plan free)
-
-| Límite del plan free | Efecto en Odoo |
-|---|---|
-| **512 MB RAM** | Odoo es pesado. La **primera inicialización** (instalar módulos) puede ser lenta o, en el peor caso, fallar por memoria. Mitigación abajo. |
-| **Sin disco persistente** | Los adjuntos se guardan en la **BD** (ya configurado). El logo del PDF y datos sobreviven. |
-| **Se suspende por inactividad** | Tras ~15 min sin uso, el servicio "duerme". La siguiente visita tarda ~50 s en despertar. |
-| **PostgreSQL free expira** (~30 días) | Para una demo está bien. Para algo permanente, sube a un plan pago o VPS. |
-
-**Si la inicialización falla por memoria:** cambia temporalmente el servicio web a plan **Starter**
-(US$ 7/mes) solo para el primer arranque; cuando la BD ya esté creada, puedes bajarlo a free.
-
----
-
-## Paso 1 — Subir el proyecto a GitHub
-
-```bash
-cd f:/Repositorios/Pierinelli
-git init
-git add .gitignore .dockerignore custom_addons config Dockerfile entrypoint.sh \
-        docker-compose.yml render.yaml GUIA.md DEPLOY.md RENDER.md
-git commit -m "Pierinelli ERP listo para Render"
+## Paso 1 — Subir el repo a GitHub
+```powershell
+git add -A
+git commit -m "Pierinelli ERP"
 git branch -M main
 git remote add origin https://github.com/<tu-usuario>/pierinelli-erp.git
 git push -u origin main
 ```
 
-> No se sube el núcleo de Odoo (`.gitignore` lo excluye); Render usa la imagen oficial `odoo:19`.
+## Paso 2 — Crear los servicios (Blueprint)
+1. https://dashboard.render.com → **New +** → **Blueprint**.
+2. Conecta el repo → Render lee `render.yaml` y propone crear:
+   - **pierinelli-db** (PostgreSQL)
+   - **pierinelli-odoo** (Web Service Docker)
+3. **Apply.** Las variables de conexión (`DB_HOST`, `DB_USER`, …) se inyectan solas.
+
+## Paso 3 — Esperar la inicialización
+En **pierinelli-odoo → Logs** verás:
+```
+>>> Inicializando 'pierinelli': modulos + idioma ...
+>>> Ejecutando seed (contabilidad PE + datos con IGV) ...
+>>> Iniciando servidor Odoo ...
+```
+Cuando el health check `/web/health` pase a verde, entra por la URL pública.
+
+## Paso 4 — Redeploys (automático)
+El `entrypoint.sh` detecta el commit nuevo (`RENDER_GIT_COMMIT`) y corre `-i/-u` + el seed
+automáticamente. Para actualizar: solo `git push`.
+
+## Empezar de cero (BD limpia en Render)
+Si cambiaste módulos/seed y quieres reinicializar limpio: **recrea la base PostgreSQL** en Render
+(o cambia `DB_NAME` en el blueprint). En el siguiente arranque el entrypoint inicializa todo desde cero.
 
 ---
 
-## Paso 2 — Crear los servicios en Render con el Blueprint
+## ⚠️ Capa gratuita (512 MB) — honesto
+Con contabilidad (`account` + `l10n_pe` + `purchase`) **más** el seed, el primer arranque es
+**pesado** y puede fallar por memoria (OOM). Recomendación:
+- Usa **Render Starter** (o sube a Starter solo para el primer deploy y luego baja), o un **VPS**.
+- Sin disco persistente los adjuntos se guardan en la BD (ya configurado).
+- El servicio se **suspende por inactividad** (~15 min) y la BD free **expira** (~30 días).
 
-1. Entra a https://dashboard.render.com → **New +** → **Blueprint**.
-2. Conecta tu cuenta de GitHub y elige el repo `pierinelli-erp`.
-3. Render leerá `render.yaml` y propondrá crear:
-   - **pierinelli-db** (PostgreSQL, free)
-   - **pierinelli-odoo** (Web Service Docker, free)
-4. Pulsa **Apply**. Render construye la imagen y conecta la BD automáticamente
-   (las variables `DB_HOST`, `DB_USER`, etc. se inyectan solas).
-
----
-
-## Paso 3 — Esperar la primera inicialización
-
-- En **pierinelli-odoo → Logs** verás:
-  ```
-  >>> Inicializando 'pierinelli': modulos + demo + idioma ...
-  >>> Migrando adjuntos a la BD ...
-  >>> Iniciando servidor Odoo ...
-  ```
-- La primera vez tarda varios minutos (instala módulos y crea la demo).
-- Cuando el **Health check** (`/web/health`) pase a verde, está listo.
-
----
-
-## Paso 4 — Entrar
-
-- Abre la URL pública (algo como `https://pierinelli-odoo.onrender.com`).
-- Verás el **login con la marca Pierinelli**.
-- Usuario inicial: `admin` / contraseña: `admin` (créala/cámbiala en el primer acceso si lo pide).
-
-> Ya estará todo: español, 5 almacenes, catálogo, **pedidos de venta**, **entregas validadas**,
-> **embudo CRM** y **cotizaciones PDF con logo**.
-
----
-
-## Paso 5 — Seguridad mínima (recomendado)
-
-- Cambia `admin_passwd` en `config/odoo.conf` (clave maestra) y vuelve a desplegar.
-- Cambia la contraseña del usuario `admin` desde la interfaz.
-
----
-
-## Probarlo localmente antes (opcional, idéntico a Render)
-
-Con Docker instalado:
+## Otros servidores (VPS / Docker)
+El mismo `Dockerfile` corre en cualquier lado con Docker:
 ```bash
 docker compose up -d --build
-# ver el progreso de la inicializacion:
 docker compose logs -f odoo
 ```
-Abrir http://localhost:8069 — se inicializa solo, igual que en Render.
-Para reiniciar desde cero: `docker compose down -v` (borra la BD) y `up` de nuevo.
+En un VPS Ubuntu: instala Docker (`curl -fsSL https://get.docker.com | sh`), clona el repo,
+`docker compose up -d --build`, y pon **HTTPS** con Caddy o Nginx+certbot. Para producción,
+en `config/odoo.conf` sube `workers = 2` y cambia `admin_passwd`.
+
+## Backup / restore (opcional)
+Para copiar un estado exacto entre entornos: `https://<servidor>/web/database/manager`
+(clave maestra = `admin_passwd`) → *Backup* / *Restore* (el zip incluye el filestore).

@@ -1,0 +1,233 @@
+[
+  {
+    "name": "Pietra Grey",
+    "code": "MAR-PIETRAGREY",
+    "categ": "marmol",
+    "price": 1250.0,
+    "image": "MAR-PIETRAGREY.jpg"
+  },
+  {
+    "name": "Negro Vía Láctea",
+    "code": "GRA-NEGROVIALACTEA",
+    "categ": "granito",
+    "price": 680.0,
+    "image": "GRA-NEGROVIALACTEA.jpg"
+  },
+  {
+    "name": "Sparkle Blue",
+    "code": "GRA-SPARKLEBLUE",
+    "categ": "granito",
+    "price": 710.0,
+    "image": "GRA-SPARKLEBLUE.jpg"
+  },
+  {
+    "name": "Blanco Micaela",
+    "code": "GRA-BLANCOMICAELA",
+    "categ": "granito",
+    "price": 740.0,
+    "image": "GRA-BLANCOMICAELA.jpg"
+  },
+  {
+    "name": "Thassos Big Grain",
+    "code": "MAR-THASSOSBIGGRAI",
+    "categ": "marmol",
+    "price": 1280.0,
+    "image": "MAR-THASSOSBIGGRAI.jpg"
+  },
+  {
+    "name": "Kalliston White",
+    "code": "MAR-KALLISTONWHITE",
+    "categ": "marmol",
+    "price": 1310.0,
+    "image": "MAR-KALLISTONWHITE.jpg"
+  },
+  {
+    "name": "Blanco Volakas",
+    "code": "MAR-BLANCOVOLAKAS",
+    "categ": "marmol",
+    "price": 1340.0,
+    "image": "MAR-BLANCOVOLAKAS.jpg"
+  },
+  {
+    "name": "Crema Galala",
+    "code": "MAR-CREMAGALALA",
+    "categ": "marmol",
+    "price": 1370.0,
+    "image": "MAR-CREMAGALALA.jpg"
+  },
+  {
+    "name": "Crema Marfil Clásico",
+    "code": "MAR-CREMAMARFILCLA",
+    "categ": "marmol",
+    "price": 1400.0,
+    "image": "MAR-CREMAMARFILCLA.jpg"
+  },
+  {
+    "name": "Marrón Emperador Estándar",
+    "code": "MAR-MARRONEMPERADO",
+    "categ": "marmol",
+    "price": 1430.0,
+    "image": "MAR-MARRONEMPERADO.jpg"
+  },
+  {
+    "name": "Verde Ubatuba",
+    "code": "GRA-VERDEUBATUBA",
+    "categ": "granito",
+    "price": 770.0,
+    "image": "GRA-VERDEUBATUBA.jpg"
+  },
+  {
+    "name": "Negro Absoluto",
+    "code": "GRA-NEGROABSOLUTO",
+    "categ": "granito",
+    "price": 800.0,
+    "image": "GRA-NEGROABSOLUTO.jpg"
+  },
+  {
+    "name": "Negro Aracruz",
+    "code": "GRA-NEGROARACRUZ",
+    "categ": "granito",
+    "price": 830.0,
+    "image": "GRA-NEGROARACRUZ.jpg"
+  },
+  {
+    "name": "Negro Galaxy",
+    "code": "GRA-NEGROGALAXY",
+    "categ": "granito",
+    "price": 860.0,
+    "image": "GRA-NEGROGALAXY.jpg"
+  },
+  {
+    "name": "Oro",
+    "code": "ONX-ORO",
+    "categ": "onix",
+    "price": 1400.0,
+    "image": "ONX-ORO.jpg"
+  },
+  {
+    "name": "Terracota",
+    "code": "ONX-TERRACOTA",
+    "categ": "onix",
+    "price": 1430.0,
+    "image": "ONX-TERRACOTA.jpg"
+  },
+  {
+    "name": "Verde",
+    "code": "ONX-VERDE",
+    "categ": "onix",
+    "price": 1460.0,
+    "image": "ONX-VERDE.jpg"
+  },
+  {
+    "name": "Ocean Blue",
+    "code": "ONX-OCEANBLUE",
+    "categ": "onix",
+    "price": 1490.0,
+    "image": "ONX-OCEANBLUE.jpg"
+  },
+  {
+    "name": "Polaris",
+    "code": "CUA-POLARIS",
+    "categ": "cuarcita",
+    "price": 980.0,
+    "image": "CUA-POLARIS.jpg"
+  },
+  {
+    "name": "Tierra de Fuego",
+    "code": "CUA-TIERRADEFUEGO",
+    "categ": "cuarcita",
+    "price": 1010.0,
+    "image": "CUA-TIERRADEFUEGO.jpg"
+  },
+  {
+    "name": "Cuarcita Dakar",
+    "code": "CUA-CUARCITADAKAR",
+    "categ": "cuarcita",
+    "price": 1040.0,
+    "image": "CUA-CUARCITADAKAR.jpg"
+  },
+  {
+    "name": "Eclipse",
+    "code": "CUA-ECLIPSE",
+    "categ": "cuarcita",
+    "price": 1070.0,
+    "image": "CUA-ECLIPSE.jpg"
+  },
+  {
+    "name": "Cuarcita Enigma",
+    "code": "CUA-CUARCITAENIGMA",
+    "categ": "cuarcita",
+    "price": 1100.0,
+    "image": "CUA-CUARCITAENIGMA.jpg"
+  },
+  {
+    "name": "Cuarcita Jacaranda",
+    "code": "CUA-CUARCITAJACARA",
+    "categ": "cuarcita",
+    "price": 1130.0,
+    "image": "CUA-CUARCITAJACARA.jpg"
+  },
+  {
+    "name": "Cuarcita Argos",
+    "code": "CUA-CUARCITAARGOS",
+    "categ": "cuarcita",
+    "price": 1160.0,
+    "image": "CUA-CUARCITAARGOS.jpg"
+  },
+  {
+    "name": "Lithos Travertino Ivory",
+    "code": "SIN-LITHOSTRAVERTI",
+    "categ": "sinterizada",
+    "price": 920.0,
+    "image": "SIN-LITHOSTRAVERTI.jpg"
+  },
+  {
+    "name": "Lithos Topacio",
+    "code": "SIN-LITHOSTOPACIO",
+    "categ": "sinterizada",
+    "price": 950.0,
+    "image": "SIN-LITHOSTOPACIO.jpg"
+  },
+  {
+    "name": "Lithos Patagonia",
+    "code": "SIN-LITHOSPATAGONI",
+    "categ": "sinterizada",
+    "price": 980.0,
+    "image": "SIN-LITHOSPATAGONI.jpg"
+  },
+  {
+    "name": "Lithos Masai",
+    "code": "SIN-LITHOSMASAI",
+    "categ": "sinterizada",
+    "price": 1010.0,
+    "image": "SIN-LITHOSMASAI.jpg"
+  },
+  {
+    "name": "Lithos Lucerna",
+    "code": "SIN-LITHOSLUCERNA",
+    "categ": "sinterizada",
+    "price": 1040.0,
+    "image": "SIN-LITHOSLUCERNA.jpg"
+  },
+  {
+    "name": "Lithos Limestone Sand",
+    "code": "SIN-LITHOSLIMESTON",
+    "categ": "sinterizada",
+    "price": 1070.0,
+    "image": "SIN-LITHOSLIMESTON.jpg"
+  },
+  {
+    "name": "Lithos Limestone Cala",
+    "code": "SIN-LITHOSLIMESTON6",
+    "categ": "sinterizada",
+    "price": 1100.0,
+    "image": "SIN-LITHOSLIMESTON6.jpg"
+  },
+  {
+    "name": "Lithos Jade",
+    "code": "SIN-LITHOSJADE",
+    "categ": "sinterizada",
+    "price": 1130.0,
+    "image": "SIN-LITHOSJADE.jpg"
+  }
+]

@@ -1,74 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-
-        <!-- Productos de muestra: piedras vendidas por m2, con inventario -->
-
-        <record id="product_cuarcita_enigma" model="product.template">
-            <field name="name">Cuarcita Enigma</field>
-            <field name="default_code">CUA-ENIGMA</field>
-            <field name="type">consu</field>
-            <field name="is_storable">True</field>
-            <field name="categ_id" ref="categ_cuarcita"/>
-            <field name="uom_id" ref="uom.product_uom_square_meter"/>
-            <field name="list_price">850.0</field>
-            <field name="description_sale">Cuarcita natural de alto valor decorativo, ideal para encimeras y revestimientos premium.</field>
-        </record>
-
-        <record id="product_onix_oro" model="product.template">
-            <field name="name">Onix Oro</field>
-            <field name="default_code">ONX-ORO</field>
-            <field name="type">consu</field>
-            <field name="is_storable">True</field>
-            <field name="categ_id" ref="categ_onix"/>
-            <field name="uom_id" ref="uom.product_uom_square_meter"/>
-            <field name="list_price">1200.0</field>
-            <field name="description_sale">Onix translucido con vetas doradas, recomendado para piezas retroiluminadas.</field>
-        </record>
-
-        <record id="product_granito_maori" model="product.template">
-            <field name="name">Granito Maori</field>
-            <field name="default_code">GRA-MAORI</field>
-            <field name="type">consu</field>
-            <field name="is_storable">True</field>
-            <field name="categ_id" ref="categ_granito"/>
-            <field name="uom_id" ref="uom.product_uom_square_meter"/>
-            <field name="list_price">650.0</field>
-            <field name="description_sale">Granito de alta resistencia para encimeras de cocina y zonas de alto transito.</field>
-        </record>
-
-        <record id="product_marmol_portoro" model="product.template">
-            <field name="name">Marmol Portoro</field>
-            <field name="default_code">MAR-PORTORO</field>
-            <field name="type">consu</field>
-            <field name="is_storable">True</field>
-            <field name="categ_id" ref="categ_marmol"/>
-            <field name="uom_id" ref="uom.product_uom_square_meter"/>
-            <field name="list_price">1500.0</field>
-            <field name="description_sale">Marmol negro con vetas doradas, simbolo de elegancia para proyectos exclusivos.</field>
-        </record>
-
-        <record id="product_sinterizada_amazonico" model="product.template">
-            <field name="name">Piedra Sinterizada Amazonico</field>
-            <field name="default_code">SIN-AMAZONICO</field>
-            <field name="type">consu</field>
-            <field name="is_storable">True</field>
-            <field name="categ_id" ref="categ_sinterizada"/>
-            <field name="uom_id" ref="uom.product_uom_square_meter"/>
-            <field name="list_price">900.0</field>
-            <field name="description_sale">Piedra sinterizada de gran formato, alta durabilidad y resistencia a rayado y calor.</field>
-        </record>
-
-        <record id="product_silestone_calacatta" model="product.template">
-            <field name="name">Cuarzo Silestone Calacatta Gold</field>
-            <field name="default_code">CRZ-CALACATTA</field>
-            <field name="type">consu</field>
-            <field name="is_storable">True</field>
-            <field name="categ_id" ref="categ_cuarzo"/>
-            <field name="uom_id" ref="uom.product_uom_square_meter"/>
-            <field name="list_price">780.0</field>
-            <field name="description_sale">Superficie de cuarzo Silestone, bajo mantenimiento y acabado uniforme.</field>
-        </record>
-
+        <!-- El catalogo real (nombres, precios e imagenes) se carga desde
+             static/products.json en el seed post-instalacion (seed_pe.py),
+             con las fotos reales de la web de Pierinelli. -->
     </data>
 </odoo>

@@ -2,15 +2,18 @@
 # ============================================================
 #  Pierinelli - SEED post-install (ejecutar con: odoo shell -d DB < seed_pe.py)
 #  Configura contabilidad peruana (plan 'pe', IGV 18%, RUC) y genera datos
-#  de ejemplo con IGV: clientes con RUC, proveedores, compras, ventas,
-#  facturas (Factura), transferencias entre almacenes y oportunidades CRM.
-#  Idempotente por version.
+#  de ejemplo con IGV: clientes con RUC, proveedores, compras + facturas de
+#  proveedor, cotizaciones, ventas, facturas de cliente, pagos registrados y
+#  transferencias entre almacenes. Idempotente por version.
 # ============================================================
 from datetime import datetime, timedelta
+import base64
+import json as _json
 import logging
+from odoo.tools import file_open
 
 _logger = logging.getLogger('pierinelli_seed')
-SEED_VERSION = '1'
+SEED_VERSION = '5'
 LANG = 'es_419'
 
 ICP = env['ir.config_parameter'].sudo()
@@ -58,49 +61,42 @@ else:
     if vals:
         existentes.write(vals)
 
-    # --- 4) Catalogo ampliado (~24 productos mas) ---
+    # --- 4) Catalogo REAL (desde products.json de la web) + imagenes ---
     def C(x):
         return env.ref('pierinelli_data.categ_%s' % x).id
 
-    catalogo = [
-        ('Cuarcita Taj Mahal', 'CUA-TAJMAHAL', 'cuarcita', 980),
-        ('Cuarcita Fusion', 'CUA-FUSION', 'cuarcita', 1050),
-        ('Cuarcita Sea Pearl', 'CUA-SEAPEARL', 'cuarcita', 920),
-        ('Granito Negro Absoluto', 'GRA-NEGROABS', 'granito', 720),
-        ('Granito Blanco Dallas', 'GRA-DALLAS', 'granito', 560),
-        ('Granito Verde Ubatuba', 'GRA-UBATUBA', 'granito', 640),
-        ('Marmol Carrara', 'MAR-CARRARA', 'marmol', 1100),
-        ('Marmol Calacatta', 'MAR-CALACATTA', 'marmol', 1800),
-        ('Marmol Nero Marquina', 'MAR-MARQUINA', 'marmol', 1350),
-        ('Marmol Emperador', 'MAR-EMPERADOR', 'marmol', 1250),
-        ('Onix Blanco', 'ONX-BLANCO', 'onix', 1400),
-        ('Onix Verde', 'ONX-VERDE', 'onix', 1500),
-        ('Onix Miel', 'ONX-MIEL', 'onix', 1300),
-        ('Sinterizada Calacatta Gold', 'SIN-CALGOLD', 'sinterizada', 1050),
-        ('Sinterizada Sofia', 'SIN-SOFIA', 'sinterizada', 980),
-        ('Sinterizada Nebbia', 'SIN-NEBBIA', 'sinterizada', 940),
-        ('Porcelanico Gris Cemento', 'POR-GRISCEM', 'porcelanico', 320),
-        ('Porcelanico Madera Roble', 'POR-ROBLE', 'porcelanico', 350),
-        ('Porcelanico Marmol Look', 'POR-MARMOL', 'porcelanico', 380),
-        ('Cuarzo Blanco Zeus', 'CRZ-ZEUS', 'cuarzo', 690),
-        ('Cuarzo Gris Expo', 'CRZ-EXPO', 'cuarzo', 660),
-        ('Solid Surface Corian Glacier White', 'SOL-GLACIER', 'solid_surface', 890),
-        ('Solid Surface Corian Deep Nocturne', 'SOL-NOCTURNE', 'solid_surface', 950),
-        ('Marmol Portoro Extra', 'MAR-PORTORO2', 'marmol', 1650),
-    ]
     m2 = env.ref('uom.product_uom_square_meter')
+    try:
+        with file_open('pierinelli_data/static/products.json', 'rb') as f:
+            catalogo = _json.loads(f.read().decode('utf-8'))
+    except Exception as e:
+        catalogo = []
+        _logger.warning('products.json no encontrado: %s', e)
+
     creados_prod = 0
-    for name, code, cat, price in catalogo:
-        if not prod(code):
-            Product.create({
-                'name': name, 'default_code': code, 'type': 'consu',
-                'is_storable': True, 'categ_id': C(cat), 'uom_id': m2.id,
-                'list_price': price,
+    con_imagen = 0
+    for it in catalogo:
+        p = prod(it['code'])
+        if p:
+            tmpl = p.product_tmpl_id
+        else:
+            tmpl = Product.create({
+                'name': it['name'], 'default_code': it['code'], 'type': 'consu',
+                'is_storable': True, 'categ_id': C(it['categ']), 'uom_id': m2.id,
+                'list_price': it['price'],
                 'taxes_id': [(6, 0, sale_tax.ids)] if sale_tax else False,
                 'supplier_taxes_id': [(6, 0, purchase_tax.ids)] if purchase_tax else False,
             })
             creados_prod += 1
-    print('Productos nuevos:', creados_prod)
+        # Imagen real del producto
+        try:
+            with file_open('pierinelli_data/static/img/products/%s' % it['image'], 'rb') as f:
+                tmpl.image_1920 = base64.b64encode(f.read())
+                con_imagen += 1
+        except Exception as e:
+            _logger.warning('Imagen %s: %s', it['code'], e)
+    print('Productos catalogo:', creados_prod, '| con imagen:', con_imagen,
+          '| total JSON:', len(catalogo))
 
     todos_prod = env['product.product'].search([('default_code', '!=', False)])
 
@@ -171,9 +167,11 @@ else:
             Quant._update_available_quantity(p, wh.lot_stock_id, qty)
     print('Stock repartido en almacenes.')
 
-    # --- 8) Compras a proveedores (con IGV) ---
+    # --- 8) Compras a proveedores (con IGV) + facturas de proveedor ---
     PO = env['purchase.order']
+    factura = env.ref('l10n_pe.document_type01', raise_if_not_found=False)  # Factura
     creados_po = 0
+    bills = 0
     for i, prov in enumerate(proveedores):
         tag = 'SEED-PO-%s' % prov.id
         if PO.search([('partner_ref', '=', tag)], limit=1):
@@ -197,17 +195,32 @@ else:
                 pick.move_ids.picked = True
                 pick._action_done()
             creados_po += 1
+            # Factura de proveedor (cuenta por pagar / gasto)
+            try:
+                po.action_create_invoice()
+                bill = po.invoice_ids[:1]
+                if bill:
+                    bill.invoice_date = (datetime.now() - timedelta(days=20 + i * 3)).date()
+                    if factura and 'l10n_latam_document_type_id' in bill._fields:
+                        bill.l10n_latam_document_type_id = factura.id
+                    if 'l10n_latam_document_number' in bill._fields:
+                        bill.l10n_latam_document_number = 'F%03d-%08d' % (i + 1, 1000 + i)
+                    bill.action_post()
+                    bills += 1
+            except Exception as e:
+                _logger.warning('Factura proveedor %s: %s', tag, e)
         except Exception as e:
             _logger.warning('PO %s: %s', tag, e)
-    print('Ordenes de compra:', creados_po)
+    print('Ordenes de compra:', creados_po, '| Facturas de proveedor:', bills)
 
-    # --- 9) Ventas con IGV + facturas (Factura) ---
+    # --- 9) Cotizaciones, ventas, facturas (IGV) y pagos ---
     SO = env['sale.order']
-    factura = env.ref('l10n_pe.document_type01', raise_if_not_found=False)  # Factura
     warehouses_list = [w for w in almacenes.values() if w]
     creados_so = 0
+    cotizaciones = 0
     facturas = 0
-    for i in range(45):
+    pagos = 0
+    for i in range(48):
         tag = 'SEED-SO-%03d' % i
         if SO.search([('client_order_ref', '=', tag)], limit=1):
             continue
@@ -226,9 +239,20 @@ else:
                 'product_uom_qty': 5 + ((i + k * 3) % 25),
             }) for k, pr in enumerate(lineas)],
         })
+        creados_so += 1
+        # ~1 de cada 5 queda como COTIZACION (borrador / enviada)
+        if i % 5 == 0:
+            if i % 2 == 0:
+                try:
+                    order.action_quotation_sent()
+                except Exception:
+                    pass
+            cotizaciones += 1
+            continue
+        # El resto se confirma (pedido de venta)
         order.action_confirm()
         # Entregar la mayoria
-        if i % 5 != 0:
+        if i % 4 != 0:
             for pick in order.picking_ids:
                 if pick.state in ('done', 'cancel'):
                     continue
@@ -240,7 +264,7 @@ else:
                     pick._action_done()
                 except Exception:
                     pass
-        # Facturar ~2/3 (Factura electronica con IGV)
+        # Facturar ~2/3 con IGV
         if i % 3 != 0:
             try:
                 inv = order._create_invoices()
@@ -249,10 +273,20 @@ else:
                         inv.l10n_latam_document_type_id = factura.id
                     inv.action_post()
                     facturas += 1
+                    # Registrar pago en ~la mitad de las facturas
+                    if i % 2 == 0:
+                        try:
+                            wiz = env['account.payment.register'].with_context(
+                                active_model='account.move', active_ids=inv.ids
+                            ).create({})
+                            wiz.action_create_payments()
+                            pagos += 1
+                        except Exception as e:
+                            _logger.warning('Pago SO %s: %s', tag, e)
             except Exception as e:
                 _logger.warning('Factura SO %s: %s', tag, e)
-        creados_so += 1
-    print('Ventas nuevas:', creados_so, '| Facturas emitidas:', facturas)
+    print('Ventas:', creados_so, '| Cotizaciones:', cotizaciones,
+          '| Facturas:', facturas, '| Pagos:', pagos)
     env.cr.commit()
 
     # --- 10) Transferencias entre almacenes ---
@@ -288,35 +322,45 @@ else:
     print('Transferencias entre almacenes creadas.')
     env.cr.commit()
 
-    # --- 11) CRM ---
-    Lead = env['crm.lead']
-    stages = {s: env.ref('crm.stage_lead%d' % n)
-              for n, s in enumerate(['new', 'qualified', 'proposition', 'won'], start=1)}
-    temas = [
-        ('Encimeras Marmol Portoro - Penthouse', 'proposition', 22500),
-        ('Fachada cuarcita - Torre corporativa', 'qualified', 68000),
-        ('Isla cocina Silestone - Depto modelo', 'new', 9800),
-        ('Pisos porcelanico - Obra Arequipa', 'proposition', 41000),
-        ('Bano onix retroiluminado - Casa playa', 'won', 15600),
-        ('Barra granito - Restaurante Barranco', 'qualified', 12300),
-        ('Revestimiento sinterizada - Hotel', 'proposition', 54000),
-        ('Marmol Calacatta - Lobby edificio', 'new', 33000),
-        ('Solid Surface - Clinica dental', 'qualified', 8700),
-        ('Cuarzo - Cocina residencial Surco', 'won', 11200),
-        ('Onix verde - Spa boutique', 'new', 19800),
-        ('Porcelanico gran formato - Showroom', 'proposition', 26500),
+    # --- 11) Usuarios de ejemplo por rol (referencia de permisos) ---
+    Users = env['res.users']
+
+    def grp(*xmlids):
+        ids = []
+        for x in xmlids:
+            g = env.ref(x, raise_if_not_found=False)
+            if g:
+                ids.append(g.id)
+        return ids
+
+    usuarios = [
+        ('Gerente General', 'gerente', grp(
+            'base.group_user', 'sales_team.group_sale_manager',
+            'stock.group_stock_manager', 'purchase.group_purchase_manager',
+            'account.group_account_manager')),
+        ('Vendedor Showroom', 'vendedor', grp(
+            'base.group_user', 'sales_team.group_sale_salesman')),
+        ('Almacenero', 'almacen', grp(
+            'base.group_user', 'stock.group_stock_user')),
+        ('Comprador', 'compras', grp(
+            'base.group_user', 'purchase.group_purchase_user')),
+        ('Contadora', 'contabilidad', grp(
+            'base.group_user', 'account.group_account_user')),
     ]
-    creados_lead = 0
-    for i, (name, stage, rev) in enumerate(temas):
-        if not Lead.search([('name', '=', name)], limit=1):
-            Lead.create({
-                'name': name, 'type': 'opportunity',
-                'partner_id': clientes[i % len(clientes)].id,
-                'expected_revenue': rev, 'stage_id': stages[stage].id,
-                'email_from': clientes[i % len(clientes)].email,
+    creados_user = 0
+    for nombre, login, gids in usuarios:
+        if Users.search([('login', '=', login)], limit=1):
+            continue
+        try:
+            Users.with_context(no_reset_password=True).create({
+                'name': nombre, 'login': login, 'password': 'pierinelli',
+                'lang': LANG, 'group_ids': [(6, 0, gids)],
             })
-            creados_lead += 1
-    print('Oportunidades CRM nuevas:', creados_lead)
+            creados_user += 1
+        except Exception as e:
+            _logger.warning('Usuario %s: %s', login, e)
+    print('Usuarios de ejemplo:', creados_user)
+    env.cr.commit()
 
     ICP.set_param('pierinelli.seed_pe_version', SEED_VERSION)
     env.cr.commit()
