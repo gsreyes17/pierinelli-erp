@@ -13,7 +13,7 @@ import logging
 from odoo.tools import file_open
 
 _logger = logging.getLogger('pierinelli_seed')
-SEED_VERSION = '6'
+SEED_VERSION = '7'
 LANG = 'es_419'
 
 ICP = env['ir.config_parameter'].sudo()
@@ -396,6 +396,11 @@ else:
         except Exception as e:
             _logger.warning('Usuario %s: %s', login, e)
     print('Usuarios de ejemplo:', creados_user)
+    # Al iniciar sesion, ir a la GRILLA DE APPS (no a la primera app / Discuss)
+    if 'is_redirect_home' in env['res.users']._fields:
+        env['res.users'].search([('share', '=', False)]).write(
+            {'is_redirect_home': True})
+        print('Redireccion al menu de apps activada para usuarios internos.')
     env.cr.commit()
 
     # --- 12) Trazabilidad: material PADRE (placa) -> HIJOS (piezas) con lote ---
