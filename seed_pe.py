@@ -13,7 +13,7 @@ import logging
 from odoo.tools import file_open
 
 _logger = logging.getLogger('pierinelli_seed')
-SEED_VERSION = '7'
+SEED_VERSION = '8'
 LANG = 'es_419'
 
 ICP = env['ir.config_parameter'].sudo()
@@ -96,10 +96,13 @@ else:
                 con_imagen += 1
         except Exception as e:
             _logger.warning('Imagen %s: %s', it['code'], e)
+        # Commit por producto -> transacciones pequenas (evita caidas SSL en Render)
+        env.cr.commit()
     print('Productos catalogo:', creados_prod, '| con imagen:', con_imagen,
           '| total JSON:', len(catalogo))
 
     todos_prod = env['product.product'].search([('default_code', '!=', False)])
+    env.cr.commit()
 
     # --- 5) Clientes con RUC ---
     nombres_cli = [
@@ -139,6 +142,7 @@ else:
                 vals['property_payment_term_id'] = terms[i % len(terms)].id
             p = Partner.create(vals)
         clientes.append(p)
+    env.cr.commit()
     print('Clientes:', len(clientes))
 
     # --- 6) Proveedores con RUC ---
@@ -163,6 +167,7 @@ else:
                 vals['property_supplier_payment_term_id'] = term_30.id
             p = Partner.create(vals)
         proveedores.append(p)
+    env.cr.commit()
     print('Proveedores:', len(proveedores))
 
     # --- 7) Stock inicial en varios almacenes ---
@@ -180,6 +185,7 @@ else:
                 continue
             qty = 40 + ((idx * 7 + j * 11) % 120)
             Quant._update_available_quantity(p, wh.lot_stock_id, qty)
+        env.cr.commit()
     print('Stock repartido en almacenes.')
 
     # --- 8) Compras a proveedores (con IGV) + facturas de proveedor ---

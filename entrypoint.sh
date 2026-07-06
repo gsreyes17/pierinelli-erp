@@ -22,17 +22,22 @@ SEED_PATH="/usr/local/bin/seed_pe.py"
 DB_ARGS="--db_host=${DB_HOST} --db_port=${DB_PORT} --db_user=${DB_USER} --db_password=${DB_PASSWORD}"
 
 echo ">>> Esperando PostgreSQL en ${DB_HOST}:${DB_PORT} ..."
-python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" <<'PYEOF'
+python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" <<'PYEOF'
 import sys, time, psycopg2
-host, port, user, pwd = sys.argv[1:5]
+host, port, user, pwd, db = sys.argv[1:6]
+# En Render el usuario solo accede a SU base; probamos con la base del proyecto
+# y como respaldo con 'postgres'.
+last = None
 for _ in range(60):
-    try:
-        psycopg2.connect(host=host, port=port, user=user, password=pwd,
-                         dbname="postgres", connect_timeout=3).close()
-        print("PostgreSQL listo"); sys.exit(0)
-    except Exception:
-        time.sleep(2)
-print("ERROR: no se pudo conectar a PostgreSQL"); sys.exit(1)
+    for dbname in (db, "postgres"):
+        try:
+            psycopg2.connect(host=host, port=port, user=user, password=pwd,
+                             dbname=dbname, connect_timeout=3).close()
+            print("PostgreSQL listo (%s)" % dbname); sys.exit(0)
+        except Exception as e:
+            last = e
+    time.sleep(2)
+print("ERROR: no se pudo conectar a PostgreSQL: %s" % last); sys.exit(1)
 PYEOF
 
 # ¿La BD ya esta inicializada?
@@ -82,11 +87,13 @@ run_seed() {
     odoo shell ${DB_ARGS} -d "${DB_NAME}" < "${SEED_PATH}"
 }
 
-migrate_attachments() {
-    echo ">>> Migrando adjuntos a la BD (persistencia sin disco) ..."
+# Guarda los adjuntos en la BD (sin disco persistente). Se hace ANTES del seed para
+# que las imagenes se escriban directo a la BD en transacciones pequenas (evita el
+# force_storage masivo que tumba la conexion SSL en Render free).
+set_attachments_db() {
+    echo ">>> Configurando adjuntos en la BD ..."
     odoo shell ${DB_ARGS} -d "${DB_NAME}" <<'PYSHELL'
 env['ir.config_parameter'].sudo().set_param('ir_attachment.location', 'db')
-env['ir.attachment'].sudo().search([]).force_storage()
 env.cr.commit()
 PYSHELL
 }
@@ -94,8 +101,8 @@ PYSHELL
 if [ "$INIT" != "yes" ]; then
     echo ">>> Inicializando '${DB_NAME}': modulos + idioma (puede tardar) ..."
     odoo ${DB_ARGS} -d "${DB_NAME}" -i "${MODULES}" --load-language=es_419 --stop-after-init
+    set_attachments_db
     run_seed
-    migrate_attachments
     set_version
     echo ">>> Inicializacion completa."
 else
@@ -103,8 +110,8 @@ else
     if [ "$STORED" != "$CODE_VERSION" ]; then
         echo ">>> Codigo nuevo (${CODE_VERSION}, antes '${STORED}') -> instalando/actualizando modulos ..."
         odoo ${DB_ARGS} -d "${DB_NAME}" -i "${MODULES}" -u "${MODULES}" --stop-after-init
+        set_attachments_db
         run_seed
-        migrate_attachments
         set_version
         echo ">>> Actualizacion completa."
     else
