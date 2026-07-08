@@ -13,7 +13,7 @@ import logging
 from odoo.tools import file_open
 
 _logger = logging.getLogger('pierinelli_seed')
-SEED_VERSION = '8'
+SEED_VERSION = '12'
 LANG = 'es_419'
 
 ICP = env['ir.config_parameter'].sudo()
@@ -180,6 +180,10 @@ else:
         'AQP': env.ref('pierinelli_data.warehouse_arequipa', raise_if_not_found=False),
     }
     for idx, p in enumerate(todos_prod):
+        # Solo productos almacenables sin seguimiento por lote (servicios y
+        # planchas-con-lote se manejan aparte)
+        if not p.is_storable or p.tracking != 'none':
+            continue
         for j, (code, wh) in enumerate(almacenes.items()):
             if not wh:
                 continue
@@ -293,6 +297,7 @@ else:
             continue
         # El resto se confirma (pedido de venta)
         order.action_confirm()
+        order.date_order = datetime.now() - timedelta(days=dias)  # confirmar la sobrescribe
         # Entregar la mayoria
         if i % 4 != 0:
             for pick in order.picking_ids:
@@ -330,6 +335,153 @@ else:
     print('Ventas:', creados_so, '| Cotizaciones:', cotizaciones,
           '| Facturas:', facturas, '| Pagos:', pagos)
     env.cr.commit()
+
+    # --- 9b) Caso "Madre Selva": listas de precios, servicios, CRM y cotizacion modelo ---
+    # Habilitar listas de precios en la interfaz
+    gpl = env.ref('product.group_product_pricelist', raise_if_not_found=False)
+    if gpl:
+        env.ref('base.group_user').write({'implied_ids': [(4, gpl.id)]})
+
+    Pricelist = env['product.pricelist']
+    PLItem = env['product.pricelist.item']
+
+    def get_pricelist(name, percent=None):
+        pl = Pricelist.search([('name', '=', name)], limit=1)
+        if not pl:
+            pl = Pricelist.create({'name': name, 'currency_id': company.currency_id.id})
+            if percent:
+                PLItem.create({'pricelist_id': pl.id, 'applied_on': '3_global',
+                               'compute_price': 'percentage', 'percent_price': percent})
+        return pl
+
+    get_pricelist('Publico')
+    get_pricelist('Profesionales (-12%)', percent=12)
+    pl_proy = get_pricelist('Proyectos por volumen', percent=18)
+    for c in clientes[:6]:
+        c.property_product_pricelist = pl_proy.id
+
+    # Servicios (corte, instalacion, flete)
+    for nombre, code, precio in [
+            ('Corte y fabricacion de encimeras a medida', 'SRV-CORTE', 1150),
+            ('Instalacion en obra + flete', 'SRV-INSTAL', 6900),
+            ('Flete a obra', 'SRV-FLETE', 850)]:
+        if not prod(code):
+            Product.create({'name': nombre, 'default_code': code, 'type': 'service',
+                            'list_price': precio, 'invoice_policy': 'order',
+                            'taxes_id': [(6, 0, sale_tax.ids)] if sale_tax else False})
+    env.cr.commit()
+
+    # Cliente del caso: Constructora Altavista SAC + arquitecta
+    altavista = Partner.search([('name', '=', 'Constructora Altavista SAC')], limit=1)
+    if not altavista:
+        altavista = Partner.create({
+            'name': 'Constructora Altavista SAC', 'is_company': True, 'lang': LANG,
+            'country_id': pe.id, 'city': 'Surco - Lima', 'street': 'Av. El Derby 254, Surco',
+            'l10n_latam_identification_type_id': ruc_type.id, 'vat': ruc_valido('2051234567'),
+            'email': 'proyectos@altavista.pe', 'customer_rank': 1,
+            'property_product_pricelist': pl_proy.id,
+            'child_ids': [(0, 0, {'name': 'Maria Fernanda Riva', 'function': 'Arquitecta',
+                                  'email': 'mf.riva@altavista.pe'})],
+        })
+
+    # CRM: embudo con la oportunidad heroe "Madre Selva"
+    if 'crm.lead' in env:
+        Lead = env['crm.lead']
+        st = {s: env.ref('crm.stage_lead%d' % n, raise_if_not_found=False)
+              for n, s in enumerate(['new', 'qualified', 'proposition', 'won'], 1)}
+        adm = env.ref('base.user_admin', raise_if_not_found=False)
+        crm_temas = [
+            ('Encimeras Madre Selva - 12 dptos', altavista, 96000, 'qualified'),
+            ('Fachada porcelanico - local Surquillo', clientes[1], 45000, 'new'),
+            ('Piso marmol - lobby San Isidro', clientes[2], 22000, 'proposition'),
+            ('Casa de playa - porcelanico exterior', clientes[3], 45000, 'new'),
+            ('Hotel boutique Cusco - banos', clientes[4], 169000, 'qualified'),
+            ('Torre Aurora - areas comunes', clientes[5], 87000, 'proposition'),
+            ('Bano principal - casa La Molina', clientes[6], 18000, 'new'),
+            ('Encimeras cuarzo - depto modelo', clientes[7], 15600, 'won'),
+        ]
+        for name, partner, rev, stage in crm_temas:
+            if not Lead.search([('name', '=', name)], limit=1):
+                v = {'name': name, 'type': 'opportunity', 'partner_id': partner.id,
+                     'expected_revenue': rev, 'email_from': partner.email}
+                if st.get(stage):
+                    v['stage_id'] = st[stage].id
+                if adm:
+                    v['user_id'] = adm.id
+                Lead.create(v)
+        env.cr.commit()
+        print('CRM: embudo con oportunidad Madre Selva cargado.')
+
+    # Cotizacion modelo "Madre Selva" con secciones + factura de anticipo 50%
+    enigma = prod('CUA-CUARCITAENIGMA')
+    corte = prod('SRV-CORTE')
+    instal = prod('SRV-INSTAL')
+    if enigma and not SO.search([('client_order_ref', '=', 'MADRE-SELVA')], limit=1):
+        lineas_ms = [
+            (0, 0, {'display_type': 'line_section', 'name': 'MATERIALES'}),
+            (0, 0, {'product_id': enigma.id, 'product_uom_qty': 48}),
+            (0, 0, {'display_type': 'line_section', 'name': 'SERVICIOS'}),
+        ]
+        if corte:
+            lineas_ms.append((0, 0, {'product_id': corte.id, 'product_uom_qty': 12}))
+        if instal:
+            lineas_ms.append((0, 0, {'product_id': instal.id, 'product_uom_qty': 1}))
+        ug_wh = almacenes.get('UG')
+        try:
+            ms = SO.create({
+                'partner_id': altavista.id,
+                'warehouse_id': ug_wh.id if ug_wh else False,
+                'client_order_ref': 'MADRE-SELVA', 'pricelist_id': pl_proy.id,
+                'order_line': lineas_ms,
+            })
+            ms.action_confirm()
+            wiz = env['sale.advance.payment.inv'].with_context(
+                active_model='sale.order', active_ids=ms.ids, active_id=ms.id
+            ).create({'advance_payment_method': 'percentage', 'amount': 50})
+            wiz.create_invoices()
+            inv = ms.invoice_ids[:1]
+            if inv:
+                if factura:
+                    inv.l10n_latam_document_type_id = factura.id
+                inv.action_post()
+            print('Cotizacion Madre Selva + anticipo 50% creados.')
+        except Exception as e:
+            _logger.warning('Madre Selva: %s', e)
+        env.cr.commit()
+
+    # --- 9c) Historial de ventas 12 meses (para los graficos de Ventas -> Informes) ---
+    prod_venta = todos_prod.filtered(lambda p: p.is_storable and p.tracking == 'none')
+    if prod_venta:
+        hist = 0
+        for mes in range(12):            # 12 meses hacia atras
+            for k in range(7):           # ~7 ventas por mes
+                tag = 'HIST-%02d-%d' % (mes, k)
+                if SO.search([('client_order_ref', '=', tag)], limit=1):
+                    continue
+                cliente = clientes[(mes * 7 + k) % len(clientes)]
+                wh = warehouses_list[(mes + k) % len(warehouses_list)]
+                nl = 1 + ((mes + k) % 3)
+                lineas = [prod_venta[(mes * 5 + k * 3 + j) % len(prod_venta)]
+                          for j in range(nl)]
+                # crecimiento suave + variacion por mes
+                base_qty = 4 + (mes % 6) * 2
+                fecha = datetime.now() - timedelta(days=mes * 30 + k * 4 + 2)
+                try:
+                    order = SO.create({
+                        'partner_id': cliente.id, 'warehouse_id': wh.id,
+                        'client_order_ref': tag, 'date_order': fecha,
+                        'order_line': [(0, 0, {
+                            'product_id': pr.id,
+                            'product_uom_qty': base_qty + ((mes + k + j) % 18),
+                        }) for j, pr in enumerate(lineas)],
+                    })
+                    order.action_confirm()
+                    order.date_order = fecha  # confirmar sobrescribe la fecha -> la fijamos
+                    hist += 1
+                except Exception as e:
+                    _logger.warning('Hist venta %s: %s', tag, e)
+            env.cr.commit()
+        print('Historial de ventas (12 meses):', hist)
 
     # --- 10) Transferencias entre almacenes ---
     prin = almacenes.get('PRIN')
@@ -388,6 +540,21 @@ else:
             'base.group_user', 'purchase.group_purchase_user')),
         ('Contadora', 'contabilidad', grp(
             'base.group_user', 'account.group_account_user')),
+        # --- Personas del caso "Madre Selva" (para las capturas del manual) ---
+        ('Valeria Campos', 'valeria@pierinelli.com', grp(
+            'base.group_user', 'sales_team.group_sale_salesman')),
+        ('Diego Torres', 'diego@pierinelli.com', grp(
+            'base.group_user', 'sales_team.group_sale_salesman')),
+        ('Carlos Ramos', 'carlos@pierinelli.com', grp(
+            'base.group_user', 'stock.group_stock_user')),
+        ('Rosa Delgado', 'rosa@pierinelli.com', grp(
+            'base.group_user', 'account.group_account_user')),
+        ('Maestro Aquino', 'aquino@pierinelli.com', grp(
+            'base.group_user', 'mrp.group_mrp_user')),
+        ('Jorge Pierinelli', 'jorge@pierinelli.com', grp(
+            'base.group_user', 'sales_team.group_sale_manager',
+            'stock.group_stock_manager', 'purchase.group_purchase_manager',
+            'account.group_account_manager', 'mrp.group_mrp_manager')),
     ]
     creados_user = 0
     for nombre, login, gids in usuarios:

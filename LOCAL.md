@@ -18,7 +18,7 @@ $env:PGPASSWORD='Odoo'
 & "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U Odoo -h localhost -d postgres -c "CREATE DATABASE odoo TEMPLATE template0 ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C';"
 
 # 2) Instalar módulos + idioma
-.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf -d odoo -i pierinelli_branding,pierinelli_data,pierinelli_pe,web_responsive,mrp --load-language=es_419 --stop-after-init
+.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf -d odoo -i pierinelli_branding,pierinelli_data,pierinelli_pe,web_responsive,mrp,crm --load-language=es_419 --stop-after-init
 
 # 3) Cargar datos (catálogo real + IGV + facturas + pagos + usuarios)
 #    OJO: se usa cmd, porque PowerShell NO acepta "<"
