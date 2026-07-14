@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="homepage_hebrea" inherit_id="website.homepage" name="Página de inicio - Academia Hebrea">
+        <xpath expr="//div[@id='wrap']" position="inside">
+
+            <!-- ============ HERO ============ -->
+            <section id="inicio" class="hb-hero">
+                <div class="container">
+                    <div class="row align-items-center" style="min-height: 78vh;">
+                        <div class="col-lg-7 py-5">
+                            <span class="hb-eyebrow-light">Academia Hebrea de Panamá · מאז 1979</span>
+                            <h1 class="hb-h1 mt-3">
+                                <span class="hb-gold-italic">Con tu luz</span><br/>vemos claridad.
+                            </h1>
+                            <p class="hb-hero-lead mt-4">
+                                Formamos niños y jóvenes con <strong>excelencia académica trilingüe</strong>
+                                y una identidad judía viva — de Parvularia a 12°, en el corazón de la
+                                comunidad de Panamá.
+                            </p>
+                            <div class="mt-4 d-flex flex-wrap gap-3">
+                                <a href="#admisiones" class="btn hb-btn-gold btn-lg">Inicia tu admisión</a>
+                                <a href="#nosotros" class="btn hb-btn-outline btn-lg">Conoce la Academia</a>
+                            </div>
+                        </div>
+                        <div class="col-lg-5 d-none d-lg-block">
+                            <div class="hb-hero-art">
+                                <div class="hb-hero-card">
+                                    <span class="hb-hero-card-kicker">Desde 1979</span>
+                                    <span class="hb-hero-card-big">45+</span>
+                                    <span class="hb-hero-card-label">años formando generaciones</span>
+                                </div>
+                                <div class="hb-hero-card hb-hero-card-2">
+                                    <span class="hb-hero-card-kicker">Programa</span>
+                                    <span class="hb-hero-card-big">3</span>
+                                    <span class="hb-hero-card-label">idiomas: español · inglés · עברית</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ NOSOTROS ============ -->
+            <section id="nosotros" class="hb-section hb-bg-white">
+                <div class="container">
+                    <div class="text-center mx-auto" style="max-width: 720px;">
+                        <span class="hb-eyebrow">Nuestra esencia</span>
+                        <h2 class="hb-h2 mt-2">Una escuela que educa la mente <span class="hb-gold-italic-dark">y el alma</span></h2>
+                        <p class="hb-lead mt-3">
+                            El sistema educativo de la Academia es transversal: desde pre-escolar hasta la
+                            graduación, cada coordinación y departamento trabaja en conjunto por un mismo fin.
+                        </p>
+                    </div>
+                    <div class="row mt-5 g-4">
+                        <div class="col-md-4">
+                            <div class="hb-card h-100">
+                                <span class="hb-icon" style="background:#fdf3dd;color:#c2912f;"><i class="fa fa-fire"/></span>
+                                <h3 class="hb-h3 mt-3">Identidad judía viva</h3>
+                                <p class="hb-text">Las enseñanzas, leyes y tradiciones con papel protagónico:
+                                    Purim, Pesaj, Yom Haatzmaut y el calendario judío se viven en el aula,
+                                    no solo se estudian.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="hb-card h-100">
+                                <span class="hb-icon" style="background:#e8effc;color:#1f56d6;"><i class="fa fa-graduation-cap"/></span>
+                                <h3 class="hb-h3 mt-3">Excelencia trilingüe</h3>
+                                <p class="hb-text">Programa académico riguroso en español, inglés y hebreo,
+                                    con consejería universitaria que abre puertas en Panamá,
+                                    Estados Unidos e Israel.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="hb-card h-100">
+                                <span class="hb-icon" style="background:#e9f7f0;color:#1f8a5b;"><i class="fa fa-users"/></span>
+                                <h3 class="hb-h3 mt-3">Familia y comunidad</h3>
+                                <p class="hb-text">Escuela y familia comparten la formación. Un equipo de
+                                    docentes y psicólogos que conoce las fortalezas de cada niño y niña,
+                                    uno a uno.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ ACADEMIA ============ -->
+            <section id="academia" class="hb-section hb-bg-light">
+                <div class="container">
+                    <div class="text-center mx-auto" style="max-width: 720px;">
+                        <span class="hb-eyebrow">Academia</span>
+                        <h2 class="hb-h2 mt-2">Un camino, <span class="hb-gold-italic-dark">tres etapas</span></h2>
+                        <p class="hb-lead mt-3">
+                            Aulas de 1° a 12° separadas por género en cada nivel, con un mismo
+                            proyecto educativo de principio a fin.
+                        </p>
+                    </div>
+                    <div class="row mt-5 g-4">
+                        <div class="col-md-4">
+                            <div class="hb-card hb-card-level h-100">
+                                <div class="hb-level-img" style="background-image:url('/hebrea_website/static/src/img/parvularia.jpg');"></div>
+                                <div class="hb-card-body">
+                                    <span class="hb-tag">Primeros años</span>
+                                    <h3 class="hb-h3 mt-2">Parvularia</h3>
+                                    <p class="hb-text">Los niños como protagonistas de su propio desarrollo:
+                                        aprender a conocer, a hacer, a convivir y a ser.</p>
+                                    <ul class="hb-list">
+                                        <li>Talleres con madres de familia</li>
+                                        <li>Feria de Disfraces de Purim</li>
+                                        <li>Seder de Pesaj y Yom Haatzmaut</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="hb-card hb-card-level h-100">
+                                <div class="hb-level-img" style="background-image:url('/hebrea_website/static/src/img/primaria.jpg');"></div>
+                                <div class="hb-card-body">
+                                    <span class="hb-tag">1° a 6°</span>
+                                    <h3 class="hb-h3 mt-2">Primaria</h3>
+                                    <p class="hb-text">Formación integral con celebraciones que marcan el año:
+                                        poesía trilingüe, Día de la Tierra, Día del Idioma.</p>
+                                    <ul class="hb-list">
+                                        <li>Recitales en español, hebreo e inglés</li>
+                                        <li>Programas de estudio integrados</li>
+                                        <li>Aulas por género en cada nivel</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="hb-card hb-card-level h-100">
+                                <div class="hb-level-img" style="background-image:url('/hebrea_website/static/src/img/secundaria.jpg');"></div>
+                                <div class="hb-card-body">
+                                    <span class="hb-tag">Pre-media y Media · 6° a 12°</span>
+                                    <h3 class="hb-h3 mt-2">Secundaria</h3>
+                                    <p class="hb-text">Consejería universitaria dedicada: PSAT, SAT, TOEFL
+                                        y aplicación a universidades del extranjero.</p>
+                                    <ul class="hb-list">
+                                        <li>Egresados en Panamá, EE.UU. e Israel</li>
+                                        <li>Ferias y visitas universitarias</li>
+                                        <li>Acompañamiento personalizado</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ VIDA ESTUDIANTIL ============ -->
+            <section id="vida" class="hb-section hb-bg-white">
+                <div class="container">
+                    <div class="row align-items-center g-5">
+                        <div class="col-lg-6">
+                            <span class="hb-eyebrow">Vida estudiantil</span>
+                            <h2 class="hb-h2 mt-2">Aquí se aprende <span class="hb-gold-italic-dark">jugando, compitiendo y celebrando</span></h2>
+                            <p class="hb-lead mt-3">
+                                Baloncesto y fútbol en ramas masculina y femenina, con participación en la
+                                <strong>Copa Kiwanis</strong> y la <strong>Liga Lidecopa</strong>. Ferias de Purim,
+                                Seder de Pesaj, Yom Haatzmaut y partidos amistosos entre familias.
+                            </p>
+                            <div class="mt-4 d-flex flex-column gap-3">
+                                <div class="hb-feature">
+                                    <span class="hb-icon-sm" style="background:#e8effc;color:#1f56d6;"><i class="fa fa-futbol-o"/></span>
+                                    <div>
+                                        <strong>Deporte formativo</strong>
+                                        <p class="hb-text mb-0">valores, trabajo en equipo y juego limpio desde pequeños</p>
+                                    </div>
+                                </div>
+                                <div class="hb-feature">
+                                    <span class="hb-icon-sm" style="background:#fdf3dd;color:#c2912f;"><i class="fa fa-music"/></span>
+                                    <div>
+                                        <strong>Cultura y tradición</strong>
+                                        <p class="hb-text mb-0">festivales, recitales trilingües y celebraciones del calendario judío</p>
+                                    </div>
+                                </div>
+                                <div class="hb-feature">
+                                    <span class="hb-icon-sm" style="background:#e9f7f0;color:#1f8a5b;"><i class="fa fa-heart"/></span>
+                                    <div>
+                                        <strong>Bienestar integral</strong>
+                                        <p class="hb-text mb-0">gabinete de psicología en todos los niveles, dentro y fuera del aula</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="hb-collage">
+                                <div class="hb-collage-a" style="background-image:url('/hebrea_website/static/src/img/deportes.jpg');"></div>
+                                <div class="hb-collage-b" style="background-image:url('/hebrea_website/static/src/img/secundaria.jpg');"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ HISTORIA ============ -->
+            <section id="historia" class="hb-section hb-bg-navy">
+                <div class="container">
+                    <div class="text-center mx-auto" style="max-width: 760px;">
+                        <span class="hb-eyebrow-light">Nuestra historia · מאז 1979</span>
+                        <h2 class="hb-h2 text-white mt-2">De un sueño comunitario a una <span class="hb-gold-italic">academia con luz propia</span></h2>
+                    </div>
+                    <div class="hb-timeline mt-5">
+                        <div class="hb-milestone">
+                            <span class="hb-year">1979</span>
+                            <h3 class="hb-h4">Abrimos nuestras puertas</h3>
+                            <p class="hb-text-light">El 26 de marzo de 1979 abrimos por primera vez, con la
+                                inauguración del primer edificio construido, hoy la sección de pre-escolar.</p>
+                        </div>
+                        <div class="hb-milestone">
+                            <span class="hb-year">1983</span>
+                            <h3 class="hb-h4">Primer Jidón Tanaj</h3>
+                            <p class="hb-text-light">Primer concurso de Jidón Tanaj realizado en el Colegio.</p>
+                        </div>
+                        <div class="hb-milestone">
+                            <span class="hb-year">1988</span>
+                            <h3 class="hb-h4">Primera Promoción de Bachilleres</h3>
+                            <p class="hb-text-light">Primera Promoción de Bachilleres de la Academia Hebrea de Panamá.</p>
+                        </div>
+                        <div class="hb-milestone">
+                            <span class="hb-year">1990</span>
+                            <h3 class="hb-h4">Sinagoga Bet Yosef</h3>
+                            <p class="hb-text-light">Inauguración con la presencia del Gran Rabino de Israel,
+                                Rabino Obadía Yosef (z"l).</p>
+                        </div>
+                        <div class="hb-milestone">
+                            <span class="hb-year">2002</span>
+                            <h3 class="hb-h4">Nuevos bachilleratos</h3>
+                            <p class="hb-text-light">Bachillerato en Comercio con énfasis en Administración
+                                o Ciencias con énfasis en Informática.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ ADMISIONES ============ -->
+            <section id="admisiones" class="hb-section hb-bg-light">
+                <div class="container">
+                    <div class="text-center mx-auto" style="max-width: 720px;">
+                        <span class="hb-eyebrow">Admisiones</span>
+                        <h2 class="hb-h2 mt-2">¿Desea que sus hijos <span class="hb-gold-italic-dark">estudien con nosotros?</span></h2>
+                        <p class="hb-lead mt-3">Cuatro pasos sencillos para formar parte de la familia AHP.</p>
+                    </div>
+                    <div class="row mt-5 g-4">
+                        <div class="col-md-6 col-lg-3">
+                            <div class="hb-card h-100">
+                                <span class="hb-step-n">01</span>
+                                <h3 class="hb-h3 mt-3">Conócenos</h3>
+                                <p class="hb-text">Agenda una visita al campus y vive un día en la Academia:
+                                    aulas, maestros y comunidad.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="hb-card h-100">
+                                <span class="hb-step-n">02</span>
+                                <h3 class="hb-h3 mt-3">Solicitud</h3>
+                                <p class="hb-text">Completa el formulario y entrega el expediente académico
+                                    del colegio anterior.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="hb-card h-100">
+                                <span class="hb-step-n">03</span>
+                                <h3 class="hb-h3 mt-3">Evaluación</h3>
+                                <p class="hb-text">Evaluación académica y entrevista familiar según el nivel
+                                    de ingreso.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="hb-card h-100">
+                                <span class="hb-step-n">04</span>
+                                <h3 class="hb-h3 mt-3">Bienvenida</h3>
+                                <p class="hb-text">Matrícula, acceso a RenWeb y bienvenida oficial a la
+                                    familia AHP. 🎉</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-5">
+                        <a href="#contacto" class="btn hb-btn-navy btn-lg">Inicia tu admisión</a>
+                    </div>
+                </div>
+            </section>
+
+        </xpath>
+    </template>
+</odoo>

@@ -1,0 +1,417 @@
+// ============================================================
+// Academia Hebrea de Panamá — estilos del sitio MVP
+// Paleta: azul marino #14254f / #0c1838 · dorado #e7bf6a / #ffd877 / #c2912f
+// Tipografías: Newsreader (títulos) · Hanken Grotesk (cuerpo)
+// ============================================================
+
+// Nota: usar la API v1 de Google Fonts — la v2 lleva ';' en la URL y el
+// empaquetador de assets de Odoo corta los @import en el primer ';',
+// dejando la hoja de estilos completa inválida.
+@import url('https://fonts.googleapis.com/css?family=Newsreader:400,400i,500,500i,600|Hanken+Grotesk:400,500,600,700&display=swap');
+
+$hb-navy: #14254f;
+$hb-navy-deep: #0c1838;
+$hb-navy-mid: #1f3a6b;
+$hb-gold: #e7bf6a;
+$hb-gold-bright: #ffd877;
+$hb-gold-dark: #c2912f;
+$hb-blue: #1f56d6;
+$hb-light: #eef3fb;
+$hb-muted: #5b6b8c;
+
+// ---------- Tipografía base (solo paginas del sitio, NO el login/backend) ----------
+// El login usa #wrapwrap pero NO #wrap; acotamos aqui para no pisar la marca Pierinelli.
+#wrap, #wrapwrap > footer {
+    font-family: 'Hanken Grotesk', system-ui, sans-serif;
+    color: #24314f;
+}
+
+// ---------- Header ----------
+#wrapwrap > header .navbar {
+    background: $hb-navy-deep !important;
+    .nav-link, .navbar-brand, .o_nav_link {
+        color: #fff !important;
+        font-family: 'Hanken Grotesk', sans-serif;
+        font-weight: 500;
+    }
+    .nav-link:hover { color: $hb-gold-bright !important; }
+}
+
+// Ocultar acceso al backend en el sitio público (MVP)
+a[href="/web/login"],
+a[href^="/web/login"],
+.o_header_sign_in {
+    display: none !important;
+}
+
+// Limpiar placeholders del header por defecto (teléfono / Contact Us)
+#wrapwrap > header {
+    a[href^="tel:"],
+    a[href="/contactus"].btn {
+        display: none !important;
+    }
+    // Marca: sello oficial + texto, en lugar del logo placeholder
+    .navbar-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        img { display: none !important; }
+        &::before {
+            content: '';
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            background: url('/hebrea_website/static/src/img/sello.png') center/contain no-repeat;
+            filter: brightness(0) invert(1);
+        }
+        &::after {
+            content: 'Academia Hebrea';
+            font-family: 'Newsreader', serif;
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+        }
+        &:hover::after { color: $hb-gold-bright; }
+    }
+}
+
+// ---------- Utilidades ----------
+.hb-eyebrow, .hb-eyebrow-light {
+    display: inline-block;
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+}
+.hb-eyebrow { color: $hb-gold-dark; }
+.hb-eyebrow-light { color: $hb-gold; }
+
+.hb-gold-italic {
+    font-style: italic;
+    color: $hb-gold-bright;
+}
+.hb-gold-italic-dark {
+    font-style: italic;
+    color: $hb-gold-dark;
+}
+
+.hb-h1 {
+    font-family: 'Newsreader', serif;
+    font-size: 3.6rem;
+    line-height: 1.06;
+    color: #fff;
+    font-weight: 500;
+    letter-spacing: -.8px;
+}
+.hb-h2 {
+    font-family: 'Newsreader', serif;
+    font-size: 2.5rem;
+    font-weight: 500;
+    letter-spacing: -.5px;
+    line-height: 1.15;
+    color: $hb-navy;
+}
+.hb-h3 {
+    font-family: 'Newsreader', serif;
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: $hb-navy;
+}
+.hb-h4 {
+    font-family: 'Newsreader', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+}
+.hb-lead {
+    font-size: 1.12rem;
+    line-height: 1.65;
+    color: $hb-muted;
+}
+.hb-text {
+    font-size: .98rem;
+    line-height: 1.6;
+    color: $hb-muted;
+}
+.hb-text-light {
+    font-size: .95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, .75);
+}
+
+// ---------- Secciones ----------
+.hb-section { padding: 96px 0; }
+.hb-bg-white { background: #fff; }
+.hb-bg-light { background: $hb-light; }
+.hb-bg-navy {
+    background: radial-gradient(ellipse at 30% 0%, $hb-navy-mid 0%, $hb-navy 45%, $hb-navy-deep 100%);
+}
+
+// ---------- Hero ----------
+.hb-hero {
+    background: radial-gradient(ellipse at 70% 20%, $hb-navy-mid 0%, $hb-navy 40%, $hb-navy-deep 100%);
+    position: relative;
+    overflow: hidden;
+    &::after {
+        content: '';
+        position: absolute;
+        right: -180px;
+        top: -180px;
+        width: 520px;
+        height: 520px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(231, 191, 106, .18) 0%, transparent 70%);
+        pointer-events: none;
+    }
+}
+.hb-hero-lead {
+    color: rgba(255, 255, 255, .82);
+    font-size: 1.12rem;
+    line-height: 1.65;
+    max-width: 520px;
+}
+.hb-hero-art {
+    position: relative;
+    min-height: 380px;
+}
+.hb-hero-card {
+    position: absolute;
+    top: 40px;
+    left: 20px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(231, 191, 106, .35);
+    border-radius: 18px;
+    padding: 28px 32px;
+    backdrop-filter: blur(6px);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    .hb-hero-card-kicker {
+        font-size: .75rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: $hb-gold;
+        font-weight: 700;
+    }
+    .hb-hero-card-big {
+        font-family: 'Newsreader', serif;
+        font-size: 3rem;
+        color: $hb-gold-bright;
+        line-height: 1;
+    }
+    .hb-hero-card-label { color: rgba(255, 255, 255, .8); font-size: .9rem; }
+}
+.hb-hero-card-2 {
+    top: 210px;
+    left: 130px;
+}
+
+// ---------- Botones ----------
+.hb-btn-gold {
+    background: linear-gradient(135deg, $hb-gold-bright, $hb-gold-dark);
+    color: $hb-navy-deep;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 28px;
+    &:hover { color: $hb-navy-deep; filter: brightness(1.06); }
+}
+.hb-btn-outline {
+    border: 1.5px solid rgba(255, 255, 255, .45);
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 28px;
+    &:hover { border-color: $hb-gold; color: $hb-gold-bright; }
+}
+.hb-btn-navy {
+    background: $hb-navy;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 12px 32px;
+    &:hover { background: $hb-navy-mid; color: #fff; }
+}
+
+// ---------- Tarjetas ----------
+.hb-card {
+    background: #fff;
+    border: 1px solid #e3eaf5;
+    border-radius: 18px;
+    padding: 32px 28px;
+    box-shadow: 0 6px 24px rgba(20, 37, 79, .06);
+    transition: transform .25s ease, box-shadow .25s ease;
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 34px rgba(20, 37, 79, .12);
+    }
+}
+.hb-card-level {
+    padding: 0;
+    overflow: hidden;
+    .hb-card-body { padding: 26px 28px 30px; }
+}
+.hb-level-img {
+    height: 170px;
+    background-size: cover;
+    background-position: center;
+}
+.hb-grad-1 { background: linear-gradient(135deg, #7fb0ff 0%, $hb-blue 60%, $hb-navy 100%); }
+.hb-grad-2 { background: linear-gradient(135deg, $hb-gold-bright 0%, $hb-gold-dark 70%, $hb-navy 130%); }
+.hb-grad-3 { background: linear-gradient(135deg, #3c4d70 0%, $hb-navy 60%, $hb-navy-deep 100%); }
+
+.hb-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+.hb-icon-sm {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+.hb-feature {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    strong { color: $hb-navy; }
+}
+
+.hb-tag {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: $hb-blue;
+    background: #e8effc;
+    border-radius: 20px;
+    padding: 4px 12px;
+}
+
+.hb-list {
+    list-style: none;
+    padding: 0;
+    margin: 14px 0 0;
+    li {
+        position: relative;
+        padding-left: 26px;
+        margin-bottom: 8px;
+        font-size: .93rem;
+        color: $hb-muted;
+        &::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: $hb-gold-dark;
+            font-weight: 700;
+        }
+    }
+}
+
+.hb-step-n {
+    font-family: 'Newsreader', serif;
+    font-size: 2.4rem;
+    font-style: italic;
+    color: $hb-gold;
+    line-height: 1;
+}
+
+// ---------- Collage (Vida estudiantil) ----------
+.hb-collage {
+    position: relative;
+    min-height: 420px;
+}
+.hb-collage-a {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 62%;
+    height: 260px;
+    border-radius: 22px;
+    transform: rotate(-3deg);
+    box-shadow: 0 18px 40px rgba(12, 24, 56, .25);
+    background-size: cover;
+    background-position: center;
+}
+.hb-collage-b {
+    position: absolute;
+    right: 0;
+    bottom: 20px;
+    width: 58%;
+    height: 240px;
+    border-radius: 22px;
+    transform: rotate(3deg);
+    box-shadow: 0 18px 40px rgba(12, 24, 56, .25);
+    background-size: cover;
+    background-position: center;
+}
+
+// ---------- Historia / línea de tiempo ----------
+.hb-timeline {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 22px;
+}
+.hb-milestone {
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(231, 191, 106, .25);
+    border-radius: 16px;
+    padding: 24px 22px;
+    .hb-year {
+        font-family: 'Newsreader', serif;
+        font-style: italic;
+        font-size: 1.6rem;
+        color: $hb-gold-bright;
+        display: block;
+        margin-bottom: 8px;
+    }
+}
+
+// ---------- Footer ----------
+#footer { background: $hb-navy-deep; }
+.hb-footer {
+    background: $hb-navy-deep;
+    .hb-footer-brand {
+        font-family: 'Newsreader', serif;
+        font-size: 1.7rem;
+        color: #fff;
+        font-weight: 500;
+    }
+    .hb-footer-title {
+        color: $hb-gold;
+        font-size: .8rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 14px;
+    }
+    .hb-footer-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        li { margin-bottom: 10px; color: rgba(255, 255, 255, .7); font-size: .93rem; }
+        a {
+            color: rgba(255, 255, 255, .7);
+            text-decoration: none;
+            &:hover { color: $hb-gold-bright; }
+        }
+    }
+}
+.o_footer_copyright { background: $hb-navy-deep !important; color: rgba(255,255,255,.5); }
+
+// ---------- Responsive ----------
+@media (max-width: 991px) {
+    .hb-h1 { font-size: 2.6rem; }
+    .hb-h2 { font-size: 2rem; }
+    .hb-section { padding: 64px 0; }
+}

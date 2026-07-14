@@ -16,7 +16,7 @@ DB_PASSWORD="${DB_PASSWORD:-odoo}"
 DB_NAME="${DB_NAME:-pierinelli}"
 HTTP_PORT="${PORT:-8069}"
 CODE_VERSION="${RENDER_GIT_COMMIT:-${CODE_VERSION:-manual}}"
-MODULES="pierinelli_branding,pierinelli_data,pierinelli_pe,web_responsive,mrp,crm"
+MODULES="pierinelli_branding,pierinelli_data,pierinelli_pe,web_responsive,mrp,crm,hebrea_website"
 SEED_PATH="/usr/local/bin/seed_pe.py"
 
 DB_ARGS="--db_host=${DB_HOST} --db_port=${DB_PORT} --db_user=${DB_USER} --db_password=${DB_PASSWORD}"
