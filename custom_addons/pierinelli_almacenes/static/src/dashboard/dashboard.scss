@@ -1,0 +1,142 @@
+// Panorama de Almacenes - Pierinelli (negro #111 / dorado #C9962F)
+.o_pier_dashboard {
+    $gold: #C9962F;
+    $ink: #111111;
+
+    height: 100%;
+    overflow: auto;
+    background: #f4f4f4;
+    padding: 16px 20px 28px;
+    color: $ink;
+
+    .o_pier_loading {
+        text-align: center;
+        padding: 80px 0;
+        color: #888;
+        i { color: $gold; margin-bottom: 10px; }
+    }
+
+    // ---- Encabezado ----
+    .o_pier_header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: $ink;
+        color: #fff;
+        border-radius: 12px;
+        padding: 16px 22px;
+        margin-bottom: 16px;
+
+        h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: .3px; }
+        .o_pier_sub { color: $gold; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+        .o_pier_totals { display: flex; gap: 26px; }
+        .o_pier_total { text-align: right; }
+        .o_pier_total_val { font-size: 20px; font-weight: 700; color: $gold; }
+        .o_pier_total_lbl { font-size: 10px; color: #bbb; text-transform: uppercase; letter-spacing: .5px; }
+    }
+
+    // ---- Cuerpo en 3 columnas ----
+    .o_pier_body {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr 1fr;
+        gap: 16px;
+        align-items: start;
+    }
+    @media (max-width: 1100px) {
+        .o_pier_body { grid-template-columns: 1fr; }
+    }
+
+    // ---- Tarjetas de sedes ----
+    .o_pier_cards { display: flex; flex-direction: column; gap: 12px; }
+    .o_pier_card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 14px 16px;
+        border: 1px solid #e8e8e8;
+        border-left: 4px solid $gold;
+        cursor: pointer;
+        transition: box-shadow .15s, transform .15s;
+
+        &:hover, &.o_pier_card_active {
+            box-shadow: 0 6px 18px rgba(0,0,0,.12);
+            transform: translateY(-2px);
+        }
+        .o_pier_card_head { display: flex; align-items: baseline; gap: 8px; }
+        .o_pier_card_code {
+            background: $ink; color: #fff; font-weight: 700; font-size: 11px;
+            padding: 2px 7px; border-radius: 4px; letter-spacing: .5px;
+        }
+        .o_pier_card_name { font-weight: 600; font-size: 14px; }
+        .o_pier_card_city { color: #888; font-size: 11px; margin: 4px 0 10px;
+            i { color: $gold; } }
+
+        .o_pier_card_stats {
+            display: flex; justify-content: space-between; margin-bottom: 10px;
+            div { display: flex; flex-direction: column; }
+            .o_pier_stat_val { font-weight: 700; font-size: 14px; }
+            .o_pier_stat_lbl { font-size: 9px; color: #999; text-transform: uppercase; }
+        }
+
+        .o_pier_bar_wrap {
+            position: relative; height: 8px; background: #eee; border-radius: 5px;
+            display: flex; align-items: center;
+        }
+        .o_pier_bar { height: 8px; border-radius: 5px; transition: width .4s; }
+        .o_pier_bar_high { background: $gold; }
+        .o_pier_bar_mid  { background: #d9b45f; }
+        .o_pier_bar_low  { background: #cfcfcf; }
+        .o_pier_bar_pct {
+            position: absolute; right: 4px; top: -16px; font-size: 10px;
+            font-weight: 700; color: #666;
+        }
+    }
+
+    // ---- Mapa ----
+    .o_pier_col_map {
+        background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #e8e8e8;
+        text-align: center;
+    }
+    .o_pier_map_title, .o_pier_top_title {
+        font-weight: 700; text-transform: uppercase; font-size: 11px;
+        letter-spacing: 1px; color: $ink; margin-bottom: 8px; text-align: left;
+        border-bottom: 2px solid $gold; padding-bottom: 6px;
+    }
+    .o_pier_map { width: 100%; max-height: 420px; }
+    .o_pier_map_land {
+        fill: #ece7db; stroke: $gold; stroke-width: .5;
+    }
+    .o_pier_pin { cursor: pointer; }
+    .o_pier_pin_dot { fill: $ink; transition: r .15s; }
+    .o_pier_pin_halo { fill: $gold; opacity: .28; transition: r .15s, opacity .15s; }
+    .o_pier_pin_lbl { font-size: 3.4px; font-weight: 700; fill: $ink; }
+    .o_pier_pin_active {
+        .o_pier_pin_dot { fill: $gold; }
+        .o_pier_pin_halo { opacity: .5; r: 5.5; }
+    }
+    .o_pier_map_hint { font-size: 10px; color: #aaa; margin-top: 6px; }
+
+    // ---- Ranking productos ----
+    .o_pier_col_top {
+        background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #e8e8e8;
+    }
+    .o_pier_top_item {
+        display: flex; align-items: center; gap: 10px; padding: 7px 4px;
+        border-bottom: 1px solid #f0f0f0; cursor: pointer;
+        &:hover { background: #faf6ec; }
+        &:last-child { border-bottom: none; }
+    }
+    .o_pier_top_img {
+        width: 42px; height: 42px; object-fit: cover; border-radius: 6px;
+        border: 1px solid #eee; background: #fafafa; flex: 0 0 auto;
+    }
+    .o_pier_top_info { flex: 1 1 auto; min-width: 0; }
+    .o_pier_top_name {
+        font-weight: 600; font-size: 12px; white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis;
+    }
+    .o_pier_top_cat { font-size: 10px; color: #999; }
+    .o_pier_top_qty { text-align: right; flex: 0 0 auto; }
+    .o_pier_top_m2 { font-weight: 700; font-size: 13px; color: $ink; }
+    .o_pier_top_val { font-size: 10px; color: $gold; font-weight: 600; }
+}

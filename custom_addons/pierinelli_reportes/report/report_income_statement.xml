@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_income_statement_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Estado de Resultados</t>
+                    </t>
+
+                    <!-- Indicadores -->
+                    <div style="margin-bottom:10px;">
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['total_ingresos_s0']"/></div>
+                            <div class="kpi-lbl">Ingresos</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['total_gastos_s0']"/></div>
+                            <div class="kpi-lbl">Costos y Gastos</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['utilidad_neta_s0']"/></div>
+                            <div class="kpi-lbl">Utilidad Neta</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val" t-esc="doc['margen_s']"/>
+                            <div class="kpi-lbl">Margen</div>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:15%;">Cuenta</th>
+                                <th>Descripcion</th>
+                                <th class="num" style="width:20%;">Monto (S/)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- INGRESOS -->
+                            <tr class="sec-title"><td colspan="3">Ingresos</td></tr>
+                            <tr t-foreach="doc['ingresos']" t-as="i">
+                                <td t-esc="i['code']"/>
+                                <td t-esc="i['name']"/>
+                                <td class="num" t-esc="i['monto_s']"/>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2">TOTAL INGRESOS</td>
+                                <td class="num" t-esc="doc['total_ingresos_s']"/>
+                            </tr>
+
+                            <!-- GASTOS -->
+                            <tr class="sec-title"><td colspan="3">Costos y Gastos</td></tr>
+                            <tr t-foreach="doc['gastos']" t-as="g">
+                                <td t-esc="g['code']"/>
+                                <td t-esc="g['name']"/>
+                                <td class="num" t-esc="g['monto_s']"/>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2">TOTAL COSTOS Y GASTOS</td>
+                                <td class="num" t-esc="doc['total_gastos_s']"/>
+                            </tr>
+
+                            <!-- RESULTADOS -->
+                            <tr class="total-row">
+                                <td colspan="2">UTILIDAD ANTES DE IMPUESTOS</td>
+                                <td class="num" t-esc="doc['utilidad_bruta_s']"/>
+                            </tr>
+                            <tr>
+                                <td colspan="2">Impuesto a la Renta estimado (29.5%)</td>
+                                <td class="num" t-esc="doc['impuesto_renta_s']"/>
+                            </tr>
+                            <tr class="grand-total">
+                                <td colspan="2">UTILIDAD NETA DEL EJERCICIO</td>
+                                <td class="num" t-esc="doc['utilidad_neta_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p class="footnote">
+                        El Impuesto a la Renta (29.5%) es una estimacion referencial de gestion,
+                        no la determinacion tributaria oficial. Reporte por naturaleza segun PCGE.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_financial_position" model="ir.actions.report">
+        <field name="name">Balance General</field>
+        <field name="model">pierinelli.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_financial_position_doc</field>
+        <field name="report_file">pierinelli_reportes.report_financial_position_doc</field>
+        <field name="print_report_name">'Balance General - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_income_statement" model="ir.actions.report">
+        <field name="name">Estado de Resultados</field>
+        <field name="model">pierinelli.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_income_statement_doc</field>
+        <field name="report_file">pierinelli_reportes.report_income_statement_doc</field>
+        <field name="print_report_name">'Estado de Resultados - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_trial_balance" model="ir.actions.report">
+        <field name="name">Balance de Comprobacion</field>
+        <field name="model">pierinelli.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_trial_balance_doc</field>
+        <field name="report_file">pierinelli_reportes.report_trial_balance_doc</field>
+        <field name="print_report_name">'Balance de Comprobacion - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_general_ledger" model="ir.actions.report">
+        <field name="name">Libro Mayor</field>
+        <field name="model">pierinelli.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_general_ledger_doc</field>
+        <field name="report_file">pierinelli_reportes.report_general_ledger_doc</field>
+        <field name="print_report_name">'Libro Mayor - %s' % (object.date_to)</field>
+    </record>
+
+</odoo>

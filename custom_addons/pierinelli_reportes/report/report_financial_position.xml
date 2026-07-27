@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_financial_position_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Estado de Situacion Financiera</t>
+                    </t>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:15%;">Cuenta</th>
+                                <th>Descripcion</th>
+                                <th class="num" style="width:20%;">Monto (S/)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- ACTIVO -->
+                            <tr class="sec-title"><td colspan="3">Activo</td></tr>
+                            <tr t-foreach="doc['activo']" t-as="a">
+                                <td t-esc="a['code']"/>
+                                <td t-esc="a['name']"/>
+                                <td class="num" t-esc="a['monto_s']"/>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2">TOTAL ACTIVO</td>
+                                <td class="num" t-esc="doc['total_activo_s']"/>
+                            </tr>
+
+                            <!-- PASIVO -->
+                            <tr class="sec-title"><td colspan="3">Pasivo</td></tr>
+                            <tr t-foreach="doc['pasivo']" t-as="p">
+                                <td t-esc="p['code']"/>
+                                <td t-esc="p['name']"/>
+                                <td class="num" t-esc="p['monto_s']"/>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2">TOTAL PASIVO</td>
+                                <td class="num" t-esc="doc['total_pasivo_s']"/>
+                            </tr>
+
+                            <!-- PATRIMONIO -->
+                            <tr class="sec-title"><td colspan="3">Patrimonio</td></tr>
+                            <tr t-foreach="doc['patrimonio']" t-as="pt">
+                                <td t-esc="pt['code']"/>
+                                <td t-esc="pt['name']"/>
+                                <td class="num" t-esc="pt['monto_s']"/>
+                            </tr>
+                            <tr>
+                                <td/>
+                                <td>Resultado del ejercicio</td>
+                                <td class="num" t-esc="doc['resultado_ejercicio_s']"/>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="2">TOTAL PATRIMONIO</td>
+                                <td class="num" t-esc="doc['total_patrimonio_s']"/>
+                            </tr>
+
+                            <!-- TOTAL PASIVO + PATRIMONIO -->
+                            <tr class="grand-total">
+                                <td colspan="2">TOTAL PASIVO Y PATRIMONIO</td>
+                                <td class="num" t-esc="doc['total_pasivo_patrimonio_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p t-if="abs(doc['descuadre']) &gt; 0.01" class="footnote">
+                        Diferencia activo vs pasivo+patrimonio:
+                        <span t-esc="doc['descuadre_s']"/>
+                        (puede deberse a asientos en borrador o al periodo elegido).
+                    </p>
+                    <p class="footnote">
+                        Reporte elaborado sobre el Plan Contable General Empresarial (PCGE).
+                        Documento de gestion interna; no constituye un comprobante ante SUNAT.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="pierinelli_almacenes.WarehouseDashboard">
+        <div class="o_pier_dashboard">
+
+            <!-- Cargando -->
+            <div t-if="state.loading" class="o_pier_loading">
+                <i class="fa fa-spinner fa-spin fa-2x"/>
+                <div>Cargando panorama de almacenes...</div>
+            </div>
+
+            <div t-else="">
+                <!-- Encabezado -->
+                <div class="o_pier_header">
+                    <div>
+                        <h1>Panorama de Almacenes</h1>
+                        <div class="o_pier_sub">PIERINELLI · Red logística nacional</div>
+                    </div>
+                    <div class="o_pier_totals">
+                        <div class="o_pier_total">
+                            <div class="o_pier_total_val"><t t-esc="state.totales.sedes"/></div>
+                            <div class="o_pier_total_lbl">Sedes</div>
+                        </div>
+                        <div class="o_pier_total">
+                            <div class="o_pier_total_val"><t t-esc="fmtM2(state.totales.m2)"/></div>
+                            <div class="o_pier_total_lbl">m² en stock</div>
+                        </div>
+                        <div class="o_pier_total">
+                            <div class="o_pier_total_val"><t t-esc="state.moneda"/> <t t-esc="fmtMoney(state.totales.valor)"/></div>
+                            <div class="o_pier_total_lbl">Valor inventario</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="o_pier_body">
+                    <!-- Columna izquierda: tarjetas de sedes -->
+                    <div class="o_pier_col_cards">
+                        <div class="o_pier_cards">
+                            <div t-foreach="state.sedes" t-as="sede" t-key="sede.id"
+                                 class="o_pier_card"
+                                 t-att-class="{ 'o_pier_card_active': state.sedeActiva === sede.code }"
+                                 t-on-mouseenter="() => this.hoverSede(sede.code)"
+                                 t-on-mouseleave="() => this.leaveSede()"
+                                 t-on-click="() => this.openSede(sede)">
+                                <div class="o_pier_card_head">
+                                    <span class="o_pier_card_code" t-esc="sede.code"/>
+                                    <span class="o_pier_card_name" t-esc="sede.name"/>
+                                </div>
+                                <div class="o_pier_card_city">
+                                    <i class="fa fa-map-marker"/> <t t-esc="sede.ciudad"/>
+                                </div>
+                                <div class="o_pier_card_stats">
+                                    <div>
+                                        <span class="o_pier_stat_val"><t t-esc="fmtM2(sede.m2)"/></span>
+                                        <span class="o_pier_stat_lbl">m²</span>
+                                    </div>
+                                    <div>
+                                        <span class="o_pier_stat_val"><t t-esc="sede.productos"/></span>
+                                        <span class="o_pier_stat_lbl">productos</span>
+                                    </div>
+                                    <div>
+                                        <span class="o_pier_stat_val"><t t-esc="state.moneda"/> <t t-esc="fmtMoney(sede.valor)"/></span>
+                                        <span class="o_pier_stat_lbl">valor</span>
+                                    </div>
+                                </div>
+                                <div class="o_pier_bar_wrap">
+                                    <div class="o_pier_bar" t-att-class="ocupClass(sede.ocupacion)"
+                                         t-attf-style="width: {{ sede.ocupacion }}%;"/>
+                                    <span class="o_pier_bar_pct"><t t-esc="sede.ocupacion"/>%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna central: mapa del Peru -->
+                    <div class="o_pier_col_map">
+                        <div class="o_pier_map_title">Distribución nacional</div>
+                        <svg class="o_pier_map" viewBox="0 0 100 130" preserveAspectRatio="xMidYMid meet">
+                            <!-- Silueta estilizada del Peru (aproximada) -->
+                            <path class="o_pier_map_land" d="
+                                M 22 8 L 30 6 L 34 12 L 33 20 L 38 26 L 36 34
+                                L 30 40 L 33 47 L 30 55 L 34 60 L 31 66 L 36 72
+                                L 40 78 L 47 84 L 52 92 L 50 100 L 44 104 L 40 112
+                                L 34 116 L 30 112 L 28 104 L 24 98 L 20 90 L 18 80
+                                L 22 72 L 20 64 L 24 56 L 20 48 L 24 40 L 20 32
+                                L 24 24 L 20 16 Z"/>
+                            <!-- Pines de las sedes -->
+                            <g t-foreach="state.sedes" t-as="sede" t-key="sede.id"
+                               class="o_pier_pin"
+                               t-att-class="{ 'o_pier_pin_active': state.sedeActiva === sede.code }"
+                               t-on-mouseenter="() => this.hoverSede(sede.code)"
+                               t-on-mouseleave="() => this.leaveSede()"
+                               t-on-click="() => this.openSede(sede)">
+                                <circle t-att-cx="sede.x" t-att-cy="sede.y" r="2.4" class="o_pier_pin_dot"/>
+                                <circle t-att-cx="sede.x" t-att-cy="sede.y" r="4.2" class="o_pier_pin_halo"/>
+                                <text t-att-x="sede.x + 5" t-att-y="sede.y + 1" class="o_pier_pin_lbl">
+                                    <t t-esc="sede.code"/>
+                                </text>
+                            </g>
+                        </svg>
+                        <div class="o_pier_map_hint">Pasa el cursor por una sede · clic para ver su inventario</div>
+                    </div>
+
+                    <!-- Columna derecha: ranking de productos -->
+                    <div class="o_pier_col_top">
+                        <div class="o_pier_top_title">Mayor stock</div>
+                        <div t-foreach="state.productos" t-as="prod" t-key="prod.id"
+                             class="o_pier_top_item"
+                             t-on-click="() => this.openProducto(prod)">
+                            <img class="o_pier_top_img" t-att-src="prod.image" alt=""/>
+                            <div class="o_pier_top_info">
+                                <div class="o_pier_top_name" t-esc="prod.name"/>
+                                <div class="o_pier_top_cat" t-esc="prod.categoria"/>
+                            </div>
+                            <div class="o_pier_top_qty">
+                                <div class="o_pier_top_m2"><t t-esc="fmtM2(prod.qty)"/> m²</div>
+                                <div class="o_pier_top_val"><t t-esc="state.moneda"/> <t t-esc="fmtMoney(prod.valor)"/></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

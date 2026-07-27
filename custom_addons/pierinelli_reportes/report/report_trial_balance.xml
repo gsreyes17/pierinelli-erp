@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_trial_balance_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Balance de Comprobacion</t>
+                    </t>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:12%;">Cuenta</th>
+                                <th>Descripcion</th>
+                                <th class="num">Debe</th>
+                                <th class="num">Haber</th>
+                                <th class="num">Saldo Deudor</th>
+                                <th class="num">Saldo Acreedor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="doc['rows']" t-as="r">
+                                <td t-esc="r['code']"/>
+                                <td t-esc="r['name']"/>
+                                <td class="num" t-esc="r['debit_s']"/>
+                                <td class="num" t-esc="r['credit_s']"/>
+                                <td class="num" t-esc="r['saldo_deudor_s']"/>
+                                <td class="num" t-esc="r['saldo_acreedor_s']"/>
+                            </tr>
+                            <tr class="grand-total">
+                                <td colspan="2">TOTALES</td>
+                                <td class="num" t-esc="doc['total_debit_s']"/>
+                                <td class="num" t-esc="doc['total_credit_s']"/>
+                                <td class="num" t-esc="doc['total_deudor_s']"/>
+                                <td class="num" t-esc="doc['total_acreedor_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="footnote">
+                        Sumas y saldos por cuenta segun PCGE. Los totales de Debe y Haber
+                        deben coincidir (partida doble).
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

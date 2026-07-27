@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Estados Financieros bajo Contabilidad > Reportes -->
+    <menuitem id="menu_pierinelli_financial_reports"
+              name="Estados Financieros"
+              parent="account.menu_finance_reports"
+              action="action_financial_report_wizard"
+              sequence="5"/>
+
+</odoo>

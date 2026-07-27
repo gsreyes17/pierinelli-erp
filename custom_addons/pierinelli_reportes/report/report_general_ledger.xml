@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_general_ledger_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Libro Mayor</t>
+                    </t>
+
+                    <t t-foreach="doc['accounts']" t-as="acc">
+                        <table style="margin-bottom:12px;">
+                            <thead>
+                                <tr class="sec-title">
+                                    <td colspan="6">
+                                        <span t-esc="acc['code']"/> -
+                                        <span t-esc="acc['name']"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th style="width:10%;">Fecha</th>
+                                    <th style="width:12%;">Asiento</th>
+                                    <th>Concepto</th>
+                                    <th class="num">Debe</th>
+                                    <th class="num">Haber</th>
+                                    <th class="num">Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="acc['lines']" t-as="l">
+                                    <td t-esc="l['date']"/>
+                                    <td t-esc="l['move']"/>
+                                    <td>
+                                        <span t-esc="l['label']"/>
+                                        <span t-if="l['partner']" class="fin-meta">
+                                            (<t t-esc="l['partner']"/>)
+                                        </span>
+                                    </td>
+                                    <td class="num" t-esc="l['debit_s']"/>
+                                    <td class="num" t-esc="l['credit_s']"/>
+                                    <td class="num" t-esc="l['saldo_s']"/>
+                                </tr>
+                                <tr class="total-row">
+                                    <td colspan="3">Total cuenta</td>
+                                    <td class="num" t-esc="acc['total_debit_s']"/>
+                                    <td class="num" t-esc="acc['total_credit_s']"/>
+                                    <td class="num" t-esc="acc['saldo_s']"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                    <p t-if="not doc['accounts']" class="footnote">
+                        No hay movimientos en el periodo seleccionado.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

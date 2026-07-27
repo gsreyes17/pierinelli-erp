@@ -4,9 +4,16 @@ Requisitos ya instalados: Python 3.11 (`.venv`), PostgreSQL, BD `odoo`.
 
 ## Solo arrancar (si la BD ya está cargada)
 ```powershell
-.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf
+.\arrancar.ps1
 ```
 → http://localhost:8069 · detener con `Ctrl+C`.
+El script `arrancar.ps1` asegura que **wkhtmltopdf** esté en el PATH (para los PDF)
+y luego lanza Odoo. Equivale a `.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf`
+más el ajuste del PATH.
+
+> **PDF en local:** requieren **wkhtmltopdf 0.12.6 (patched qt)**. Instálalo una vez con
+> `winget install wkhtmltopdf.wkhtmltox` (queda en `C:\Program Files\wkhtmltopdf\bin`).
+> En Render/Docker ya viene incluido en la imagen `odoo:19`.
 
 ## Cargar todo desde cero (BD limpia + datos)
 ```powershell
@@ -18,7 +25,7 @@ $env:PGPASSWORD='Odoo'
 & "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U Odoo -h localhost -d postgres -c "CREATE DATABASE odoo TEMPLATE template0 ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C';"
 
 # 2) Instalar módulos + idioma
-.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf -d odoo -i pierinelli_branding,pierinelli_data,pierinelli_pe,web_responsive,mrp,crm --load-language=es_419 --stop-after-init
+.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf -d odoo -i pierinelli_branding,pierinelli_data,pierinelli_pe,pierinelli_reportes,pierinelli_almacenes,web_responsive,mrp,crm --load-language=es_419 --stop-after-init
 
 # 3) Cargar datos (catálogo real + IGV + facturas + pagos + usuarios)
 #    OJO: se usa cmd, porque PowerShell NO acepta "<"
