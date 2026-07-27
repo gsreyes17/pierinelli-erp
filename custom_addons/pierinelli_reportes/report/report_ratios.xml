@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_ratios_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Indicadores Financieros</t>
+                    </t>
+
+                    <!-- Cifras base -->
+                    <div style="margin-bottom:10px;">
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['resumen']['total_activo_s']"/></div>
+                            <div class="kpi-lbl">Activo</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['resumen']['total_pasivo_s']"/></div>
+                            <div class="kpi-lbl">Pasivo</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['resumen']['ingresos_s']"/></div>
+                            <div class="kpi-lbl">Ingresos</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['resumen']['utilidad_s']"/></div>
+                            <div class="kpi-lbl">Utilidad neta</div>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:24%;">Indicador</th>
+                                <th class="num" style="width:12%;">Valor</th>
+                                <th style="width:26%;">Formula</th>
+                                <th>Lectura</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="doc['items']" t-as="it">
+                                <td><strong t-esc="it['nombre']"/></td>
+                                <td class="num"><strong t-esc="it['valor_s']"/></td>
+                                <td class="fin-meta" t-esc="it['formula']"/>
+                                <td t-esc="it['lectura']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p class="footnote">
+                        Indicadores calculados sobre los saldos del periodo seleccionado
+                        (activo/pasivo/patrimonio acumulados a la fecha "Hasta"; ingresos y
+                        utilidad del rango). El activo corriente agrupa las clases 1 y 2 del
+                        PCGE y el impuesto a la renta es el estimado de gestion (29.5%).
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

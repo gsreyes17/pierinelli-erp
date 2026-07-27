@@ -26,7 +26,7 @@
                                    groups="base.group_multi_company"/>
                         </group>
                     </group>
-                    <group string="Reportes disponibles">
+                    <group string="Estados financieros">
                         <div class="d-flex flex-wrap gap-2">
                             <button name="action_financial_position" type="object"
                                     string="Balance General" class="btn-primary"
@@ -34,12 +34,38 @@
                             <button name="action_income_statement" type="object"
                                     string="Estado de Resultados" class="btn-primary"
                                     icon="fa-line-chart"/>
-                            <button name="action_trial_balance" type="object"
-                                    string="Balance de Comprobacion" class="btn-secondary"
-                                    icon="fa-table"/>
+                            <button name="action_cash_flow" type="object"
+                                    string="Flujo de Caja" class="btn-primary"
+                                    icon="fa-money"/>
+                            <button name="action_ratios" type="object"
+                                    string="Indicadores Financieros" class="btn-primary"
+                                    icon="fa-tachometer"/>
+                        </div>
+                    </group>
+                    <group string="Libros contables">
+                        <div class="d-flex flex-wrap gap-2">
+                            <button name="action_journal_book" type="object"
+                                    string="Libro Diario" class="btn-secondary"
+                                    icon="fa-calendar"/>
                             <button name="action_general_ledger" type="object"
                                     string="Libro Mayor" class="btn-secondary"
                                     icon="fa-book"/>
+                            <button name="action_trial_balance" type="object"
+                                    string="Balance de Comprobacion" class="btn-secondary"
+                                    icon="fa-table"/>
+                        </div>
+                    </group>
+                    <group string="Gestion e impuestos">
+                        <div class="d-flex flex-wrap gap-2">
+                            <button name="action_aged_receivable" type="object"
+                                    string="Antiguedad CxC (clientes)" class="btn-secondary"
+                                    icon="fa-users"/>
+                            <button name="action_aged_payable" type="object"
+                                    string="Antiguedad CxP (proveedores)" class="btn-secondary"
+                                    icon="fa-truck"/>
+                            <button name="action_tax_summary" type="object"
+                                    string="Resumen de IGV" class="btn-secondary"
+                                    icon="fa-percent"/>
                         </div>
                     </group>
                 </sheet>

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Motor de estados financieros para Pierinelli (Odoo Community).
 
@@ -311,6 +311,286 @@ class FinancialReportWizard(models.TransientModel):
         return {'accounts': accounts}
 
     # ------------------------------------------------------------------
+    #  Antiguedad de saldos (CxC / CxP) - partidas abiertas por tercero,
+    #  clasificadas por dias de vencimiento respecto a la fecha "Hasta".
+    # ------------------------------------------------------------------
+    def _compute_aged(self, account_type):
+        Line = self.env['account.move.line']
+        domain = [
+            ('company_id', '=', self.company_id.id),
+            ('account_id.account_type', '=', account_type),
+            ('date', '<=', self.date_to),
+            ('amount_residual', '!=', 0),
+        ]
+        if self.target_move == 'posted':
+            domain.append(('parent_state', '=', 'posted'))
+        else:
+            domain.append(('parent_state', 'in', ('posted', 'draft')))
+
+        # CxC: residual positivo = nos deben. CxP: residual negativo = debemos.
+        sign = 1.0 if account_type == 'asset_receivable' else -1.0
+        buckets = ['no_vencido', 'b30', 'b60', 'b90', 'mas90']
+        partners = {}
+        for l in Line.search(domain):
+            due = l.date_maturity or l.date
+            dias = (self.date_to - due).days
+            if dias <= 0:
+                key = 'no_vencido'
+            elif dias <= 30:
+                key = 'b30'
+            elif dias <= 60:
+                key = 'b60'
+            elif dias <= 90:
+                key = 'b90'
+            else:
+                key = 'mas90'
+            pid = l.partner_id.id or 0
+            row = partners.setdefault(pid, {
+                'partner': l.partner_id.name or '(Sin tercero)',
+                'vat': l.partner_id.vat or '',
+                'no_vencido': 0.0, 'b30': 0.0, 'b60': 0.0,
+                'b90': 0.0, 'mas90': 0.0, 'total': 0.0,
+            })
+            amt = sign * l.amount_residual
+            row[key] += amt
+            row['total'] += amt
+
+        rows = sorted(partners.values(), key=lambda r: -abs(r['total']))
+        keys = buckets + ['total']
+        totals = {b: sum(r[b] for r in rows) for b in keys}
+        self._fmt_rows(rows, keys)
+        totals.update({b + '_s': self._money(totals[b]) for b in keys})
+        es_cxc = account_type == 'asset_receivable'
+        return {
+            'rows': rows,
+            'totals': totals,
+            'titulo': ('Antiguedad de Cuentas por Cobrar' if es_cxc
+                       else 'Antiguedad de Cuentas por Pagar'),
+            'tercero_lbl': 'Cliente' if es_cxc else 'Proveedor',
+        }
+
+    # ------------------------------------------------------------------
+    #  Libro Diario - asientos del periodo con sus apuntes
+    # ------------------------------------------------------------------
+    def _compute_journal_book(self):
+        Move = self.env['account.move']
+        domain = [
+            ('company_id', '=', self.company_id.id),
+            ('date', '>=', self.date_from),
+            ('date', '<=', self.date_to),
+        ]
+        if self.target_move == 'posted':
+            domain.append(('state', '=', 'posted'))
+        else:
+            domain.append(('state', 'in', ('posted', 'draft')))
+        moves = Move.search(domain, order='date, name')
+        entries = []
+        tot_d = tot_c = 0.0
+        for m in moves:
+            lines = []
+            for l in m.line_ids:
+                if l.display_type in ('line_section', 'line_note'):
+                    continue
+                lines.append({
+                    'account': '%s %s' % (l.account_id.code or '', l.account_id.name or ''),
+                    'label': l.name or '',
+                    'partner': l.partner_id.name or '',
+                    'debit_s': self._money(l.debit),
+                    'credit_s': self._money(l.credit),
+                    'debit': l.debit,
+                    'credit': l.credit,
+                })
+            d = sum(x['debit'] for x in lines)
+            c = sum(x['credit'] for x in lines)
+            tot_d += d
+            tot_c += c
+            entries.append({
+                'name': m.name,
+                'date': m.date,
+                'journal': m.journal_id.name,
+                'ref': m.ref or '',
+                'state': 'Publicado' if m.state == 'posted' else 'Borrador',
+                'lines': lines,
+                'debit_s': self._money(d),
+                'credit_s': self._money(c),
+            })
+        return {
+            'entries': entries,
+            'count': len(entries),
+            'total_debit_s': self._money(tot_d),
+            'total_credit_s': self._money(tot_c),
+        }
+
+    # ------------------------------------------------------------------
+    #  Flujo de Caja - cuentas de efectivo (clase 10 PCGE): saldo inicial,
+    #  entradas/salidas del periodo por diario y saldo final.
+    # ------------------------------------------------------------------
+    def _compute_cash_flow(self):
+        Line = self.env['account.move.line']
+        cash_accounts = self.env['account.account'].search([('code', '=like', '10%')])
+        state_dom = ([('parent_state', '=', 'posted')] if self.target_move == 'posted'
+                     else [('parent_state', 'in', ('posted', 'draft'))])
+        base = [('company_id', '=', self.company_id.id),
+                ('account_id', 'in', cash_accounts.ids)] + state_dom
+
+        prev = Line.read_group(base + [('date', '<', self.date_from)], ['balance:sum'], [])
+        saldo_inicial = (prev[0].get('balance') or 0.0) if prev else 0.0
+
+        period = base + [('date', '>=', self.date_from), ('date', '<=', self.date_to)]
+        groups = Line.read_group(period, ['debit:sum', 'credit:sum'], ['journal_id'])
+        rows = []
+        tot_in = tot_out = 0.0
+        for g in groups:
+            jname = g['journal_id'][1] if g.get('journal_id') else '(Sin diario)'
+            d = g.get('debit') or 0.0
+            c = g.get('credit') or 0.0
+            rows.append({
+                'journal': jname,
+                'entradas': d, 'salidas': c, 'neto': d - c,
+                'entradas_s': self._money(d),
+                'salidas_s': self._money(c),
+                'neto_s': self._money(d - c),
+            })
+            tot_in += d
+            tot_out += c
+        rows.sort(key=lambda r: -(r['entradas'] + r['salidas']))
+        saldo_final = saldo_inicial + tot_in - tot_out
+        return {
+            'rows': rows,
+            'saldo_inicial': saldo_inicial,
+            'saldo_inicial_s': self._money(saldo_inicial),
+            'total_entradas': tot_in,
+            'total_entradas_s': self._money(tot_in),
+            'total_salidas': tot_out,
+            'total_salidas_s': self._money(tot_out),
+            'flujo_neto': tot_in - tot_out,
+            'flujo_neto_s': self._money(tot_in - tot_out),
+            'saldo_final': saldo_final,
+            'saldo_final_s': self._money(saldo_final),
+        }
+
+    # ------------------------------------------------------------------
+    #  Resumen de IGV - debito fiscal (ventas) vs credito fiscal (compras)
+    #  a partir de los apuntes de impuesto del periodo. Estilo PDT 621.
+    # ------------------------------------------------------------------
+    def _compute_tax_summary(self):
+        Line = self.env['account.move.line']
+        domain = self._base_domain() + [('tax_line_id', '!=', False)]
+        taxes = {}
+        for l in Line.search(domain):
+            t = l.tax_line_id
+            entry = taxes.setdefault(t.id, {
+                'name': t.name, 'rate': t.amount,
+                'use': t.type_tax_use, 'amount': 0.0,
+            })
+            # IGV ventas: apunte al haber (balance negativo) -> monto positivo.
+            # IGV compras: apunte al debe (balance positivo).
+            entry['amount'] += -l.balance if t.type_tax_use == 'sale' else l.balance
+
+        ventas = [v for v in taxes.values() if v['use'] == 'sale']
+        compras = [v for v in taxes.values() if v['use'] == 'purchase']
+        for grp in (ventas, compras):
+            for v in grp:
+                v['base'] = v['amount'] / (v['rate'] / 100.0) if v['rate'] else 0.0
+                v['base_s'] = self._money(v['base'])
+                v['amount_s'] = self._money(v['amount'])
+        igv_ventas = sum(v['amount'] for v in ventas)
+        igv_compras = sum(v['amount'] for v in compras)
+        saldo = igv_ventas - igv_compras
+        return {
+            'ventas': ventas,
+            'compras': compras,
+            'igv_ventas': igv_ventas,
+            'igv_ventas_s': self._money(igv_ventas),
+            'igv_compras': igv_compras,
+            'igv_compras_s': self._money(igv_compras),
+            'saldo': saldo,
+            'saldo_s': self._money(abs(saldo)),
+            'a_favor': saldo < 0,
+        }
+
+    # ------------------------------------------------------------------
+    #  Indicadores financieros - ratios de gestion con interpretacion
+    # ------------------------------------------------------------------
+    def _compute_ratios(self):
+        fp = self._compute_financial_position()
+        inc = self._compute_income_statement()
+
+        act_corriente = sum(a['monto'] for a in fp['activo'] if a['code'][:1] in ('1', '2'))
+        existencias = sum(a['monto'] for a in fp['activo'] if a['code'][:1] == '2')
+        total_activo = fp['total_activo']
+        total_pasivo = fp['total_pasivo']
+        patrimonio = fp['total_patrimonio']
+        ingresos = inc['total_ingresos']
+        utilidad = inc['utilidad_neta']
+        costo_ventas = sum(g['monto'] for g in inc['gastos']
+                           if g['code'].startswith('69')) or inc['total_gastos']
+
+        def div(num, den):
+            # None = no calculable (denominador cero); se muestra "n.d."
+            return (num / den) if den else None
+
+        def pct(num, den):
+            r = div(num, den)
+            return r * 100.0 if r is not None else None
+
+        items = [
+            {'nombre': 'Liquidez corriente', 'unidad': 'x',
+             'formula': 'Activo corriente / Pasivo',
+             'valor': div(act_corriente, total_pasivo),
+             'lectura': 'Por cada S/ 1 de deuda, hay S/ %.2f en activos de corto plazo.'},
+            {'nombre': 'Prueba acida', 'unidad': 'x',
+             'formula': '(Activo corriente - Existencias) / Pasivo',
+             'valor': div(act_corriente - existencias, total_pasivo),
+             'lectura': 'Sin contar el inventario, se cubre %.2f veces la deuda.'},
+            {'nombre': 'Endeudamiento', 'unidad': '%',
+             'formula': 'Pasivo / Activo',
+             'valor': pct(total_pasivo, total_activo),
+             'lectura': 'El %.1f%% de los activos esta financiado con deuda.'},
+            {'nombre': 'Solvencia patrimonial', 'unidad': '%',
+             'formula': 'Patrimonio / Activo',
+             'valor': pct(patrimonio, total_activo),
+             'lectura': 'El %.1f%% de los activos es capital propio.'},
+            {'nombre': 'Margen neto', 'unidad': '%',
+             'formula': 'Utilidad neta / Ingresos',
+             'valor': pct(utilidad, ingresos),
+             'lectura': 'De cada S/ 100 vendidos quedan S/ %.1f de utilidad.'},
+            {'nombre': 'ROA (rentab. de activos)', 'unidad': '%',
+             'formula': 'Utilidad neta / Activo',
+             'valor': pct(utilidad, total_activo),
+             'lectura': 'Cada S/ 100 invertidos en activos generan S/ %.1f.'},
+            {'nombre': 'ROE (rentab. patrimonial)', 'unidad': '%',
+             'formula': 'Utilidad neta / Patrimonio',
+             'valor': pct(utilidad, patrimonio),
+             'lectura': 'Cada S/ 100 de capital propio generan S/ %.1f.'},
+            {'nombre': 'Rotacion de inventario', 'unidad': 'x',
+             'formula': 'Costo de ventas / Existencias',
+             'valor': div(costo_ventas, existencias),
+             'lectura': 'El inventario rota %.2f veces en el periodo.'},
+        ]
+        for it in items:
+            if it['valor'] is None:
+                it['valor_s'] = 'n.d.'
+                it['lectura'] = 'No calculable con los datos del periodo.'
+            elif it['unidad'] == '%':
+                it['valor_s'] = '{:,.1f}%'.format(it['valor'])
+                it['lectura'] = it['lectura'] % it['valor']
+            else:
+                it['valor_s'] = '{:,.2f}'.format(it['valor'])
+                it['lectura'] = it['lectura'] % it['valor']
+
+        return {
+            'items': items,
+            'resumen': {
+                'total_activo_s': self._money(total_activo),
+                'total_pasivo_s': self._money(total_pasivo),
+                'patrimonio_s': self._money(patrimonio),
+                'ingresos_s': self._money(ingresos),
+                'utilidad_s': self._money(utilidad),
+            },
+        }
+
+    # ------------------------------------------------------------------
     #  Datos base compartidos por las plantillas
     # ------------------------------------------------------------------
     def _report_header(self):
@@ -333,6 +613,18 @@ class FinancialReportWizard(models.TransientModel):
             body = self._compute_trial_balance()
         elif report_type == 'general_ledger':
             body = self._compute_general_ledger()
+        elif report_type == 'aged_receivable':
+            body = self._compute_aged('asset_receivable')
+        elif report_type == 'aged_payable':
+            body = self._compute_aged('liability_payable')
+        elif report_type == 'journal_book':
+            body = self._compute_journal_book()
+        elif report_type == 'cash_flow':
+            body = self._compute_cash_flow()
+        elif report_type == 'tax_summary':
+            body = self._compute_tax_summary()
+        elif report_type == 'ratios':
+            body = self._compute_ratios()
         else:
             raise UserError(_('Tipo de reporte desconocido: %s') % report_type)
         return {
@@ -366,6 +658,30 @@ class FinancialReportWizard(models.TransientModel):
     def action_general_ledger(self):
         return self._print('pierinelli_reportes.action_report_general_ledger',
                             'general_ledger')
+
+    def action_aged_receivable(self):
+        return self._print('pierinelli_reportes.action_report_aged',
+                            'aged_receivable')
+
+    def action_aged_payable(self):
+        return self._print('pierinelli_reportes.action_report_aged',
+                            'aged_payable')
+
+    def action_journal_book(self):
+        return self._print('pierinelli_reportes.action_report_journal_book',
+                            'journal_book')
+
+    def action_cash_flow(self):
+        return self._print('pierinelli_reportes.action_report_cash_flow',
+                            'cash_flow')
+
+    def action_tax_summary(self):
+        return self._print('pierinelli_reportes.action_report_tax_summary',
+                            'tax_summary')
+
+    def action_ratios(self):
+        return self._print('pierinelli_reportes.action_report_ratios',
+                            'ratios')
 
 
 class ReportFinancialPosition(models.AbstractModel):
@@ -413,4 +729,54 @@ class ReportGeneralLedger(models.AbstractModel):
         wizard = self.env['pierinelli.financial.report.wizard'].browse(data['wizard_id'])
         # 'o'/'docs' deben ser un recordset (el layout estandar usa o._name,
         # o.id, o.env). Nuestros datos calculados van en 'doc'.
+        return {'doc': data, 'docs': wizard, 'o': wizard, 'wizard': wizard}
+
+
+class ReportAged(models.AbstractModel):
+    _name = 'report.pierinelli_reportes.report_aged_doc'
+    _description = 'Datos Antiguedad de Saldos'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        wizard = self.env['pierinelli.financial.report.wizard'].browse(data['wizard_id'])
+        return {'doc': data, 'docs': wizard, 'o': wizard, 'wizard': wizard}
+
+
+class ReportJournalBook(models.AbstractModel):
+    _name = 'report.pierinelli_reportes.report_journal_book_doc'
+    _description = 'Datos Libro Diario'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        wizard = self.env['pierinelli.financial.report.wizard'].browse(data['wizard_id'])
+        return {'doc': data, 'docs': wizard, 'o': wizard, 'wizard': wizard}
+
+
+class ReportCashFlow(models.AbstractModel):
+    _name = 'report.pierinelli_reportes.report_cash_flow_doc'
+    _description = 'Datos Flujo de Caja'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        wizard = self.env['pierinelli.financial.report.wizard'].browse(data['wizard_id'])
+        return {'doc': data, 'docs': wizard, 'o': wizard, 'wizard': wizard}
+
+
+class ReportTaxSummary(models.AbstractModel):
+    _name = 'report.pierinelli_reportes.report_tax_summary_doc'
+    _description = 'Datos Resumen de IGV'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        wizard = self.env['pierinelli.financial.report.wizard'].browse(data['wizard_id'])
+        return {'doc': data, 'docs': wizard, 'o': wizard, 'wizard': wizard}
+
+
+class ReportRatios(models.AbstractModel):
+    _name = 'report.pierinelli_reportes.report_ratios_doc'
+    _description = 'Datos Indicadores Financieros'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        wizard = self.env['pierinelli.financial.report.wizard'].browse(data['wizard_id'])
         return {'doc': data, 'docs': wizard, 'o': wizard, 'wizard': wizard}

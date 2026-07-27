@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_cash_flow_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Flujo de Caja</t>
+                    </t>
+
+                    <!-- Indicadores -->
+                    <div style="margin-bottom:10px;">
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['saldo_inicial_s']"/></div>
+                            <div class="kpi-lbl">Saldo inicial</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['total_entradas_s']"/></div>
+                            <div class="kpi-lbl">Entradas</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['total_salidas_s']"/></div>
+                            <div class="kpi-lbl">Salidas</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['saldo_final_s']"/></div>
+                            <div class="kpi-lbl">Saldo final</div>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Origen (diario)</th>
+                                <th class="num">Entradas</th>
+                                <th class="num">Salidas</th>
+                                <th class="num">Neto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="sec-title"><td colspan="4">Movimientos de efectivo del periodo</td></tr>
+                            <tr t-foreach="doc['rows']" t-as="r">
+                                <td t-esc="r['journal']"/>
+                                <td class="num" t-esc="r['entradas_s']"/>
+                                <td class="num" t-esc="r['salidas_s']"/>
+                                <td class="num" t-esc="r['neto_s']"/>
+                            </tr>
+                            <tr class="total-row">
+                                <td>FLUJO NETO DEL PERIODO</td>
+                                <td class="num" t-esc="doc['total_entradas_s']"/>
+                                <td class="num" t-esc="doc['total_salidas_s']"/>
+                                <td class="num" t-esc="doc['flujo_neto_s']"/>
+                            </tr>
+                            <tr>
+                                <td colspan="3">Saldo inicial de efectivo (al inicio del periodo)</td>
+                                <td class="num" t-esc="doc['saldo_inicial_s']"/>
+                            </tr>
+                            <tr class="grand-total">
+                                <td colspan="3">SALDO FINAL DE EFECTIVO Y EQUIVALENTES</td>
+                                <td class="num" t-esc="doc['saldo_final_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p class="footnote">
+                        Elaborado por metodo directo sobre las cuentas de Efectivo y
+                        equivalentes de efectivo (clase 10 del PCGE), agrupando los
+                        movimientos por diario de origen.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

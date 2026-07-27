@@ -10,12 +10,17 @@ Community no incluye los estados financieros con formato oficial (eso es
 Enterprise); este modulo los construye directamente sobre account.move.line
 usando la estructura del Plan Contable General Empresarial (PCGE) peruano.
 
-Incluye:
+Incluye 10 reportes:
 - Estado de Situacion Financiera (Balance General) por clase PCGE.
 - Estado de Resultados (Ganancias y Perdidas) por naturaleza.
-- Balance de Comprobacion (sumas y saldos).
+- Flujo de Caja (efectivo clase 10: inicial, entradas/salidas, final).
+- Indicadores Financieros (liquidez, endeudamiento, ROA/ROE, margenes).
+- Libro Diario (asientos del periodo).
 - Libro Mayor por cuenta.
-- Indicadores en el Estado de Resultados (ingresos, gastos, utilidad, margen).
+- Balance de Comprobacion (sumas y saldos).
+- Antiguedad de Cuentas por Cobrar (buckets 30/60/90/+90 dias).
+- Antiguedad de Cuentas por Pagar.
+- Resumen de IGV (debito vs credito fiscal, estilo PDT 621).
 Todos con filtro de fechas y salida PDF con la marca Pierinelli.
 
 Ademas renombra el menu 'Facturacion' a 'Contabilidad' para el usuario final.
@@ -33,6 +38,11 @@ Ademas renombra el menu 'Facturacion' a 'Contabilidad' para el usuario final.
         'report/report_income_statement.xml',
         'report/report_trial_balance.xml',
         'report/report_general_ledger.xml',
+        'report/report_aged.xml',
+        'report/report_journal_book.xml',
+        'report/report_cash_flow.xml',
+        'report/report_tax_summary.xml',
+        'report/report_ratios.xml',
         'views/menus.xml',
     ],
     'post_init_hook': '_rename_accounting_menu',

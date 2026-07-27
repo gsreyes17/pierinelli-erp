@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_tax_summary_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Resumen de IGV</t>
+                    </t>
+
+                    <!-- Indicadores -->
+                    <div style="margin-bottom:10px;">
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['igv_ventas_s']"/></div>
+                            <div class="kpi-lbl">IGV Ventas (debito fiscal)</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['igv_compras_s']"/></div>
+                            <div class="kpi-lbl">IGV Compras (credito fiscal)</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['saldo_s']"/></div>
+                            <div class="kpi-lbl">
+                                <t t-if="doc['a_favor']">Saldo a favor</t>
+                                <t t-else="">IGV por pagar</t>
+                            </div>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Impuesto</th>
+                                <th class="num" style="width:10%;">Tasa</th>
+                                <th class="num" style="width:22%;">Base imponible</th>
+                                <th class="num" style="width:22%;">Impuesto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- VENTAS -->
+                            <tr class="sec-title"><td colspan="4">Ventas (debito fiscal)</td></tr>
+                            <tr t-foreach="doc['ventas']" t-as="v">
+                                <td t-esc="v['name']"/>
+                                <td class="num"><t t-esc="v['rate']"/>%</td>
+                                <td class="num" t-esc="v['base_s']"/>
+                                <td class="num" t-esc="v['amount_s']"/>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="3">TOTAL IGV VENTAS</td>
+                                <td class="num" t-esc="doc['igv_ventas_s']"/>
+                            </tr>
+
+                            <!-- COMPRAS -->
+                            <tr class="sec-title"><td colspan="4">Compras (credito fiscal)</td></tr>
+                            <tr t-foreach="doc['compras']" t-as="c">
+                                <td t-esc="c['name']"/>
+                                <td class="num"><t t-esc="c['rate']"/>%</td>
+                                <td class="num" t-esc="c['base_s']"/>
+                                <td class="num" t-esc="c['amount_s']"/>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="3">TOTAL IGV COMPRAS</td>
+                                <td class="num" t-esc="doc['igv_compras_s']"/>
+                            </tr>
+
+                            <!-- SALDO -->
+                            <tr class="grand-total">
+                                <td colspan="3">
+                                    <t t-if="doc['a_favor']">SALDO A FAVOR DEL CONTRIBUYENTE</t>
+                                    <t t-else="">IGV RESULTANTE POR PAGAR</t>
+                                </td>
+                                <td class="num" t-esc="doc['saldo_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p class="footnote">
+                        Resumen de gestion del IGV del periodo (estructura similar a la
+                        declaracion mensual PDT 621). Base imponible estimada a partir del
+                        impuesto y su tasa. No sustituye la declaracion oficial ante SUNAT.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

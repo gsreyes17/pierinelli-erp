@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_aged_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title" t-value="doc['titulo']"/>
+                    </t>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><t t-esc="doc['tercero_lbl']"/></th>
+                                <th>RUC / Doc.</th>
+                                <th class="num">No vencido</th>
+                                <th class="num">1-30 dias</th>
+                                <th class="num">31-60 dias</th>
+                                <th class="num">61-90 dias</th>
+                                <th class="num">+90 dias</th>
+                                <th class="num">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="doc['rows']" t-as="r">
+                                <td t-esc="r['partner']"/>
+                                <td t-esc="r['vat']"/>
+                                <td class="num" t-esc="r['no_vencido_s']"/>
+                                <td class="num" t-esc="r['b30_s']"/>
+                                <td class="num" t-esc="r['b60_s']"/>
+                                <td class="num" t-esc="r['b90_s']"/>
+                                <td class="num" t-esc="r['mas90_s']"/>
+                                <td class="num" t-esc="r['total_s']"/>
+                            </tr>
+                            <tr class="grand-total">
+                                <td colspan="2">TOTALES</td>
+                                <td class="num" t-esc="doc['totals']['no_vencido_s']"/>
+                                <td class="num" t-esc="doc['totals']['b30_s']"/>
+                                <td class="num" t-esc="doc['totals']['b60_s']"/>
+                                <td class="num" t-esc="doc['totals']['b90_s']"/>
+                                <td class="num" t-esc="doc['totals']['mas90_s']"/>
+                                <td class="num" t-esc="doc['totals']['total_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p t-if="not doc['rows']" class="footnote">
+                        No hay partidas abiertas a la fecha seleccionada.
+                    </p>
+                    <p class="footnote">
+                        Partidas abiertas al cierre del periodo, clasificadas por dias de
+                        vencimiento (segun fecha de vencimiento del documento). Ordenado por
+                        saldo total de mayor a menor.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

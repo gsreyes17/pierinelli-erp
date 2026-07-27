@@ -37,4 +37,50 @@
         <field name="print_report_name">'Libro Mayor - %s' % (object.date_to)</field>
     </record>
 
+    <!-- Compartido por CxC y CxP: el titulo viaja en los datos -->
+    <record id="action_report_aged" model="ir.actions.report">
+        <field name="name">Antiguedad de Saldos</field>
+        <field name="model">pierinelli.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_aged_doc</field>
+        <field name="report_file">pierinelli_reportes.report_aged_doc</field>
+        <field name="print_report_name">'Antiguedad de Saldos - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_journal_book" model="ir.actions.report">
+        <field name="name">Libro Diario</field>
+        <field name="model">pierinelli.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_journal_book_doc</field>
+        <field name="report_file">pierinelli_reportes.report_journal_book_doc</field>
+        <field name="print_report_name">'Libro Diario - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_cash_flow" model="ir.actions.report">
+        <field name="name">Flujo de Caja</field>
+        <field name="model">pierinelli.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_cash_flow_doc</field>
+        <field name="report_file">pierinelli_reportes.report_cash_flow_doc</field>
+        <field name="print_report_name">'Flujo de Caja - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_tax_summary" model="ir.actions.report">
+        <field name="name">Resumen de IGV</field>
+        <field name="model">pierinelli.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_tax_summary_doc</field>
+        <field name="report_file">pierinelli_reportes.report_tax_summary_doc</field>
+        <field name="print_report_name">'Resumen de IGV - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_ratios" model="ir.actions.report">
+        <field name="name">Indicadores Financieros</field>
+        <field name="model">pierinelli.financial.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_ratios_doc</field>
+        <field name="report_file">pierinelli_reportes.report_ratios_doc</field>
+        <field name="print_report_name">'Indicadores Financieros - %s' % (object.date_to)</field>
+    </record>
+
 </odoo>
