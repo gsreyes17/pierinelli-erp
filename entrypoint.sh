@@ -87,6 +87,65 @@ run_seed() {
     odoo shell ${DB_ARGS} -d "${DB_NAME}" < "${SEED_PATH}"
 }
 
+# Limpia restos del antiguo modulo hebrea_website (extraido del repo). Si la BD
+# lo tiene registrado como instalado pero el codigo ya no existe, Odoo falla con
+# "Some modules are not loaded ... ['hebrea_website']". Aqui se neutraliza por
+# SQL (idempotente) y se desinstala 'website' para dejar Pierinelli puro.
+cleanup_hebrea() {
+    python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" <<'PYEOF'
+import sys, psycopg2
+host, port, user, pwd, db = sys.argv[1:6]
+try:
+    c = psycopg2.connect(host=host, port=port, user=user, password=pwd, dbname=db)
+    cur = c.cursor()
+    cur.execute("SELECT state FROM ir_module_module WHERE name='hebrea_website'")
+    r = cur.fetchone()
+    if r and r[0] not in ('uninstalled', 'uninstallable'):
+        # vistas que creo el modulo (quedarian huerfanas y romperian el sitio)
+        cur.execute("""DELETE FROM ir_ui_view WHERE id IN
+                       (SELECT res_id FROM ir_model_data
+                        WHERE module='hebrea_website' AND model='ir.ui.view')""")
+        cur.execute("DELETE FROM ir_model_data WHERE module='hebrea_website'")
+        cur.execute("UPDATE ir_module_module SET state='uninstalled' WHERE name='hebrea_website'")
+        c.commit()
+        print(">>> hebrea_website neutralizado (uninstalled + vistas eliminadas)")
+    c.close()
+except Exception as e:
+    print(">>> cleanup hebrea omitido: %s" % e)
+PYEOF
+}
+
+# Devuelve el estado del modulo website en la BD
+website_state() {
+    python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" <<'PYEOF'
+import sys, psycopg2
+host, port, user, pwd, db = sys.argv[1:6]
+try:
+    c = psycopg2.connect(host=host, port=port, user=user, password=pwd, dbname=db)
+    cur = c.cursor()
+    cur.execute("SELECT state FROM ir_module_module WHERE name='website'")
+    r = cur.fetchone(); print(r[0] if r else "absent"); c.close()
+except Exception:
+    print("absent")
+PYEOF
+}
+
+uninstall_website() {
+    echo ">>> Desinstalando modulo 'website' (Pierinelli puro) ..."
+    odoo shell ${DB_ARGS} -d "${DB_NAME}" <<'PYSHELL' || true
+mod = env['ir.module.module'].search([('name', '=', 'website'), ('state', '=', 'installed')])
+if mod:
+    try:
+        mod.button_immediate_uninstall()
+        env.cr.commit()
+        print(">>> website desinstalado")
+    except Exception as e:
+        print(">>> no se pudo desinstalar website: %s" % e)
+else:
+    print(">>> website ya no esta instalado")
+PYSHELL
+}
+
 # Guarda los adjuntos en la BD (sin disco persistente). Se hace ANTES del seed para
 # que las imagenes se escriban directo a la BD en transacciones pequenas (evita el
 # force_storage masivo que tumba la conexion SSL en Render free).
@@ -106,6 +165,11 @@ if [ "$INIT" != "yes" ]; then
     set_version
     echo ">>> Inicializacion completa."
 else
+    # Limpieza de restos de hebrea_website (no-op si la BD ya esta limpia)
+    cleanup_hebrea
+    if [ "$(website_state)" = "installed" ]; then
+        uninstall_website
+    fi
     STORED=$(get_version)
     if [ "$STORED" != "$CODE_VERSION" ]; then
         echo ">>> Codigo nuevo (${CODE_VERSION}, antes '${STORED}') -> instalando/actualizando modulos ..."

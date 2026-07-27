@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ 1. Existencias valorizadas por sede ============ -->
+    <template id="report_stock_by_warehouse_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Existencias Valorizadas por Sede</t>
+                    </t>
+
+                    <t t-foreach="doc['sedes']" t-as="s">
+                        <table style="margin-bottom:12px;">
+                            <thead>
+                                <tr class="sec-title">
+                                    <td colspan="6">
+                                        <span t-esc="s['code']"/> -
+                                        <span t-esc="s['name']"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th style="width:14%;">Codigo</th>
+                                    <th>Producto</th>
+                                    <th style="width:16%;">Categoria</th>
+                                    <th class="num">Cantidad (m²)</th>
+                                    <th class="num">Costo unit.</th>
+                                    <th class="num">Valor (S/)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="s['lines']" t-as="l">
+                                    <td t-esc="l['code']"/>
+                                    <td t-esc="l['name']"/>
+                                    <td t-esc="l['categ']"/>
+                                    <td class="num" t-esc="l['qty_s']"/>
+                                    <td class="num" t-esc="l['costo_s']"/>
+                                    <td class="num" t-esc="l['valor_s']"/>
+                                </tr>
+                                <tr class="total-row">
+                                    <td colspan="3">Total sede</td>
+                                    <td class="num" t-esc="s['total_qty_s']"/>
+                                    <td/>
+                                    <td class="num" t-esc="s['total_valor_s']"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+
+                    <table>
+                        <tbody>
+                            <tr class="grand-total">
+                                <td>TOTAL GENERAL</td>
+                                <td class="num" style="width:20%;" t-esc="doc['gran_qty_s']"/>
+                                <td class="num" style="width:20%;" t-esc="doc['gran_valor_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="footnote">
+                        Foto actual del inventario (cantidad por producto x costo estandar).
+                        Ordenado por valor de mayor a menor dentro de cada sede.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============ 2. Composicion por categoria ============ -->
+    <template id="report_by_category_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Composicion del Inventario por Categoria</t>
+                    </t>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th class="num">Productos</th>
+                                <th class="num">Cantidad (m²)</th>
+                                <th class="num">Valor (S/)</th>
+                                <th class="num">% del valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="doc['rows']" t-as="r">
+                                <td t-esc="r['name']"/>
+                                <td class="num" t-esc="r['n_prod']"/>
+                                <td class="num" t-esc="r['qty_s']"/>
+                                <td class="num" t-esc="r['valor_s']"/>
+                                <td class="num" t-esc="r['pct_s']"/>
+                            </tr>
+                            <tr class="grand-total">
+                                <td colspan="2">TOTAL</td>
+                                <td class="num" t-esc="doc['total_qty_s']"/>
+                                <td class="num" t-esc="doc['total_valor_s']"/>
+                                <td class="num">100%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="footnote">
+                        Distribucion del valor del inventario actual por tipo de piedra /
+                        categoria de producto.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============ 3. Stock critico ============ -->
+    <template id="report_critical_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Stock Critico</t>
+                    </t>
+
+                    <p class="fin-meta" style="margin-bottom:8px;">
+                        Umbral: <strong t-esc="doc['umbral_s']"/> m² ·
+                        <strong t-esc="len(doc['rows'])"/> productos bajo el umbral ·
+                        <strong t-esc="doc['n_agotados']"/> agotados
+                    </p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:13%;">Codigo</th>
+                                <th>Producto</th>
+                                <th style="width:14%;">Categoria</th>
+                                <th class="num" t-foreach="doc['wh_codes']" t-as="w">
+                                    <t t-esc="w"/>
+                                </th>
+                                <th class="num">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="doc['rows']" t-as="r">
+                                <td t-esc="r['code']"/>
+                                <td>
+                                    <t t-esc="r['name']"/>
+                                    <strong t-if="r['agotado']" style="color:#a00;"> (AGOTADO)</strong>
+                                </td>
+                                <td t-esc="r['categ']"/>
+                                <td class="num" t-foreach="doc['wh_codes']" t-as="w">
+                                    <t t-esc="r['by_wh'][w]"/>
+                                </td>
+                                <td class="num"><strong t-esc="r['qty_s']"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p t-if="not doc['rows']" class="footnote">
+                        Ningun producto esta por debajo del umbral. Inventario saludable.
+                    </p>
+                    <p class="footnote">
+                        Productos cuyo stock total esta por debajo del umbral definido,
+                        con el detalle por sede. Ordenado del mas critico al menos critico.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============ 4. Antiguedad del inventario ============ -->
+    <template id="report_stock_aging_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Antiguedad del Inventario</t>
+                    </t>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:13%;">Codigo</th>
+                                <th>Producto</th>
+                                <th class="num">0-30 dias</th>
+                                <th class="num">31-90 dias</th>
+                                <th class="num">91-180 dias</th>
+                                <th class="num">+180 dias</th>
+                                <th class="num">Total (m²)</th>
+                                <th class="num">Valor (S/)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="doc['rows']" t-as="r">
+                                <td t-esc="r['code']"/>
+                                <td t-esc="r['name']"/>
+                                <td class="num" t-esc="r['b30_s']"/>
+                                <td class="num" t-esc="r['b90_s']"/>
+                                <td class="num" t-esc="r['b180_s']"/>
+                                <td class="num" t-esc="r['mas180_s']"/>
+                                <td class="num" t-esc="r['total_s']"/>
+                                <td class="num" t-esc="r['valor_s']"/>
+                            </tr>
+                            <tr class="grand-total">
+                                <td colspan="2">TOTALES</td>
+                                <td class="num" t-esc="doc['totals']['b30_s']"/>
+                                <td class="num" t-esc="doc['totals']['b90_s']"/>
+                                <td class="num" t-esc="doc['totals']['b180_s']"/>
+                                <td class="num" t-esc="doc['totals']['mas180_s']"/>
+                                <td class="num" t-esc="doc['totals']['total_s']"/>
+                                <td class="num" t-esc="doc['totals']['valor_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="footnote">
+                        Dias en almacen segun la fecha de entrada de cada lote de
+                        existencias. El stock envejecido inmoviliza capital: util para
+                        decidir promociones o traslados entre sedes.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============ 5. Kardex de movimientos ============ -->
+    <template id="report_kardex_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Kardex de Movimientos</t>
+                    </t>
+
+                    <t t-foreach="doc['productos']" t-as="p">
+                        <table style="margin-bottom:12px;">
+                            <thead>
+                                <tr class="sec-title">
+                                    <td colspan="6">
+                                        [<t t-esc="p['code']"/>] <t t-esc="p['name']"/>
+                                        <span style="float:right;">
+                                            Entradas <t t-esc="p['ent_s']"/> ·
+                                            Salidas <t t-esc="p['sal_s']"/> ·
+                                            Neto <t t-esc="p['neto_s']"/>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th style="width:10%;">Fecha</th>
+                                    <th style="width:16%;">Documento</th>
+                                    <th style="width:10%;">Tipo</th>
+                                    <th>Origen → Destino</th>
+                                    <th class="num" style="width:11%;">Entrada</th>
+                                    <th class="num" style="width:11%;">Salida</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="p['lines']" t-as="l">
+                                    <td t-esc="l['fecha']"/>
+                                    <td t-esc="l['doc']"/>
+                                    <td t-esc="l['tipo']"/>
+                                    <td class="fin-meta">
+                                        <t t-esc="l['origen']"/> → <t t-esc="l['destino']"/>
+                                    </td>
+                                    <td class="num" t-esc="l['ent_s']"/>
+                                    <td class="num" t-esc="l['sal_s']"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                    <p t-if="not doc['productos']" class="footnote">
+                        No hay movimientos en el periodo seleccionado.
+                    </p>
+                    <p class="footnote">
+                        Movimientos realizados en el periodo por producto (entradas de
+                        compra, salidas a clientes y traslados). Cantidades en m².
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============ 6. Transferencias entre sedes ============ -->
+    <template id="report_transfers_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Transferencias entre Sedes</t>
+                    </t>
+
+                    <p class="fin-meta" style="margin-bottom:8px;">
+                        <strong t-esc="doc['count']"/> movimientos ·
+                        <strong t-esc="doc['total_s']"/> m² trasladados en el periodo
+                    </p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:11%;">Fecha</th>
+                                <th style="width:16%;">Documento</th>
+                                <th>Producto</th>
+                                <th style="width:19%;">Origen</th>
+                                <th style="width:19%;">Destino</th>
+                                <th class="num" style="width:10%;">m²</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="doc['rows']" t-as="r">
+                                <td t-esc="r['fecha']"/>
+                                <td t-esc="r['doc']"/>
+                                <td t-esc="r['producto']"/>
+                                <td t-esc="r['origen']"/>
+                                <td t-esc="r['destino']"/>
+                                <td class="num" t-esc="r['qty_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p t-if="not doc['rows']" class="footnote">
+                        No hubo transferencias entre sedes en el periodo.
+                    </p>
+                    <p class="footnote">
+                        Traslados internos entre almacenes distintos (p. ej. del Almacen
+                        Principal al showroom Urban Gallery) realizados en el periodo.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============ 7. Rotacion de productos ============ -->
+    <template id="report_rotation_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+                    <t t-call="pierinelli_reportes.financial_report_header">
+                        <t t-set="title">Rotacion de Productos</t>
+                    </t>
+
+                    <!-- Indicadores -->
+                    <div style="margin-bottom:10px;">
+                        <div class="kpi-box">
+                            <div class="kpi-val"><t t-esc="doc['total_ventas_s']"/> m²</div>
+                            <div class="kpi-lbl">Salidas a clientes</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['valor_ventas_s']"/></div>
+                            <div class="kpi-lbl">Valor vendido (precio lista)</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val"><t t-esc="doc['total_compras_s']"/> m²</div>
+                            <div class="kpi-lbl">Entradas de compras</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">S/ <t t-esc="doc['valor_compras_s']"/></div>
+                            <div class="kpi-lbl">Valor comprado (al costo)</div>
+                        </div>
+                    </div>
+
+                    <table style="margin-bottom:12px;">
+                        <thead>
+                            <tr class="sec-title"><td colspan="5">Salidas a clientes (mas vendidos primero)</td></tr>
+                            <tr>
+                                <th style="width:13%;">Codigo</th>
+                                <th>Producto</th>
+                                <th style="width:15%;">Categoria</th>
+                                <th class="num">m² vendidos</th>
+                                <th class="num">% del total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="doc['ventas']" t-as="v">
+                                <td t-esc="v['code']"/>
+                                <td t-esc="v['name']"/>
+                                <td t-esc="v['categ']"/>
+                                <td class="num" t-esc="v['qty_s']"/>
+                                <td class="num" t-esc="v['pct_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table>
+                        <thead>
+                            <tr class="sec-title"><td colspan="4">Entradas de compras</td></tr>
+                            <tr>
+                                <th style="width:13%;">Codigo</th>
+                                <th>Producto</th>
+                                <th class="num">m² recibidos</th>
+                                <th class="num">Valor al costo (S/)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="doc['compras']" t-as="c">
+                                <td t-esc="c['code']"/>
+                                <td t-esc="c['name']"/>
+                                <td class="num" t-esc="c['qty_s']"/>
+                                <td class="num" t-esc="c['valor_s']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="footnote">
+                        Movimientos realizados del periodo: salidas hacia clientes
+                        (ranking de rotacion) y entradas desde proveedores.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

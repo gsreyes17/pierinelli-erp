@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_stock_report_wizard_form" model="ir.ui.view">
+        <field name="name">pierinelli.stock.report.wizard.form</field>
+        <field name="model">pierinelli.stock.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reportes de Almacen">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Reportes de Almacen</h1>
+                        <p class="text-muted">
+                            Reportes PDF del inventario multi-sede con la marca
+                            Pierinelli. El rango de fechas aplica a los reportes de
+                            movimientos; los de inventario son una foto actual.
+                        </p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group>
+                            <field name="warehouse_id" options="{'no_create': True}"/>
+                            <field name="umbral"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <separator string="Inventario actual"/>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <button name="action_stock_by_warehouse" type="object"
+                                string="Existencias por Sede" class="btn-primary text-nowrap"
+                                icon="fa-building"/>
+                        <button name="action_by_category" type="object"
+                                string="Composicion por Categoria" class="btn-primary text-nowrap"
+                                icon="fa-pie-chart"/>
+                        <button name="action_critical" type="object"
+                                string="Stock Critico" class="btn-primary text-nowrap"
+                                icon="fa-exclamation-triangle"/>
+                        <button name="action_stock_aging" type="object"
+                                string="Antiguedad del Inventario" class="btn-primary text-nowrap"
+                                icon="fa-hourglass-half"/>
+                    </div>
+                    <separator string="Movimientos del periodo"/>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <button name="action_kardex" type="object"
+                                string="Kardex de Movimientos" class="btn-secondary text-nowrap"
+                                icon="fa-exchange"/>
+                        <button name="action_transfers" type="object"
+                                string="Transferencias entre Sedes" class="btn-secondary text-nowrap"
+                                icon="fa-truck"/>
+                        <button name="action_rotation" type="object"
+                                string="Rotacion (Ventas y Compras)" class="btn-secondary text-nowrap"
+                                icon="fa-refresh"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_stock_report_wizard" model="ir.actions.act_window">
+        <field name="name">Reportes de Almacen</field>
+        <field name="res_model">pierinelli.stock.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Inventario > Reportes > Reportes de Almacen -->
+    <menuitem id="menu_stock_report_wizard"
+              name="Reportes de Almacen (PDF)"
+              parent="stock.menu_warehouse_report"
+              action="action_stock_report_wizard"
+              sequence="5"
+              groups="stock.group_stock_user"/>
+
+</odoo>

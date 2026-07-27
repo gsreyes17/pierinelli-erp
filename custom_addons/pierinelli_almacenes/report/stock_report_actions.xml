@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_stock_by_warehouse" model="ir.actions.report">
+        <field name="name">Existencias por Sede</field>
+        <field name="model">pierinelli.stock.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_almacenes.report_stock_by_warehouse_doc</field>
+        <field name="report_file">pierinelli_almacenes.report_stock_by_warehouse_doc</field>
+        <field name="print_report_name">'Existencias por Sede - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_by_category" model="ir.actions.report">
+        <field name="name">Composicion por Categoria</field>
+        <field name="model">pierinelli.stock.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_almacenes.report_by_category_doc</field>
+        <field name="report_file">pierinelli_almacenes.report_by_category_doc</field>
+        <field name="print_report_name">'Composicion por Categoria - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_critical" model="ir.actions.report">
+        <field name="name">Stock Critico</field>
+        <field name="model">pierinelli.stock.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_almacenes.report_critical_doc</field>
+        <field name="report_file">pierinelli_almacenes.report_critical_doc</field>
+        <field name="print_report_name">'Stock Critico - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_stock_aging" model="ir.actions.report">
+        <field name="name">Antiguedad del Inventario</field>
+        <field name="model">pierinelli.stock.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_almacenes.report_stock_aging_doc</field>
+        <field name="report_file">pierinelli_almacenes.report_stock_aging_doc</field>
+        <field name="print_report_name">'Antiguedad del Inventario - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_kardex" model="ir.actions.report">
+        <field name="name">Kardex de Movimientos</field>
+        <field name="model">pierinelli.stock.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_almacenes.report_kardex_doc</field>
+        <field name="report_file">pierinelli_almacenes.report_kardex_doc</field>
+        <field name="print_report_name">'Kardex - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_transfers" model="ir.actions.report">
+        <field name="name">Transferencias entre Sedes</field>
+        <field name="model">pierinelli.stock.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_almacenes.report_transfers_doc</field>
+        <field name="report_file">pierinelli_almacenes.report_transfers_doc</field>
+        <field name="print_report_name">'Transferencias - %s' % (object.date_to)</field>
+    </record>
+
+    <record id="action_report_rotation" model="ir.actions.report">
+        <field name="name">Rotacion de Productos</field>
+        <field name="model">pierinelli.stock.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_almacenes.report_rotation_doc</field>
+        <field name="report_file">pierinelli_almacenes.report_rotation_doc</field>
+        <field name="print_report_name">'Rotacion - %s' % (object.date_to)</field>
+    </record>
+
+</odoo>
