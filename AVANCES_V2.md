@@ -72,10 +72,90 @@
 
 ### Pendiente (próximos bloques)
 
-- **Fase 3**: reserva de plancha desde el pedido de venta (`lot_id` en línea de venta); perfiles finos por campo.
-- **Fase 4**: flujo de corte completo (consumo → retorno con código extendido), zona de mermas con destino, motivo obligatorio en ajustes, orden de producción PDF con modulación anexa, reporte de mermas.
-- **Fase 5**: tipos de cambio configurables, plantillas de asientos, etiquetas de código de barras.
+- ~~Fase 4~~ → completada en sesión 2 (ver abajo).
+- ~~Fase 5~~ → completada en sesión 2, salvo etiquetas de código de barras (pendiente por decisión del cliente: "puede esperar, apartado vacío").
 - Ajuste menor: reportes de almacén agrupan por subfamilia (ya funcionan); sumar la dimensión plancha donde aporte.
+- Conector automático a la tasa SUNAT (API): pendiente — hoy las tasas se cargan a mano en la tabla, que ya registra origen y vigencia.
+
+---
+
+## Sesión 2 — 31 jul 2026 · Fase 3 completa
+
+**Reserva de plancha desde el pedido de venta** ✅ (tareas 14 y 17 del plan; la 13 y 15 salieron en la sesión 1)
+
+| Qué | Detalle |
+|---|---|
+| Columna **Plancha** en la línea del pedido | El vendedor elige LA plancha concreta (solo muestra disponibles del producto). Al elegirla, la cantidad se propone con sus m². |
+| Al confirmar el pedido | La plancha queda **reservada comercialmente** (cliente + asesor del pedido + 7 días) y la **reserva de stock se fuerza a ese lote exacto** — no a cualquiera. |
+| **Anti-conflicto** | Si otro vendedor intenta confirmar la misma plancha: bloqueo con mensaje claro (quién la tiene, hasta cuándo). El problema central del ERP anterior, resuelto. |
+| Validación de sede | Plancha en otra sede → bloqueo con instrucción (cambiar almacén del pedido o trasladar primero). |
+| Al facturar | El **número y fecha de comprobante** quedan escritos en la ficha de cada plancha vendida, con mensaje en su chatter. |
+
+**Verificado end-to-end** (test con rollback, sin ensuciar la demo): reserva → conflicto bloqueado → sede equivocada bloqueada → entrega (estado `vendida`) → factura (`comprobante` en ficha). Perfiles: comercial sin costo ✓ · almacenero con costo ✓ · contador sin acceso a planchas ✓ (cada rol ve lo suyo).
+
+**Archivos:** `models/sale_order.py` + `views/sale_order_views.xml` en `pierinelli_planchas`.
+
+---
+
+## Sesión 2 (cont.) · Fases 4 y 5 completas
+
+### Fase 4 — Producción y merma ✅
+
+**Orden de Producción / Corte** (`Inventario → Planchas → Ordenes de Corte`):
+
+| Qué | Detalle |
+|---|---|
+| La orden | Plancha origen + cliente/pedido/asesor + tabla de **cortes con medidas** (pieza, cantidad, largo, alto, m²). El sistema muestra en vivo: m² a cortar / retorno / merma. |
+| Al ejecutar | El **retorno nace como plancha hija** con código extendido (`BM0726.01` → `BM0726.01.01`), sus medidas nuevas, su foto y el vínculo a la madre. La **merma sale a la Zona de Mermas** (fuera del stock vendible y de la vista comercial) con su valor al costo. Lo cortado queda en la plancha para salir por la entrega del pedido. |
+| **PDF con modulación anexa** | Botón "Imprimir OP + Modulación": genera el PDF de la orden (estilo Pierinelli) y le **fusiona los PDFs de AutoCAD** subidos — un solo documento, como pidió el cliente. |
+| Validaciones | No se puede cortar más de lo disponible; alerta de **retazo < 0.5 m** en el retorno (sugiere merma/liquidación). |
+
+**Mermas** (`Inventario → Planchas → Mermas` + wizard "Registrar Merma"):
+- Registro con **motivo** (corte, rotura, defecto, muestra, otro) y **destino** (asumida por el cliente / pérdida del negocio), valorizada al costo kardex.
+- Botón **Reingresar**: si el retazo resulta aprovechable, vuelve al stock de su sede.
+- **Reporte PDF de Mermas** con indicadores (total m², valor, pérdida del negocio vs. asumida por clientes) — se imprime desde la lista filtrando el período.
+
+**Motivo obligatorio en ajustes de inventario**: columna "Motivo del ajuste" en el conteo; sin motivo, el ajuste **no se aplica** (bloqueo con mensaje). El motivo queda en la referencia del movimiento.
+
+**Verificado end-to-end** (OP-00007 quedó como demo): corte 3.18 m² + retorno 1.20 m² + merma 0.74 m² (S/ 321.15) → madre quedó exacta en 3.18; PDF fusionado con modulación (43 KB); reingreso de merma OK; ajuste sin motivo bloqueado y con motivo aplicado.
+
+**Bug encontrado y corregido en el camino:** `m2_merma` es calculado sobre lo disponible, que cambia al mover el retorno — había que **congelar las cantidades antes de mover stock** o la merma quedaba en cero.
+
+### Fase 5 — Contabilidad avanzada ✅ (en `pierinelli_reportes`)
+
+**Tipos de cambio configurables** (`Contabilidad → Configuración → Tipos de Cambio`):
+- Tabla de tasas por fecha y origen (**SUNAT** compra/venta y **Corporativa**), editable en línea.
+- En la factura en USD, campo **"Origen de la tasa"**: el vendedor elige (SUNAT venta/compra, Corporativa, Manual) y el sistema aplica la tasa vigente y **registra cuál se usó** (con seguimiento). Verificado: factura de USD 118 → S/ 440.14 con tasa 3.73 exacta.
+- Multi-moneda activado para usuarios internos; 6 tasas demo cargadas.
+- Pendiente (documentado): conector automático a la API de SUNAT — hoy la tasa se digita a mano.
+
+**Plantillas de asientos** (`Contabilidad → Asientos contables → Plantillas de Asientos`):
+- Se definen una vez las líneas (cuenta, glosa, Debe/Haber, monto fijo o **% de un importe base**).
+- "Generar asiento": fecha + importe base → borrador cuadrado en dos clics.
+- 2 plantillas demo: **Planilla mensual** (sueldos + EsSalud 9% contra cuentas por pagar) y **Depreciación mensual**. Verificado: planilla de S/ 25,000 → asiento de 4 líneas, Debe = Haber = 27,250.
+
+### Dónde ver lo nuevo
+
+| Qué | Dónde |
+|---|---|
+| Orden de Corte + PDF con planos | Inventario → Planchas → Ordenes de Corte (OP-00007 de demo) |
+| Mermas y reingreso | Inventario → Planchas → Mermas |
+| Registrar merma manual | Inventario → Planchas → Registrar Merma |
+| Motivo en ajustes | Inventario → Operaciones → Ajustes de inventario (columna Motivo) |
+| Tipos de cambio | Contabilidad → Configuración → Tipos de Cambio |
+| Origen de tasa | Cualquier factura en USD, junto al campo de tasa |
+| Plantillas de asientos | Contabilidad → Asientos contables → Plantillas de Asientos |
+
+### Estado del plan completo
+
+| Fase | Estado |
+|---|---|
+| 0 — Datos reconstruidos | ✅ |
+| 1 — Cimientos (AVCO, tiempo real, familias, fix factura) | ✅ |
+| 2 — La plancha como entidad | ✅ |
+| 3 — Comercial (reserva desde pedido, perfiles) | ✅ |
+| 4 — Producción y merma | ✅ |
+| 5 — Contabilidad avanzada | ✅ (salvo etiquetas de barras: a pedido del cliente, "puede esperar") |
 
 ### Verificación ejecutada (todo en BD limpia)
 

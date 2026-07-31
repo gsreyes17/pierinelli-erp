@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Multi-moneda visible para usuarios internos: sin este grupo, el
+             campo de tasa en la factura no se muestra (Plan V2, Fase 5). -->
+        <record id="base.group_user" model="res.groups">
+            <field name="implied_ids" eval="[
+                (4, ref('base.group_multi_currency')),
+            ]"/>
+        </record>
+
+    </data>
+</odoo>

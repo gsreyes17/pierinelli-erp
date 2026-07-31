@@ -711,6 +711,61 @@ else:
             print('Apertura de existencias: S/ %.2f' % apertura)
     env.cr.commit()
 
+    # --- 11f) Tipos de cambio (SUNAT / Corporativa) de muestra ---
+    TC = env['pierinelli.tipo.cambio']
+    if not TC.search([], limit=1):
+        hoy_tc = datetime.now().date()
+        for dias, (s_c, s_v), corp in [
+                (2, (3.712, 3.721), 3.75),
+                (1, (3.718, 3.727), 3.76),
+                (0, (3.721, 3.730), 3.76)]:
+            f = hoy_tc - timedelta(days=dias)
+            TC.create({'fecha': f, 'origen': 'sunat',
+                       'compra': s_c, 'venta': s_v})
+            TC.create({'fecha': f, 'origen': 'corporativa',
+                       'venta': corp,
+                       'notas': 'Tasa comercial Pierinelli'})
+        print('Tipos de cambio de muestra cargados.')
+
+    # --- 11g) Plantillas de asientos contables de muestra ---
+    Plantilla = env['pierinelli.plantilla.asiento']
+    if not Plantilla.search([], limit=1):
+        Acc = env['account.account']
+
+        def cta(code):
+            return Acc.search([('code', '=like', code + '%')], limit=1)
+
+        diario_g = env['account.journal'].search(
+            [('type', '=', 'general')], limit=1)
+        plantillas_demo = [
+            ('Planilla mensual', 'Sueldos del mes contra cuentas por pagar', [
+                ('6211', 'Sueldos y salarios', 'debe', 'porcentaje', 100),
+                ('4031', 'EsSalud 9%', 'debe', 'porcentaje', 9),
+                ('4111', 'Remuneraciones por pagar', 'haber', 'porcentaje', 100),
+                ('4031', 'Tributos por pagar', 'haber', 'porcentaje', 9),
+            ]),
+            ('Depreciacion mensual', 'Depreciacion de activos del mes', [
+                ('6811', 'Depreciacion del periodo', 'debe', 'porcentaje', 100),
+                ('3911', 'Depreciacion acumulada', 'haber', 'porcentaje', 100),
+            ]),
+        ]
+        creadas_pl = 0
+        for nombre, desc, lineas_pl in plantillas_demo:
+            lineas_ok = []
+            for code, glosa, lado, modo, valor in lineas_pl:
+                cuenta = cta(code)
+                if cuenta:
+                    lineas_ok.append((0, 0, {
+                        'account_id': cuenta.id, 'name': glosa,
+                        'lado': lado, 'modo': modo, 'valor': valor}))
+            if diario_g and len(lineas_ok) >= 2:
+                Plantilla.create({'name': nombre, 'descripcion': desc,
+                                  'journal_id': diario_g.id,
+                                  'linea_ids': lineas_ok})
+                creadas_pl += 1
+        print('Plantillas de asientos:', creadas_pl)
+    env.cr.commit()
+
     # --- 12) Trazabilidad: material PADRE (placa) -> HIJOS (piezas) con lote ---
     if 'mrp.production' in env:
         BoM = env['mrp.bom']

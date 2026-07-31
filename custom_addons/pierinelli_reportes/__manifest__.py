@@ -23,7 +23,11 @@ Incluye 10 reportes:
 - Resumen de IGV (debito vs credito fiscal, estilo PDT 621).
 Todos con filtro de fechas y salida PDF con la marca Pierinelli.
 
-Ademas renombra el menu 'Facturacion' a 'Contabilidad' para el usuario final.
+Ademas:
+- Renombra el menu 'Facturacion' a 'Contabilidad' para el usuario final.
+- Tipos de cambio configurables (SUNAT / Corporativa): el vendedor elige la
+  tasa en la factura y queda registrado cual se uso.
+- Plantillas de asientos contables reutilizables (planilla, depreciacion...).
 """,
     'author': 'Pierinelli',
     'website': 'https://pierinelli.com',
@@ -31,6 +35,8 @@ Ademas renombra el menu 'Facturacion' a 'Contabilidad' para el usuario final.
     'depends': ['account', 'pierinelli_data'],
     'data': [
         'security/ir.model.access.csv',
+        'data/multimoneda.xml',
+        'views/contabilidad_extra_views.xml',
         'wizard/financial_report_wizard_views.xml',
         'report/report_actions.xml',
         'report/report_templates.xml',

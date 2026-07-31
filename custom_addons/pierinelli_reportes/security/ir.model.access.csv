@@ -1,3 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_financial_report_wizard_user,pierinelli.financial.report.wizard.user,model_pierinelli_financial_report_wizard,account.group_account_invoice,1,1,1,1
 access_financial_report_wizard_readonly,pierinelli.financial.report.wizard.readonly,model_pierinelli_financial_report_wizard,account.group_account_readonly,1,1,1,1
+access_tipo_cambio_user,pierinelli.tipo.cambio.contable,model_pierinelli_tipo_cambio,account.group_account_invoice,1,1,1,1
+access_tipo_cambio_sale,pierinelli.tipo.cambio.vendedor,model_pierinelli_tipo_cambio,sales_team.group_sale_salesman,1,0,0,0
+access_plantilla_asiento_user,pierinelli.plantilla.asiento.contable,model_pierinelli_plantilla_asiento,account.group_account_invoice,1,1,1,1
+access_plantilla_linea_user,pierinelli.plantilla.asiento.linea.contable,model_pierinelli_plantilla_asiento_linea,account.group_account_invoice,1,1,1,1
+access_plantilla_usar_user,pierinelli.plantilla.usar.contable,model_pierinelli_plantilla_usar,account.group_account_invoice,1,1,1,1

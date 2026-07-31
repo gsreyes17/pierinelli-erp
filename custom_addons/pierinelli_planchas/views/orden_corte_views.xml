@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================= ORDEN DE CORTE ================= -->
+    <record id="view_orden_corte_form" model="ir.ui.view">
+        <field name="name">pierinelli.orden.corte.form</field>
+        <field name="model">pierinelli.orden.corte</field>
+        <field name="arch" type="xml">
+            <form string="Orden de Produccion">
+                <header>
+                    <button name="action_confirmar" type="object"
+                            string="Ejecutar corte" class="btn-primary"
+                            invisible="state != 'borrador'"
+                            confirm="Se creara el retorno y la merma saldra del stock vendible. ¿Ejecutar el corte?"/>
+                    <button name="action_imprimir" type="object"
+                            string="Imprimir OP + Modulacion"
+                            invisible="state == 'cancelada'"/>
+                    <button name="action_cancelar" type="object"
+                            string="Cancelar" invisible="state != 'borrador'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,hecho"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Origen">
+                            <field name="plancha_id"
+                                   readonly="state != 'borrador'"
+                                   options="{'no_create': True}"/>
+                            <field name="product_id"/>
+                            <field name="m2_plancha"/>
+                            <field name="fecha"
+                                   readonly="state != 'borrador'"/>
+                        </group>
+                        <group string="Cliente">
+                            <field name="sale_order_id"
+                                   readonly="state != 'borrador'"/>
+                            <field name="partner_id"
+                                   readonly="state != 'borrador'"/>
+                            <field name="asesor_id"
+                                   readonly="state != 'borrador'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Cortes (medidas)" name="cortes">
+                            <field name="linea_ids"
+                                   readonly="state != 'borrador'">
+                                <list editable="bottom">
+                                    <field name="descripcion"/>
+                                    <field name="cantidad"/>
+                                    <field name="largo"/>
+                                    <field name="alto"/>
+                                    <field name="m2"/>
+                                </list>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="m2_cortes"/>
+                                <field name="m2_retorno"/>
+                                <field name="m2_merma" class="oe_subtotal_footer_separator"/>
+                            </group>
+                        </page>
+                        <page string="Retorno y merma" name="retorno">
+                            <group>
+                                <group string="Retorno a stock (lo que queda utilizable)">
+                                    <field name="retorno_largo"
+                                           readonly="state != 'borrador'"/>
+                                    <field name="retorno_alto"
+                                           readonly="state != 'borrador'"/>
+                                    <field name="plancha_retorno_id"/>
+                                </group>
+                                <group string="Merma">
+                                    <field name="m2_merma"/>
+                                    <field name="destino_merma"
+                                           readonly="state != 'borrador'"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Modulacion (planos)" name="modulacion">
+                            <field name="modulacion_ids"
+                                   widget="many2many_binary"/>
+                            <p class="text-muted">
+                                Sube los disenos de AutoCAD <b>exportados a PDF</b>.
+                                Con "Imprimir OP + Modulacion" salen anexados en un
+                                solo documento.
+                            </p>
+                        </page>
+                        <page string="Notas" name="notas">
+                            <field name="notas" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_orden_corte_list" model="ir.ui.view">
+        <field name="name">pierinelli.orden.corte.list</field>
+        <field name="model">pierinelli.orden.corte</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'cancelada'"
+                  decoration-info="state == 'borrador'">
+                <field name="name"/>
+                <field name="fecha"/>
+                <field name="plancha_id"/>
+                <field name="product_id"/>
+                <field name="partner_id"/>
+                <field name="asesor_id" widget="many2one_avatar_user"/>
+                <field name="m2_cortes"/>
+                <field name="m2_retorno"/>
+                <field name="m2_merma"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'hecho'"
+                       decoration-info="state == 'borrador'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_orden_corte" model="ir.actions.act_window">
+        <field name="name">Ordenes de Corte</field>
+        <field name="res_model">pierinelli.orden.corte</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sin ordenes de corte</p>
+            <p>Crea una orden con la plancha, las medidas de los cortes y la
+               modulacion en PDF. Al ejecutarla, el retorno vuelve a stock con
+               su codigo extendido y la merma sale a su zona.</p>
+        </field>
+    </record>
+
+    <!-- ================= MERMAS ================= -->
+    <record id="view_merma_list" model="ir.ui.view">
+        <field name="name">pierinelli.merma.list</field>
+        <field name="model">pierinelli.merma</field>
+        <field name="arch" type="xml">
+            <list decoration-success="destino == 'reingreso'"
+                  decoration-danger="destino == 'negocio'">
+                <field name="fecha"/>
+                <field name="plancha_id"/>
+                <field name="product_id"/>
+                <field name="orden_corte_id" optional="show"/>
+                <field name="warehouse_id"/>
+                <field name="m2" sum="Total m²"/>
+                <field name="valor" sum="Total S/"/>
+                <field name="motivo"/>
+                <field name="destino" widget="badge"
+                       decoration-warning="destino == 'cliente'"
+                       decoration-danger="destino == 'negocio'"
+                       decoration-success="destino == 'reingreso'"/>
+                <field name="notas" optional="hide"/>
+                <button name="action_reingresar" type="object"
+                        string="Reingresar" icon="fa-undo"
+                        invisible="destino == 'reingreso'"
+                        confirm="¿Reingresar esta merma al stock de su sede?"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_merma_search" model="ir.ui.view">
+        <field name="name">pierinelli.merma.search</field>
+        <field name="model">pierinelli.merma</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="plancha_id"/>
+                <field name="product_id"/>
+                <filter name="negocio" string="Perdida del negocio"
+                        domain="[('destino', '=', 'negocio')]"/>
+                <filter name="cliente" string="Asumida por cliente"
+                        domain="[('destino', '=', 'cliente')]"/>
+                <filter name="reingresadas" string="Reingresadas"
+                        domain="[('destino', '=', 'reingreso')]"/>
+                <group>
+                    <filter name="group_motivo" string="Motivo"
+                            context="{'group_by': 'motivo'}"/>
+                    <filter name="group_destino" string="Destino"
+                            context="{'group_by': 'destino'}"/>
+                    <filter name="group_sede" string="Sede"
+                            context="{'group_by': 'warehouse_id'}"/>
+                    <filter name="group_mes" string="Mes"
+                            context="{'group_by': 'fecha:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_mermas" model="ir.actions.act_window">
+        <field name="name">Mermas</field>
+        <field name="res_model">pierinelli.merma</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_merma_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sin mermas registradas</p>
+            <p>Aqui queda cada m² que salio del stock vendible: por corte,
+               rotura o defecto, con su destino (cliente / negocio) y su valor.</p>
+        </field>
+    </record>
+
+    <!-- ================= REGISTRAR MERMA (manual) ================= -->
+    <record id="view_registrar_merma_form" model="ir.ui.view">
+        <field name="name">pierinelli.registrar.merma.form</field>
+        <field name="model">pierinelli.registrar.merma</field>
+        <field name="arch" type="xml">
+            <form string="Registrar Merma">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Registrar Merma</h1>
+                        <p class="text-muted">
+                            Rotura, defecto o baja de material fuera de un
+                            corte. La cantidad sale del stock vendible hacia
+                            la Zona de Mermas.
+                        </p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="plancha_id"
+                                   options="{'no_create': True}"/>
+                            <field name="m2_disponible"/>
+                            <field name="m2"/>
+                        </group>
+                        <group>
+                            <field name="motivo"/>
+                            <field name="destino"/>
+                            <field name="notas"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_registrar" type="object"
+                            string="Registrar" class="btn-primary"/>
+                    <button string="Cancelar" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_registrar_merma" model="ir.actions.act_window">
+        <field name="name">Registrar Merma</field>
+        <field name="res_model">pierinelli.registrar.merma</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ================= MENUS ================= -->
+    <menuitem id="menu_orden_corte" name="Ordenes de Corte"
+              parent="menu_planchas_root" sequence="3"
+              action="action_orden_corte"/>
+    <menuitem id="menu_mermas" name="Mermas"
+              parent="menu_planchas_root" sequence="4"
+              action="action_mermas"/>
+    <menuitem id="menu_registrar_merma" name="Registrar Merma"
+              parent="menu_planchas_root" sequence="5"
+              action="action_registrar_merma"/>
+
+</odoo>

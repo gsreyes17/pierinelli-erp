@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Columna "Plancha" en las lineas del pedido de venta: el vendedor
+         aparta LA plancha concreta que el cliente eligio. -->
+    <record id="view_order_form_plancha" model="ir.ui.view">
+        <field name="name">sale.order.form.plancha</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list//field[@name='product_uom_qty']"
+                   position="before">
+                <field name="plancha_id" optional="show"
+                       options="{'no_create': True}"/>
+                <field name="plancha_m2" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

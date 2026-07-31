@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ Accion: PDF de la Orden de Produccion ============ -->
+    <record id="action_report_orden_corte" model="ir.actions.report">
+        <field name="name">Orden de Produccion</field>
+        <field name="model">pierinelli.orden.corte</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_planchas.report_orden_corte_doc</field>
+        <field name="report_file">pierinelli_planchas.report_orden_corte_doc</field>
+        <field name="print_report_name">object.name</field>
+        <field name="binding_model_id" ref="model_pierinelli_orden_corte"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_orden_corte_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page pierinelli-fin">
+                        <t t-call="pierinelli_reportes.financial_report_styles"/>
+
+                        <div style="border-bottom:3px solid #C9962F; margin-bottom:12px; padding-bottom:6px;">
+                            <span style="font-size:16px; font-weight:bold; letter-spacing:1px;">
+                                ORDEN DE PRODUCCION <t t-esc="o.name"/>
+                            </span>
+                            <span style="float:right;" t-field="o.fecha"/>
+                        </div>
+
+                        <table style="margin-bottom:10px;">
+                            <tbody>
+                                <tr>
+                                    <td style="width:50%;">
+                                        <strong>Cliente:</strong> <span t-field="o.partner_id"/><br/>
+                                        <strong>Pedido:</strong> <span t-esc="o.sale_order_id.name or '-'"/><br/>
+                                        <strong>Asesor:</strong> <span t-esc="o.asesor_id.name or '-'"/>
+                                    </td>
+                                    <td>
+                                        <strong>Plancha:</strong> <span t-esc="o.plancha_id.name"/><br/>
+                                        <strong>Material:</strong> <span t-esc="o.product_id.name"/><br/>
+                                        <strong>Medidas plancha:</strong>
+                                        <span t-field="o.plancha_id.largo"/> x
+                                        <span t-field="o.plancha_id.alto"/> m ·
+                                        <span t-field="o.plancha_id.m2_neto"/> m²
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Pieza</th>
+                                    <th class="num" style="width:10%;">Piezas</th>
+                                    <th class="num" style="width:14%;">Largo (m)</th>
+                                    <th class="num" style="width:14%;">Alto (m)</th>
+                                    <th class="num" style="width:14%;">m²</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.linea_ids" t-as="l">
+                                    <td t-esc="l.descripcion"/>
+                                    <td class="num" t-esc="l.cantidad"/>
+                                    <td class="num"><span t-field="l.largo"/></td>
+                                    <td class="num"><span t-field="l.alto"/></td>
+                                    <td class="num"><span t-field="l.m2"/></td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td colspan="4">TOTAL A CORTAR (VENTA)</td>
+                                    <td class="num"><span t-field="o.m2_cortes"/></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4">
+                                        Retorno a stock
+                                        <t t-if="o.plancha_retorno_id">
+                                            (nueva plancha <t t-esc="o.plancha_retorno_id.name"/>)
+                                        </t>
+                                        <t t-if="o.retorno_largo">
+                                            — <span t-field="o.retorno_largo"/> x
+                                            <span t-field="o.retorno_alto"/> m
+                                        </t>
+                                    </td>
+                                    <td class="num"><span t-field="o.m2_retorno"/></td>
+                                </tr>
+                                <tr class="grand-total">
+                                    <td colspan="4">
+                                        MERMA —
+                                        <t t-if="o.destino_merma == 'cliente'">asumida por el cliente (metro lineal)</t>
+                                        <t t-else="">perdida del negocio (corte por bloques)</t>
+                                    </td>
+                                    <td class="num"><span t-field="o.m2_merma"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p t-if="o.notas" style="margin-top:8px;">
+                            <strong>Notas:</strong> <span t-field="o.notas"/>
+                        </p>
+                        <p class="footnote">
+                            <t t-if="o.modulacion_ids">
+                                Modulacion anexa: <t t-esc="len(o.modulacion_ids)"/>
+                                documento(s) a continuacion de esta pagina.
+                            </t>
+                            <t t-else="">Sin modulacion anexa.</t>
+                            Documento interno de produccion Pierinelli.
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ============ Accion: PDF del reporte de Mermas ============ -->
+    <record id="action_report_mermas" model="ir.actions.report">
+        <field name="name">Reporte de Mermas</field>
+        <field name="model">pierinelli.merma</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_planchas.report_mermas_doc</field>
+        <field name="report_file">pierinelli_planchas.report_mermas_doc</field>
+        <field name="print_report_name">'Mermas'</field>
+        <field name="binding_model_id" ref="model_pierinelli_merma"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_mermas_doc">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <t t-set="o" t-value="docs[:1]"/>
+                <div class="page pierinelli-fin">
+                    <t t-call="pierinelli_reportes.financial_report_styles"/>
+
+                    <div style="border-bottom:3px solid #C9962F; margin-bottom:12px; padding-bottom:6px;">
+                        <span style="font-size:16px; font-weight:bold; letter-spacing:1px;">
+                            REPORTE DE MERMAS Y PERDIDAS
+                        </span>
+                        <span style="float:right;">
+                            <t t-esc="len(docs)"/> registros
+                        </span>
+                    </div>
+
+                    <!-- Indicadores -->
+                    <div style="margin-bottom:10px;">
+                        <div class="kpi-box">
+                            <div class="kpi-val">
+                                <t t-esc="sum(docs.mapped('m2'))"
+                                   t-options="{'widget': 'float', 'precision': 2}"/> m²
+                            </div>
+                            <div class="kpi-lbl">Merma total</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">
+                                S/ <t t-esc="sum(docs.mapped('valor'))"
+                                      t-options="{'widget': 'float', 'precision': 2}"/>
+                            </div>
+                            <div class="kpi-lbl">Valor al costo</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">
+                                S/ <t t-esc="sum(d.valor for d in docs if d.destino == 'negocio')"
+                                      t-options="{'widget': 'float', 'precision': 2}"/>
+                            </div>
+                            <div class="kpi-lbl">Perdida del negocio</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-val">
+                                S/ <t t-esc="sum(d.valor for d in docs if d.destino == 'cliente')"
+                                      t-options="{'widget': 'float', 'precision': 2}"/>
+                            </div>
+                            <div class="kpi-lbl">Asumida por clientes</div>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:10%;">Fecha</th>
+                                <th>Plancha</th>
+                                <th>Material</th>
+                                <th style="width:10%;">Sede</th>
+                                <th class="num" style="width:9%;">m²</th>
+                                <th class="num" style="width:12%;">Valor (S/)</th>
+                                <th style="width:14%;">Motivo</th>
+                                <th style="width:14%;">Destino</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="docs" t-as="m">
+                                <td><span t-field="m.fecha"/></td>
+                                <td t-esc="m.plancha_id.name"/>
+                                <td t-esc="m.product_id.name"/>
+                                <td t-esc="m.warehouse_id.code or '-'"/>
+                                <td class="num"><span t-field="m.m2"/></td>
+                                <td class="num"><span t-field="m.valor"/></td>
+                                <td><span t-field="m.motivo"/></td>
+                                <td><span t-field="m.destino"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="footnote">
+                        Cada registro es material que salio del stock vendible.
+                        "Asumida por el cliente" = venta por metro lineal (se cobro
+                        completo). "Perdida del negocio" = corte por bloques.
+                        Imprime desde la lista de Mermas filtrando el periodo deseado.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>
