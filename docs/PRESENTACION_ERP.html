@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pierinelli ERP — el hilo del funcionamiento</title>
+</head>
+<body>
+<style>
+  :root {
+    --ground: #FCFBF9;
+    --panel: #FFFFFF;
+    --wash: #F6EEDE;
+    --ink: #141210;
+    --ink-2: #4E463C;
+    --ink-3: #797064;
+    --rule: #E5DFD4;
+    --gold: #C9962F;
+    --gold-deep: #9C7220;
+    --on-dark: #F5F1E9;
+    --on-dark-2: #B9AF9E;
+    --dark: #141210;
+    --dark-2: #1E1A16;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    --mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #131110; --panel: #1C1916; --wash: #2A2318;
+      --ink: #F3EFE7; --ink-2: #C9BFAF; --ink-3: #8F8578;
+      --rule: #322C24; --gold: #D8AC55; --gold-deep: #C9962F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131110; --panel: #1C1916; --wash: #2A2318;
+    --ink: #F3EFE7; --ink-2: #C9BFAF; --ink-3: #8F8578;
+    --rule: #322C24; --gold: #D8AC55; --gold-deep: #C9962F;
+  }
+  :root[data-theme="light"] {
+    --ground: #FCFBF9; --panel: #FFFFFF; --wash: #F6EEDE;
+    --ink: #141210; --ink-2: #4E463C; --ink-3: #797064;
+    --rule: #E5DFD4; --gold: #C9962F; --gold-deep: #9C7220;
+  }
+
+  body {
+    margin: 0; padding: 0;
+    background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .band-dark { background: var(--dark); color: var(--on-dark); }
+  .inner { max-width: 56rem; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ============ HERO ============ */
+  .hero { padding: 3.5rem 0 3rem; }
+  .hero .inner { display: flex; flex-direction: column; gap: 1.4rem; }
+  .hero img.logo { width: 240px; max-width: 60%; height: auto; }
+  .hero .rule-gold { width: 72px; height: 3px; background: var(--gold-deep); background: #C9962F; }
+  .hero h1 {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(1.9rem, 4.6vw, 3rem); line-height: 1.12;
+    margin: 0; text-wrap: balance; max-width: 22ch;
+  }
+  .hero p {
+    margin: 0; max-width: 58ch; color: var(--on-dark-2); font-size: 1.06rem;
+  }
+  .hero p strong { color: var(--on-dark); font-weight: 600; }
+
+  /* ============ SECTION HEADINGS ============ */
+  section.block { padding: 3rem 0 1rem; }
+  .eyebrow {
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #C9962F; font-weight: 700; margin: 0 0 0.4rem;
+  }
+  h2 {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 0.6rem;
+    text-wrap: balance;
+  }
+  .lede { color: var(--ink-2); max-width: 62ch; margin: 0 0 1.5rem; }
+
+  /* ============ EL HILO (timeline) ============ */
+  .thread { position: relative; padding: 0.5rem 0 1rem; }
+  .thread::before {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 21px;
+    width: 2px; background: linear-gradient(#C9962F, #C9962F 92%, transparent);
+  }
+  .station {
+    position: relative; padding: 0 0 2.2rem 4rem;
+  }
+  .station .dot {
+    position: absolute; left: 0; top: 0.1rem;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--panel); border: 2px solid #C9962F;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display); font-weight: 700; font-size: 1.15rem;
+    color: var(--gold-deep);
+  }
+  .station h3 {
+    font-family: var(--display); font-size: 1.3rem; font-weight: 600;
+    margin: 0.35rem 0 0.4rem;
+  }
+  .station p { margin: 0 0 0.6rem; color: var(--ink-2); max-width: 60ch; }
+  .station p strong { color: var(--ink); font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .chip {
+    font-size: 0.76rem; padding: 0.22rem 0.6rem;
+    background: var(--wash); color: var(--ink-2);
+    border: 1px solid var(--rule);
+  }
+  .chip.code { font-family: var(--mono); font-size: 0.72rem; color: var(--gold-deep); }
+
+  /* ============ LA PLANCHA (feature panel) ============ */
+  .ficha {
+    background: var(--panel); border: 1px solid var(--rule);
+    border-top: 3px solid #C9962F;
+    padding: 1.6rem 1.7rem; margin: 1rem 0 1.5rem;
+  }
+  .ficha .head {
+    display: flex; justify-content: space-between; gap: 1rem;
+    flex-wrap: wrap; align-items: baseline; margin-bottom: 1rem;
+  }
+  .ficha .codigo { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; color: var(--gold-deep); }
+  .ficha .estado {
+    font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 700; color: #3F6B4C; background: #E4EFE5;
+    padding: 0.25rem 0.6rem;
+  }
+  :root[data-theme="dark"] .ficha .estado { color: #86AE90; background: #23301F; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .ficha .estado { color: #86AE90; background: #23301F; }
+  }
+  .ficha dl {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.9rem 1.5rem; margin: 0;
+  }
+  .ficha dt {
+    font-size: 0.68rem; letter-spacing: 0.13em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 700; margin-bottom: 0.1rem;
+  }
+  .ficha dd { margin: 0; font-size: 0.95rem; }
+  .ficha dd.mono { font-family: var(--mono); font-size: 0.88rem; }
+
+  /* ============ MODULOS (grid) ============ */
+  .mods {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+    gap: 1rem; margin: 0.5rem 0 1rem;
+  }
+  .mod {
+    background: var(--panel); border: 1px solid var(--rule);
+    padding: 1.1rem 1.2rem;
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .mod h4 { font-family: var(--display); font-size: 1.05rem; margin: 0; font-weight: 600; }
+  .mod .tag {
+    align-self: flex-start; font-size: 0.64rem; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 700; color: var(--gold-deep);
+  }
+  .mod p { margin: 0; font-size: 0.88rem; color: var(--ink-2); }
+
+  /* ============ CIFRAS (dark band) ============ */
+  .band-dark.cifras { margin-top: 3rem; padding: 2.6rem 0; }
+  .cifras .inner { display: flex; flex-direction: column; gap: 1.6rem; }
+  .cifras .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 1.4rem 2rem;
+  }
+  .cifra .v {
+    font-family: var(--display); font-size: 2rem; font-weight: 600;
+    color: #C9962F; line-height: 1.1; font-variant-numeric: tabular-nums;
+  }
+  :root[data-theme="dark"] .cifra .v { color: #D8AC55; }
+  .cifra .l { font-size: 0.78rem; color: var(--on-dark-2); }
+  .cifras h2 { color: var(--on-dark); }
+  .cifras .eyebrow { color: #C9962F; }
+
+  /* ============ LIMITES ============ */
+  .limites { margin: 1rem 0 0; }
+  .limites ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; max-width: 62ch; }
+  .limites li { color: var(--ink-2); font-size: 0.92rem; }
+  .limites li strong { color: var(--ink); }
+
+  /* ============ FOOTER ============ */
+  footer { padding: 2.5rem 0 3.5rem; }
+  footer .inner {
+    border-top: 2px solid #C9962F; padding-top: 1.2rem;
+    display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    font-size: 0.8rem; color: var(--ink-3);
+  }
+
+  code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--wash); padding: 0.08em 0.35em; color: var(--ink);
+  }
+
+  @media print {
+    body { font-size: 12px; }
+    .band-dark { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .station { break-inside: avoid; }
+    .ficha, .mod { break-inside: avoid; }
+  }
+</style>
+
+<!-- ================= HERO ================= -->
+<header class="band-dark hero">
+  <div class="inner">
+    <img class="logo" src="data:image/png;base64,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" alt="Pierinelli"/>
+    <div class="rule-gold"></div>
+    <h1>Un solo sistema, de la plancha importada a la utilidad del mes</h1>
+    <p>
+      El ERP de Pierinelli sobre Odoo 19, hecho a la medida del negocio de la
+      piedra: aquí <strong>cada plancha existe con nombre propio</strong> — su
+      código, sus medidas, su foto, su ubicación y su historia — desde que baja
+      del contenedor hasta que se factura y aparece en la contabilidad.
+    </p>
+  </div>
+</header>
+
+<!-- ================= EL HILO ================= -->
+<section class="block">
+  <div class="inner">
+    <p class="eyebrow">El hilo del funcionamiento</p>
+    <h2>Ocho estaciones, un solo flujo</h2>
+    <p class="lede">
+      Cada área trabaja en su pantalla, pero todas tocan el mismo dato. Lo que
+      el almacén registra, el vendedor lo ve; lo que el vendedor reserva, el
+      almacén lo despacha; lo que se despacha, contabilidad lo valoriza. Sin
+      re-digitar nada.
+    </p>
+
+    <div class="thread">
+      <div class="station">
+        <div class="dot">1</div>
+        <h3>Compra e importación</h3>
+        <p>
+          La orden de compra al proveedor termina en una recepción que
+          <strong>da de alta cada plancha</strong>: el sistema genera los
+          códigos internos y pide las medidas. Llegan 20 planchas, se registran
+          20 fichas — no "112 m²" anónimos.
+        </p>
+        <div class="chips">
+          <span class="chip code">CIG1025.01 … CIG1025.20</span>
+          <span class="chip">Alta masiva: cantidad + medidas y listo</span>
+        </div>
+      </div>
+
+      <div class="station">
+        <div class="dot">2</div>
+        <h3>Almacén — 5 sedes</h3>
+        <p>
+          La <strong>Tabla de Operaciones</strong> lista cada plancha con su
+          condición, medidas, ubicación referencial y foto. El sistema marca
+          solo el material con más de un año (<strong>Hueso</strong>) para
+          pasarlo a oferta, y ningún ajuste de inventario se aplica sin motivo.
+        </p>
+        <div class="chips">
+          <span class="chip">Urban Gallery · Zárate · VES · Trujillo · Arequipa</span>
+          <span class="chip">Naturales: foto por plancha</span>
+        </div>
+      </div>
+
+      <div class="station">
+        <div class="dot">3</div>
+        <h3>Venta y reserva</h3>
+        <p>
+          El vendedor trabaja en su vista <strong>sin costos ni márgenes</strong>:
+          ve qué hay, dónde está y en qué condición. En la cotización aparta
+          <strong>la plancha exacta</strong> que el cliente eligió — reserva de
+          7 días con vencimiento automático. Si otro vendedor intenta tomar la
+          misma plancha, el sistema lo bloquea y le dice quién la tiene.
+        </p>
+        <div class="chips">
+          <span class="chip">Reserva 7 días · liberación automática</span>
+          <span class="chip">Anti-conflicto entre vendedores</span>
+        </div>
+      </div>
+
+      <div class="station">
+        <div class="dot">4</div>
+        <h3>Orden de corte</h3>
+        <p>
+          Las medidas de cada pieza, la <strong>modulación de AutoCAD anexa</strong>
+          y los tres destinos del material: lo vendido, el <strong>retorno</strong>
+          que vuelve a stock como plancha hija con código extendido, y la
+          <strong>merma</strong> que sale a su zona con motivo y destino
+          (¿la asume el cliente o el negocio?). Todo en un solo PDF.
+        </p>
+        <div class="chips">
+          <span class="chip code">CIG1025.01 → CIG1025.01.01</span>
+          <span class="chip">OP + planos en un documento</span>
+        </div>
+      </div>
+
+      <div class="station">
+        <div class="dot">5</div>
+        <h3>Entrega</h3>
+        <p>
+          El despacho sale con <strong>exactamente la plancha reservada</strong>,
+          no con cualquiera del mismo material. La trazabilidad acompaña a la
+          pieza: de qué plancha madre vino y a qué cliente se fue.
+        </p>
+        <div class="chips">
+          <span class="chip">Traslados entre sedes con la misma identidad</span>
+        </div>
+      </div>
+
+      <div class="station">
+        <div class="dot">6</div>
+        <h3>Factura</h3>
+        <p>
+          IGV 18%, numeración peruana. Si el pago es en dólares, el vendedor
+          <strong>elige qué tasa aplicar</strong> — SUNAT compra, SUNAT venta o
+          la corporativa — y el sistema registra cuál se usó. El número de
+          comprobante queda escrito en la ficha de cada plancha vendida.
+        </p>
+        <div class="chips">
+          <span class="chip">Tasas administradas en Contabilidad → Tipos de Cambio</span>
+        </div>
+      </div>
+
+      <div class="station">
+        <div class="dot">7</div>
+        <h3>Contabilidad</h3>
+        <p>
+          Valorización <strong>en tiempo real</strong>: la compra entra a
+          Mercaderías y la venta la descarga, sin cierres manuales. El costo es
+          <strong>promedio ponderado</strong> (el kardex: entra material a otro
+          precio y el costo se ajusta solo). Además: 10 reportes financieros
+          PCGE y plantillas de asientos para lo repetitivo.
+        </p>
+        <div class="chips">
+          <span class="chip">Balance · EE.RR. · Flujo de Caja · IGV (PDT 621)</span>
+          <span class="chip">Plantillas: planilla, depreciación</span>
+        </div>
+      </div>
+
+      <div class="station" style="padding-bottom: 0.5rem;">
+        <div class="dot">8</div>
+        <h3>Gerencia</h3>
+        <p>
+          El <strong>Panorama de Almacenes</strong>: las 5 sedes en un mapa del
+          Perú con su valor de inventario y ocupación, el ranking de materiales,
+          y 17 reportes PDF con la marca de la casa listos para una reunión.
+        </p>
+        <div class="chips">
+          <span class="chip">Dashboard + indicadores financieros</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LA PLANCHA ================= -->
+<section class="block">
+  <div class="inner">
+    <p class="eyebrow">La protagonista</p>
+    <h2>Cada plancha, una ficha</h2>
+    <p class="lede">
+      Lo que el ERP anterior no sabía responder — ¿cuál plancha es, cuánto mide,
+      dónde está, quién la apartó? — ahora es una pantalla:
+    </p>
+
+    <div class="ficha">
+      <div class="head">
+        <span class="codigo">CIG1025.03</span>
+        <span>Cuarcita Iron Green Traslucid</span>
+        <span class="estado">Reservada</span>
+      </div>
+      <dl>
+        <div><dt>Medidas</dt><dd>3.20 × 1.60 m · 2 cm</dd></div>
+        <div><dt>Neto vendible</dt><dd>5.12 m²</dd></div>
+        <div><dt>Condición</dt><dd>Oferta</dd></div>
+        <div><dt>Ubicación</dt><dd>UG · Showroom · Caballete 2</dd></div>
+        <div><dt>Cliente</dt><dd>Constructora Altavista SAC</dd></div>
+        <div><dt>Asesora</dt><dd>Valeria Campos · vence 07/08</dd></div>
+        <div><dt>Importación</dt><dd class="mono">LOTE-1025-CHN</dd></div>
+        <div><dt>Observaciones</dt><dd>Quiñe de 4 cm, esquina inferior</dd></div>
+      </dl>
+    </div>
+
+    <p class="lede" style="margin-bottom: 0;">
+      Y con su <strong>foto real</strong> en las naturales — porque en mármol,
+      ónix y cuarcita la veta decide la venta — más su historia completa: quién
+      la reservó, cuándo se cortó, en qué factura salió.
+    </p>
+  </div>
+</section>
+
+<!-- ================= MODULOS ================= -->
+<section class="block">
+  <div class="inner">
+    <p class="eyebrow">Bajo el capó</p>
+    <h2>Seis módulos propios sobre Odoo 19</h2>
+    <p class="lede">
+      Todo construido en Odoo Community (sin licencias), con módulos a la medida
+      que se instalan igual en local y en la nube:
+    </p>
+    <div class="mods">
+      <div class="mod"><span class="tag">Identidad</span>
+        <h4>Branding</h4>
+        <p>Login, colores y logo de la casa. El equipo entra a un sistema Pierinelli, no a un software genérico.</p>
+      </div>
+      <div class="mod"><span class="tag">Datos maestros</span>
+        <h4>Datos del negocio</h4>
+        <p>Las 5 sedes, las familias Naturales/Artificiales con sus subfamilias, y el costo promedio con valorización en tiempo real.</p>
+      </div>
+      <div class="mod"><span class="tag">Perú</span>
+        <h4>Localización peruana</h4>
+        <p>Plan contable PCGE, IGV 18%, RUC, tipos de comprobante. La contabilidad habla el idioma del contador.</p>
+      </div>
+      <div class="mod"><span class="tag">El corazón</span>
+        <h4>Planchas</h4>
+        <p>La ficha por plancha, el código interno, la reserva, la orden de corte con planos, las mermas y sus reportes.</p>
+      </div>
+      <div class="mod"><span class="tag">Contabilidad</span>
+        <h4>Reportes financieros</h4>
+        <p>Los 10 estados financieros que Community no trae, tipos de cambio SUNAT/corporativa y plantillas de asientos.</p>
+      </div>
+      <div class="mod"><span class="tag">Gerencia</span>
+        <h4>Panorama de almacenes</h4>
+        <p>El dashboard con el mapa del Perú y 7 reportes de inventario valorizado, rotación y stock crítico.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CIFRAS ================= -->
+<section class="band-dark cifras">
+  <div class="inner">
+    <div>
+      <p class="eyebrow">La demo, en números</p>
+      <h2>Todo cuadra entre sí</h2>
+    </div>
+    <div class="grid">
+      <div class="cifra"><div class="v">5</div><div class="l">sedes operando</div></div>
+      <div class="cifra"><div class="v">292</div><div class="l">planchas con ficha, código y foto</div></div>
+      <div class="cifra"><div class="v">17</div><div class="l">reportes PDF con la marca</div></div>
+      <div class="cifra"><div class="v">S/ 791 mil</div><div class="l">inventario: igual en almacén, dashboard y cuenta contable</div></div>
+      <div class="cifra"><div class="v">0.00</div><div class="l">descuadre del Balance General</div></div>
+      <div class="cifra"><div class="v">11</div><div class="l">usuarios por rol: cada quien ve lo suyo</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LIMITES ================= -->
+<section class="block">
+  <div class="inner">
+    <p class="eyebrow">Transparencia</p>
+    <h2>Lo que esta versión no incluye</h2>
+    <p class="lede">Dicho de frente, para que no haya sorpresas:</p>
+    <div class="limites">
+      <ul>
+        <li><strong>Envío real a SUNAT:</strong> los comprobantes se emiten con formato y numeración correctos, pero la transmisión electrónica requiere un proveedor OSE/PSE homologado (servicio aparte).</li>
+        <li><strong>Lectura automática de PDF (OCR):</strong> es función de Odoo Enterprise. El XML de la factura electrónica — que el proveedor está obligado a entregar — sí se importa solo.</li>
+        <li><strong>Escaneo móvil de códigos de barras:</strong> la app de escaneo es Enterprise; la alternativa práctica es un lector USB. Quedó preparado para decidirlo con el volumen real.</li>
+        <li><strong>Tasa SUNAT automática:</strong> hoy se digita en la tabla de tipos de cambio; conectarla a una API diaria es una mejora corta ya diseñada.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <span>Pierinelli ERP · Odoo 19 Community</span>
+    <span>Documento de presentación · julio 2026</span>
+  </div>
+</footer>
+
+</body>
+</html>

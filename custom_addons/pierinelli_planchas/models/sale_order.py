@@ -69,6 +69,42 @@ class SaleOrderLine(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
+    orden_corte_ids = fields.One2many(
+        'pierinelli.orden.corte', 'sale_order_id',
+        string='Ordenes de corte')
+    orden_corte_count = fields.Integer(
+        compute='_compute_orden_corte_count')
+
+    def _compute_orden_corte_count(self):
+        for order in self:
+            order.orden_corte_count = len(order.orden_corte_ids)
+
+    def action_ver_ordenes_corte(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'pierinelli_planchas.action_orden_corte')
+        action['domain'] = [('sale_order_id', '=', self.id)]
+        action['context'] = {'default_sale_order_id': self.id}
+        return action
+
+    def action_crear_orden_corte(self):
+        """Crea la Orden de Corte precargada desde el pedido: plancha de la
+        primera linea que tenga una apartada, cliente y asesor."""
+        self.ensure_one()
+        linea = self.order_line.filtered('plancha_id')[:1]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'pierinelli.orden.corte',
+            'view_mode': 'form',
+            'context': {
+                'default_sale_order_id': self.id,
+                'default_partner_id': self.partner_id.id,
+                'default_asesor_id': (self.user_id.id
+                                      or self.env.user.id),
+                'default_plancha_id': linea.plancha_id.id or False,
+            },
+        }
+
     def action_confirm(self):
         lineas_con_plancha = self.order_line.filtered('plancha_id')
         # Validaciones ANTES de confirmar (si algo falla, no se crea nada)
@@ -126,6 +162,26 @@ class SaleOrder(models.Model):
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+
+    orden_corte_count = fields.Integer(
+        compute='_compute_orden_corte_count',
+        string='Ordenes de corte')
+
+    def _compute_orden_corte_count(self):
+        for move in self:
+            ordenes = move.invoice_line_ids.sale_line_ids.order_id\
+                .orden_corte_ids if move.move_type == 'out_invoice' \
+                else self.env['pierinelli.orden.corte']
+            move.orden_corte_count = len(ordenes)
+
+    def action_ver_ordenes_corte(self):
+        """Desde la factura, ver las ordenes de corte de sus pedidos."""
+        self.ensure_one()
+        ordenes = self.invoice_line_ids.sale_line_ids.order_id.orden_corte_ids
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'pierinelli_planchas.action_orden_corte')
+        action['domain'] = [('id', 'in', ordenes.ids)]
+        return action
 
     def action_post(self):
         """Al contabilizar la factura, el comprobante queda en cada plancha."""

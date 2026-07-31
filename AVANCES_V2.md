@@ -146,6 +146,16 @@
 | Origen de tasa | Cualquier factura en USD, junto al campo de tasa |
 | Plantillas de asientos | Contabilidad → Asientos contables → Plantillas de Asientos |
 
+### Ajustes de pulido (sesión 2, cierre)
+
+| Qué | Detalle |
+|---|---|
+| Título "Facturas" al entrar a Contabilidad | Ahora la app abre con el **Tablero de diarios titulado "Contabilidad"** (como Enterprise); el submenú Configuración → "Facturación" también se renombró. |
+| Botón "Subir factura" con PDF | **Bloqueo amable**: explica que el OCR es de Enterprise y que el camino en esta versión es el **XML** de la factura electrónica (que sí se importa) o digitar. El XML sigue funcionando. |
+| UI del tipo de cambio en factura | Los campos salieron de la fila apretada de la tasa: ahora es un **panel propio** con borde dorado, radio buttons verticales y la tasa aplicada visible. |
+| Vistas de Tipos de Cambio | Lista con badges por origen + vista **kanban** de tarjetas (venta grande, compra menor). |
+| Factura/Pedido ↔ Orden de Corte | Botón inteligente **"Ordenes de corte"** en el pedido y en la factura; botón **"Crear Orden de Corte"** en el pedido confirmado (precarga plancha, cliente y asesor). |
+
 ### Estado del plan completo
 
 | Fase | Estado |
