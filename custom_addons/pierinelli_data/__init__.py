@@ -4,9 +4,11 @@ from odoo.tools import file_open
 
 
 def _set_initial_stock(env):
-    """Carga inicial: marca en PDF (logo + colores) y stock de muestra."""
+    """Carga inicial: marca en PDF (logo + colores de la compania).
 
-    # --- Marca en reportes/PDF: logo negro (visible en blanco) + colores ---
+    El stock ya NO se crea aqui: en el modelo V2 cada plancha es un lote con
+    codigo interno y medidas, y las genera el seed (seed_pe.py, bloque 7).
+    """
     company = env.ref('base.main_company', raise_if_not_found=False)
     if company:
         try:
@@ -16,23 +18,3 @@ def _set_initial_stock(env):
             pass
         company.primary_color = '#C9962F'
         company.secondary_color = '#111111'
-
-    # --- Stock inicial (m2) en el almacen Urban Gallery ---
-    warehouse = env.ref('stock.warehouse0', raise_if_not_found=False)
-    if not warehouse:
-        return
-    location = warehouse.lot_stock_id
-    Quant = env['stock.quant']
-    initial_qty = {
-        'CUA-ENIGMA': 120.0,
-        'ONX-ORO': 45.0,
-        'GRA-MAORI': 200.0,
-        'MAR-PORTORO': 60.0,
-        'SIN-AMAZONICO': 150.0,
-        'CRZ-CALACATTA': 90.0,
-    }
-    for code, qty in initial_qty.items():
-        product = env['product.product'].search(
-            [('default_code', '=', code)], limit=1)
-        if product:
-            Quant._update_available_quantity(product, location, qty)

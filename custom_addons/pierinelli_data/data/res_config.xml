@@ -2,12 +2,14 @@
 <odoo>
     <data noupdate="1">
 
-        <!-- Activa multi-almacen y multi-ubicacion para usuarios internos
-             (necesario para que los almacenes sean seleccionables en ventas/inventario) -->
+        <!-- Activa multi-almacen, multi-ubicacion y lotes para usuarios internos.
+             Los lotes son la base del modelo de planchas: cada plancha fisica
+             es un lote (stock.lot) con su codigo interno, medidas y foto. -->
         <record id="base.group_user" model="res.groups">
             <field name="implied_ids" eval="[
                 (4, ref('stock.group_stock_multi_warehouses')),
                 (4, ref('stock.group_stock_multi_locations')),
+                (4, ref('stock.group_production_lot')),
             ]"/>
         </record>
 

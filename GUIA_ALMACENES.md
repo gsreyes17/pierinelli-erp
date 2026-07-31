@@ -151,6 +151,23 @@ Cuando el conteo real difiere del sistema:
 
 📸 *Captura del reporte de Existencias filtrado por almacén.*
 
+### 9.1 Reportes de Almacén en PDF (con la marca Pierinelli)
+
+`Inventario → Reportes → Reportes de Almacén (PDF)` — elige fechas/sede/umbral y
+genera el PDF. Siete reportes con el mismo diseño que los estados financieros:
+
+| Reporte | Qué muestra |
+|---|---|
+| **Existencias por Sede** | Inventario valorizado de cada una de las 5 sedes (producto, m², costo, valor) con totales. |
+| **Composición por Categoría** | Distribución del valor por tipo de piedra con % del total. |
+| **Stock Crítico** | Productos bajo el umbral (configurable), con detalle por sede y marca de AGOTADO. |
+| **Antigüedad del Inventario** | Días en almacén del stock (0-30/31-90/91-180/+180) — detecta capital inmovilizado. |
+| **Kardex de Movimientos** | Entradas/salidas/traslados por producto en el período. |
+| **Transferencias entre Sedes** | Traslados internos del período (ej. Principal → Urban Gallery). |
+| **Rotación de Productos** | Ranking de más vendidos (m² y % del total) + entradas de compras, con tarjetas de indicadores. |
+
+📸 *Captura sugerida: el PDF de Rotación (tarjetas + ranking) y el de Stock Crítico.*
+
 ---
 
 ## 10. Flujo completo de ejemplo (para la demo)

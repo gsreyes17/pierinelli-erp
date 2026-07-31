@@ -13,7 +13,7 @@ import logging
 from odoo.tools import file_open
 
 _logger = logging.getLogger('pierinelli_seed')
-SEED_VERSION = '12'
+SEED_VERSION = '13'
 LANG = 'es_419'
 
 ICP = env['ir.config_parameter'].sudo()
@@ -73,6 +73,9 @@ else:
         catalogo = []
         _logger.warning('products.json no encontrado: %s', e)
 
+    # Familias naturales: cada plancha es unica (foto individual).
+    NATURALES = {'marmol', 'granito', 'cuarcita', 'onix'}
+
     creados_prod = 0
     con_imagen = 0
     for it in catalogo:
@@ -83,6 +86,10 @@ else:
             tmpl = Product.create({
                 'name': it['name'], 'default_code': it['code'], 'type': 'consu',
                 'is_storable': True, 'categ_id': C(it['categ']), 'uom_id': m2.id,
+                # Modelo V2: cada plancha es un lote de su producto
+                'tracking': 'lot',
+                'tipo_material': ('natural' if it['categ'] in NATURALES
+                                  else 'artificial'),
                 'list_price': it['price'],
                 'standard_price': round(it['price'] * 0.6, 2),  # costo -> valorizacion de inventario
                 'taxes_id': [(6, 0, sale_tax.ids)] if sale_tax else False,
@@ -170,8 +177,11 @@ else:
     env.cr.commit()
     print('Proveedores:', len(proveedores))
 
-    # --- 7) Stock inicial en varios almacenes ---
+    # --- 7) Stock inicial: PLANCHAS con codigo interno en cada almacen ---
+    # Modelo V2: cada plancha fisica es un lote con medidas, ubicacion
+    # referencial y ficha propia. El stock del producto = suma de sus planchas.
     Quant = env['stock.quant']
+    Lot = env['stock.lot']
     almacenes = {
         'UG': env.ref('stock.warehouse0'),
         'PRIN': env.ref('pierinelli_data.warehouse_principal', raise_if_not_found=False),
@@ -179,18 +189,46 @@ else:
         'TRU': env.ref('pierinelli_data.warehouse_trujillo', raise_if_not_found=False),
         'AQP': env.ref('pierinelli_data.warehouse_arequipa', raise_if_not_found=False),
     }
-    for idx, p in enumerate(todos_prod):
-        # Solo productos almacenables sin seguimiento por lote (servicios y
-        # planchas-con-lote se manejan aparte)
-        if not p.is_storable or p.tracking != 'none':
-            continue
-        for j, (code, wh) in enumerate(almacenes.items()):
-            if not wh:
+    # Formatos tipicos de plancha (largo, alto) en metros
+    DIMS = [(3.40, 1.65), (3.20, 1.60), (3.00, 1.50),
+            (3.35, 1.70), (2.90, 1.55), (3.10, 1.85)]
+    ZONAS = ['Zona A · Rack 1', 'Zona A · Rack 2', 'Zona B · Rack 1',
+             'Zona B · Rack 3', 'Patio · Caballete 1', 'Showroom · Caballete 2']
+    total_planchas = 0
+    if not Lot.search([('ref_importacion', '=like', 'IMP-SEED%')], limit=1):
+        for idx, p in enumerate(todos_prod):
+            if not p.is_storable or p.tracking != 'lot':
                 continue
-            qty = 40 + ((idx * 7 + j * 11) % 120)
-            Quant._update_available_quantity(p, wh.lot_stock_id, qty)
-        env.cr.commit()
-    print('Stock repartido en almacenes.')
+            tmpl = p.product_tmpl_id
+            for j, (code, wh) in enumerate(almacenes.items()):
+                if not wh:
+                    continue
+                n = 1 + ((idx + j) % 2)      # 1-2 planchas por sede
+                # Fecha de llegada repartida (algunas > 1 anio -> Hueso)
+                dias_atras = 20 + ((idx * 13 + j * 47) % 420)
+                fecha_llegada = (datetime.now() - timedelta(days=dias_atras)).date()
+                codigos = Lot.siguiente_codigo(p, count=n, fecha=fecha_llegada)
+                for c in codigos:
+                    largo, alto = DIMS[(idx + j + total_planchas) % len(DIMS)]
+                    m2v = round(largo * alto, 2)
+                    lot = Lot.create({
+                        'name': c, 'product_id': p.id,
+                        'company_id': company.id,
+                        'largo': largo, 'alto': alto, 'espesor': 2.0,
+                        'm2_neto': m2v,
+                        'ubicacion_ref': ZONAS[(idx * 3 + j) % len(ZONAS)],
+                        'ref_importacion': 'IMP-SEED-%s' % fecha_llegada.strftime('%m%y'),
+                        'fecha_ingreso': fecha_llegada,
+                    })
+                    # Naturales: foto por plancha (en demo, la del producto;
+                    # en produccion cada plancha lleva su foto real)
+                    if tmpl.tipo_material == 'natural' and tmpl.image_1920:
+                        lot.image_1920 = tmpl.image_1920
+                    Quant._update_available_quantity(
+                        p, wh.lot_stock_id, m2v, lot_id=lot)
+                    total_planchas += 1
+            env.cr.commit()
+    print('Planchas generadas:', total_planchas)
 
     # --- 8) Compras a proveedores (con IGV) + facturas de proveedor ---
     PO = env['purchase.order']
@@ -202,11 +240,16 @@ else:
         if PO.search([('partner_ref', '=', tag)], limit=1):
             continue
         lineas = [todos_prod[(i * 3 + k) % len(todos_prod)] for k in range(3)]
+        # Cada linea pide N planchas del formato 3.20 x 1.60 (5.12 m² c/u):
+        # la cantidad de la orden = suma exacta de las planchas a recibir.
+        PLANCHA_M2 = 5.12
+        n_planchas_linea = [2 + k for k in range(3)]        # 2, 3, 4 planchas
         po = PO.create({
             'partner_id': prov.id,
             'partner_ref': tag,
             'order_line': [(0, 0, {
-                'product_id': pr.id, 'product_qty': 20 + k * 10,
+                'product_id': pr.id,
+                'product_qty': round(PLANCHA_M2 * n_planchas_linea[k], 2),
                 'price_unit': pr.list_price * 0.55,
                 'name': pr.name,
             }) for k, pr in enumerate(lineas)],
@@ -215,10 +258,31 @@ else:
             po.button_confirm()
             for pick in po.picking_ids:
                 pick.action_assign()
+                # La recepcion da de alta las planchas: un lote por plancha
                 for mv in pick.move_ids:
-                    mv.quantity = mv.product_uom_qty
+                    n = max(1, int(round(mv.product_uom_qty / PLANCHA_M2)))
+                    codigos = Lot.siguiente_codigo(mv.product_id, count=n)
+                    mv.move_line_ids = [(5, 0, 0)] + [(0, 0, {
+                        'product_id': mv.product_id.id,
+                        'lot_name': c,
+                        'quantity': PLANCHA_M2,
+                        'location_id': mv.location_id.id,
+                        'location_dest_id': mv.location_dest_id.id,
+                    }) for c in codigos]
                 pick.move_ids.picked = True
                 pick._action_done()
+                # Completar la ficha de las planchas recien creadas
+                for ml in pick.move_ids.move_line_ids:
+                    if ml.lot_id and not ml.lot_id.largo:
+                        ml.lot_id.write({
+                            'largo': 3.20, 'alto': 1.60, 'espesor': 2.0,
+                            'm2_neto': PLANCHA_M2,
+                            'ref_importacion': po.name,
+                            'ubicacion_ref': 'Zona Recepcion',
+                        })
+                        tmpl = ml.lot_id.product_id.product_tmpl_id
+                        if tmpl.tipo_material == 'natural' and tmpl.image_1920:
+                            ml.lot_id.image_1920 = tmpl.image_1920
             creados_po += 1
             # Factura de proveedor (cuenta por pagar / gasto)
             try:
@@ -280,7 +344,8 @@ else:
             'date_order': datetime.now() - timedelta(days=dias),
             'order_line': [(0, 0, {
                 'product_id': pr.id,
-                'product_uom_qty': 5 + ((i + k * 3) % 25),
+                # A escala de plancha: 4-11 m² por linea (1-2 planchas)
+                'product_uom_qty': 4 + ((i + k * 3) % 8),
                 'analytic_distribution': ({str(obras[i % len(obras)].id): 100}
                                           if obras else False),
             }) for k, pr in enumerate(lineas)],
@@ -298,14 +363,15 @@ else:
         # El resto se confirma (pedido de venta)
         order.action_confirm()
         order.date_order = datetime.now() - timedelta(days=dias)  # confirmar la sobrescribe
-        # Entregar la mayoria
+        # Entregar la mayoria. Con planchas (lotes) la reserva automatica
+        # elige que planchas salen; solo validamos si reservo completo.
         if i % 4 != 0:
             for pick in order.picking_ids:
                 if pick.state in ('done', 'cancel'):
                     continue
                 pick.action_assign()
-                for mv in pick.move_ids:
-                    mv.quantity = mv.product_uom_qty
+                if pick.state != 'assigned':
+                    continue    # sin planchas suficientes -> queda pendiente
                 pick.move_ids.picked = True
                 try:
                     pick._action_done()
@@ -450,7 +516,7 @@ else:
         env.cr.commit()
 
     # --- 9c) Historial de ventas 12 meses (para los graficos de Ventas -> Informes) ---
-    prod_venta = todos_prod.filtered(lambda p: p.is_storable and p.tracking == 'none')
+    prod_venta = todos_prod.filtered(lambda p: p.is_storable)
     if prod_venta:
         hist = 0
         for mes in range(12):            # 12 meses hacia atras
@@ -507,8 +573,8 @@ else:
                     })],
                 })
                 pick.action_confirm(); pick.action_assign()
-                for mv in pick.move_ids:
-                    mv.quantity = mv.product_uom_qty
+                if pick.state != 'assigned':
+                    continue    # sin planchas en PRIN para trasladar
                 pick.move_ids.picked = True
                 pick._action_done()
             except Exception as e:
@@ -574,6 +640,75 @@ else:
         env['res.users'].search([('share', '=', False)]).write(
             {'is_redirect_home': True})
         print('Redireccion al menu de apps activada para usuarios internos.')
+    env.cr.commit()
+
+    # --- 11b) Asesores reales en los pedidos (antes todo era OdooBot) ---
+    asesores = Users.search([('login', 'in', [
+        'valeria@pierinelli.com', 'diego@pierinelli.com', 'vendedor'])])
+    if asesores:
+        pedidos_seed = SO.search([('client_order_ref', '!=', False)])
+        for n, so in enumerate(pedidos_seed):
+            so.user_id = asesores[n % len(asesores)]
+        print('Asesores asignados a %d pedidos.' % len(pedidos_seed))
+    env.cr.commit()
+
+    # --- 11c) Reservas comerciales de muestra (regla de los 7 dias) ---
+    libres = Lot.search([
+        ('m2_disponible', '>', 0), ('cliente_reserva_id', '=', False),
+        ('largo', '>', 0)], limit=4)
+    hoy = datetime.now().date()
+    for n, plancha in enumerate(libres):
+        plancha.write({
+            'cliente_reserva_id': clientes[n % len(clientes)].id,
+            'asesor_id': asesores[n % len(asesores)].id if asesores else False,
+            'reserva_inicio': hoy - timedelta(days=n),
+            'reserva_fin': hoy + timedelta(days=7 - n),
+        })
+    print('Reservas de muestra:', len(libres))
+
+    # --- 11d) Condicion Hueso: marcar lo que lleva mas de 1 anio ---
+    Lot._cron_marcar_hueso()
+    huesos = Lot.search_count([('condicion', '=', 'hueso')])
+    print('Planchas en condicion Hueso:', huesos)
+    env.cr.commit()
+
+    # --- 11e) Asiento de APERTURA de existencias ---
+    # Las planchas iniciales del seed entran por ajuste directo de stock (sin
+    # asiento). Con valorizacion en tiempo real, las ventas SI acreditan la
+    # cuenta 201 (Mercaderias), asi que sin apertura quedaria negativa. Este
+    # asiento deja 201 = valor fisico del inventario (contra Capital).
+    AM = env['account.move']
+    if not AM.search([('ref', '=', 'SEED-APERTURA-EXISTENCIAS')], limit=1):
+        Acc = env['account.account']
+        cta_merc = Acc.search([('code', '=like', '2011%')], limit=1)
+        cta_capital = Acc.search([('code', '=like', '5011%')], limit=1)
+        diario_gral = env['account.journal'].search(
+            [('type', '=', 'general')], limit=1)
+        quants_int = env['stock.quant'].search(
+            [('location_id.usage', '=', 'internal')])
+        valor_fisico = sum(q.quantity * q.product_id.standard_price
+                           for q in quants_int)
+        mls_201 = env['account.move.line'].search(
+            [('account_id.code', '=like', '201%'),
+             ('parent_state', '=', 'posted')])
+        apertura = round(valor_fisico - sum(mls_201.mapped('balance')), 2)
+        if cta_merc and cta_capital and diario_gral and apertura > 0:
+            asiento = AM.create({
+                'move_type': 'entry',
+                'journal_id': diario_gral.id,
+                'ref': 'SEED-APERTURA-EXISTENCIAS',
+                'date': (datetime.now() - timedelta(days=430)).date(),
+                'line_ids': [
+                    (0, 0, {'account_id': cta_merc.id,
+                            'name': 'Apertura de existencias (planchas)',
+                            'debit': apertura, 'credit': 0.0}),
+                    (0, 0, {'account_id': cta_capital.id,
+                            'name': 'Apertura de existencias (planchas)',
+                            'debit': 0.0, 'credit': apertura}),
+                ],
+            })
+            asiento.action_post()
+            print('Apertura de existencias: S/ %.2f' % apertura)
     env.cr.commit()
 
     # --- 12) Trazabilidad: material PADRE (placa) -> HIJOS (piezas) con lote ---

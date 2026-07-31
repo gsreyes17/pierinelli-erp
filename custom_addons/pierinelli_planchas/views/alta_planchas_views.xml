@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_alta_planchas_form" model="ir.ui.view">
+        <field name="name">pierinelli.alta.planchas.form</field>
+        <field name="model">pierinelli.alta.planchas</field>
+        <field name="arch" type="xml">
+            <form string="Alta de Planchas">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Alta de Planchas</h1>
+                        <p class="text-muted">
+                            Registra la llegada de un contenedor: cuantas
+                            planchas y de que medidas. El sistema genera los
+                            codigos internos y el stock de cada una. Las que
+                            midan distinto se corrigen luego en su ficha.
+                        </p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="product_id"
+                                   options="{'no_create': True}"/>
+                            <field name="warehouse_id"
+                                   options="{'no_create': True}"/>
+                            <field name="cantidad"/>
+                            <field name="condicion"/>
+                        </group>
+                        <group>
+                            <field name="largo"/>
+                            <field name="alto"/>
+                            <field name="espesor"/>
+                            <field name="ubicacion_ref"
+                                   placeholder="Zona A · Rack 3"/>
+                            <field name="ref_importacion"
+                                   placeholder="IMP-2026-07"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="m2_por_plancha"/>
+                            <field name="m2_total"/>
+                        </group>
+                        <group>
+                            <field name="codigos_preview"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_crear" type="object"
+                            string="Crear planchas" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_alta_planchas" model="ir.actions.act_window">
+        <field name="name">Alta de Planchas</field>
+        <field name="res_model">pierinelli.alta.planchas</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_alta_planchas" name="Alta de Planchas"
+              parent="menu_planchas_root" sequence="2"
+              action="action_alta_planchas"
+              groups="stock.group_stock_user"/>
+
+</odoo>

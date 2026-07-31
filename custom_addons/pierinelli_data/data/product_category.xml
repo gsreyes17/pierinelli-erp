@@ -2,44 +2,88 @@
 <odoo>
     <data noupdate="1">
 
-        <record id="categ_cuarcita" model="product.category">
-            <field name="name">Cuarcita</field>
+        <!-- ============================================================
+             Jerarquia FAMILIA > SUBFAMILIA (Plan Inventario V2, Fase 1)
+
+             Todas las categorias usan:
+             - Costo promedio (AVCO): al ingresar mercaderia a otro precio,
+               el costo de todo el producto se pondera (el "costo kardex"
+               que el cliente describe: 100 + 120 -> 110).
+             - Valorizacion en tiempo real: cada movimiento de stock genera
+               su asiento contable automaticamente.
+             ============================================================ -->
+
+        <!-- Familias -->
+        <record id="familia_naturales" model="product.category">
+            <field name="name">Naturales</field>
             <field name="parent_id" ref="product.product_category_goods"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
+        </record>
+
+        <record id="familia_artificiales" model="product.category">
+            <field name="name">Artificiales</field>
+            <field name="parent_id" ref="product.product_category_goods"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
+        </record>
+
+        <!-- Subfamilias naturales (cada plancha es unica: foto individual) -->
+        <record id="categ_marmol" model="product.category">
+            <field name="name">Marmol</field>
+            <field name="parent_id" ref="familia_naturales"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
         <record id="categ_granito" model="product.category">
             <field name="name">Granito</field>
-            <field name="parent_id" ref="product.product_category_goods"/>
+            <field name="parent_id" ref="familia_naturales"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
-        <record id="categ_marmol" model="product.category">
-            <field name="name">Marmol</field>
-            <field name="parent_id" ref="product.product_category_goods"/>
+        <record id="categ_cuarcita" model="product.category">
+            <field name="name">Cuarcita</field>
+            <field name="parent_id" ref="familia_naturales"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
         <record id="categ_onix" model="product.category">
             <field name="name">Onix</field>
-            <field name="parent_id" ref="product.product_category_goods"/>
+            <field name="parent_id" ref="familia_naturales"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
+        <!-- Subfamilias artificiales (formato constante: foto compartida) -->
         <record id="categ_sinterizada" model="product.category">
             <field name="name">Piedra Sinterizada</field>
-            <field name="parent_id" ref="product.product_category_goods"/>
+            <field name="parent_id" ref="familia_artificiales"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
         <record id="categ_porcelanico" model="product.category">
             <field name="name">Porcelanico</field>
-            <field name="parent_id" ref="product.product_category_goods"/>
+            <field name="parent_id" ref="familia_artificiales"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
         <record id="categ_cuarzo" model="product.category">
             <field name="name">Cuarzo</field>
-            <field name="parent_id" ref="product.product_category_goods"/>
+            <field name="parent_id" ref="familia_artificiales"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
         <record id="categ_solid_surface" model="product.category">
             <field name="name">Solid Surface</field>
-            <field name="parent_id" ref="product.product_category_goods"/>
+            <field name="parent_id" ref="familia_artificiales"/>
+            <field name="property_cost_method">average</field>
+            <field name="property_valuation">real_time</field>
         </record>
 
     </data>

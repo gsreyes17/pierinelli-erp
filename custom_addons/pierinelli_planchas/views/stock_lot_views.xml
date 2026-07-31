@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         FORMULARIO de plancha: hereda el form de lote y agrega la ficha
+         ============================================================ -->
+    <record id="view_lot_form_plancha" model="ir.ui.view">
+        <field name="name">stock.lot.form.plancha</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Barra de acciones: reservar / liberar + estado -->
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_reservar" type="object"
+                            string="Reservar (7 dias)" class="btn-primary"
+                            invisible="estado != 'disponible'"/>
+                    <button name="action_liberar" type="object"
+                            string="Liberar reserva"
+                            invisible="estado != 'reservada'"/>
+                    <field name="estado" widget="statusbar"/>
+                </header>
+            </xpath>
+
+            <!-- Foto de la plancha (obligatoria solo en naturales) -->
+            <xpath expr="//div[hasclass('oe_title')]" position="before">
+                <field name="image_1920" widget="image" class="oe_avatar"
+                       options="{'preview_image': 'image_128'}"/>
+            </xpath>
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                <div class="text-warning"
+                     invisible="tipo_material != 'natural' or image_1920">
+                    <i class="fa fa-camera" title="Falta foto"/> Plancha natural sin
+                    foto: cada veta es unica, sube la imagen real.
+                </div>
+            </xpath>
+
+            <!-- Ficha de la plancha -->
+            <xpath expr="//group[@name='main_group']" position="after">
+                <group name="ficha_plancha" string="Ficha de la plancha">
+                    <group>
+                        <field name="tipo_material"/>
+                        <field name="condicion"/>
+                        <field name="largo"/>
+                        <field name="alto"/>
+                        <field name="espesor"/>
+                        <field name="m2_bruto"/>
+                        <field name="m2_neto"/>
+                        <field name="m2_disponible"/>
+                    </group>
+                    <group>
+                        <field name="ubicacion_ref"/>
+                        <field name="ref_importacion"/>
+                        <field name="fecha_ingreso"/>
+                        <field name="antiguedad_dias"/>
+                        <field name="plancha_madre_id"/>
+                        <field name="costo_kardex"
+                               groups="stock.group_stock_user"/>
+                    </group>
+                </group>
+                <group name="reserva_venta" string="Reserva / Venta">
+                    <group>
+                        <field name="cliente_reserva_id"/>
+                        <field name="asesor_id"/>
+                        <field name="reserva_inicio"/>
+                        <field name="reserva_fin"/>
+                    </group>
+                    <group>
+                        <field name="comprobante"/>
+                        <field name="fecha_comprobante"/>
+                    </group>
+                </group>
+                <group name="obs" string="Observaciones">
+                    <field name="observaciones" colspan="2" nolabel="1"
+                           placeholder="Quinie, despunte, rayadura, veta especial..."/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         VISTA DE OPERACIONES: la tabla global completa
+         ============================================================ -->
+    <record id="view_planchas_list_operaciones" model="ir.ui.view">
+        <field name="name">stock.lot.list.planchas.operaciones</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <list string="Planchas" default_order="product_id, name"
+                  decoration-muted="estado == 'vendida'"
+                  decoration-warning="condicion == 'hueso'">
+                <field name="name" string="Nro. plancha"/>
+                <field name="product_id" string="Descripcion del material"/>
+                <field name="tipo_material" optional="show"/>
+                <field name="location_id" string="Almacen/Ubicacion" optional="show"/>
+                <field name="ubicacion_ref" optional="show"/>
+                <field name="condicion" optional="show"
+                       decoration-danger="condicion == 'hueso'"
+                       decoration-info="condicion == 'oferta'"
+                       decoration-warning="condicion == 'liquidacion'"
+                       widget="badge"/>
+                <field name="largo" optional="show"/>
+                <field name="alto" optional="show"/>
+                <field name="m2_neto" optional="show"/>
+                <field name="m2_bruto" optional="hide"/>
+                <field name="m2_disponible" string="Stock (m²)" optional="show"/>
+                <field name="estado" widget="badge" optional="show"
+                       decoration-success="estado == 'disponible'"
+                       decoration-warning="estado == 'reservada'"/>
+                <field name="cliente_reserva_id" optional="show"/>
+                <field name="asesor_id" optional="show" widget="many2one_avatar_user"/>
+                <field name="reserva_inicio" optional="hide"/>
+                <field name="reserva_fin" optional="show"/>
+                <field name="comprobante" optional="hide"/>
+                <field name="fecha_comprobante" optional="hide"/>
+                <field name="ref_importacion" optional="hide"/>
+                <field name="fecha_ingreso" optional="show"/>
+                <field name="antiguedad_dias" optional="show"/>
+                <field name="costo_kardex" optional="hide"
+                       groups="stock.group_stock_user"/>
+                <field name="plancha_madre_id" optional="hide"/>
+                <field name="observaciones" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         VISTA COMERCIAL: sin costos, editable en lo suyo
+         ============================================================ -->
+    <record id="view_planchas_list_comercial" model="ir.ui.view">
+        <field name="name">stock.lot.list.planchas.comercial</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <list string="Planchas" default_order="product_id, name"
+                  editable="bottom" open_form_view="1"
+                  decoration-muted="estado == 'vendida'">
+                <field name="name" string="Nro. plancha" readonly="1"/>
+                <field name="product_id" string="Descripcion del material"
+                       readonly="1"/>
+                <field name="location_id" string="Almacen" readonly="1"/>
+                <field name="ubicacion_ref" readonly="1"/>
+                <field name="condicion" widget="badge" readonly="1"
+                       decoration-danger="condicion == 'hueso'"
+                       decoration-info="condicion == 'oferta'"/>
+                <field name="largo" readonly="1"/>
+                <field name="alto" readonly="1"/>
+                <field name="m2_neto" string="Neto" readonly="1"/>
+                <field name="m2_disponible" string="Stock (m²)" readonly="1"/>
+                <field name="estado" widget="badge"
+                       decoration-success="estado == 'disponible'"
+                       decoration-warning="estado == 'reservada'"/>
+                <field name="cliente_reserva_id"/>
+                <field name="asesor_id" widget="many2one_avatar_user"/>
+                <field name="reserva_inicio"/>
+                <field name="reserva_fin"/>
+                <field name="comprobante"/>
+                <field name="fecha_comprobante" optional="hide"/>
+                <field name="observaciones"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Busqueda con los filtros del negocio -->
+    <record id="view_planchas_search" model="ir.ui.view">
+        <field name="name">stock.lot.search.planchas</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <search string="Planchas">
+                <field name="name" string="Nro. plancha"/>
+                <field name="product_id"/>
+                <field name="cliente_reserva_id"/>
+                <field name="asesor_id"/>
+                <field name="ref_importacion"/>
+                <filter name="disponibles" string="Disponibles"
+                        domain="[('estado', '=', 'disponible')]"/>
+                <filter name="reservadas" string="Reservadas"
+                        domain="[('estado', '=', 'reservada')]"/>
+                <filter name="vendidas" string="Vendidas"
+                        domain="[('estado', '=', 'vendida')]"/>
+                <separator/>
+                <filter name="hueso" string="Hueso (a gestionar)"
+                        domain="[('condicion', '=', 'hueso')]"/>
+                <filter name="oferta_liq" string="Oferta / Liquidacion"
+                        domain="[('condicion', 'in', ('oferta', 'liquidacion'))]"/>
+                <separator/>
+                <filter name="naturales" string="Naturales"
+                        domain="[('tipo_material', '=', 'natural')]"/>
+                <filter name="artificiales" string="Artificiales"
+                        domain="[('tipo_material', '=', 'artificial')]"/>
+                <group>
+                    <filter name="group_product" string="Producto"
+                            context="{'group_by': 'product_id'}"/>
+                    <filter name="group_location" string="Ubicacion"
+                            context="{'group_by': 'location_id'}"/>
+                    <filter name="group_condicion" string="Condicion"
+                            context="{'group_by': 'condicion'}"/>
+                    <filter name="group_estado" string="Estado"
+                            context="{'group_by': 'estado'}"/>
+                    <filter name="group_asesor" string="Asesor"
+                            context="{'group_by': 'asesor_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         ACCIONES Y MENUS
+         ============================================================ -->
+    <record id="action_planchas_operaciones" model="ir.actions.act_window">
+        <field name="name">Planchas — Operaciones</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,form,kanban</field>
+        <field name="view_id" ref="view_planchas_list_operaciones"/>
+        <field name="search_view_id" ref="view_planchas_search"/>
+        <field name="context">{'display_complete': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sin planchas todavia</p>
+            <p>Usa "Alta de Planchas" para registrar la llegada de un
+               contenedor: numero de planchas y medidas, y el sistema genera
+               los codigos internos.</p>
+        </field>
+    </record>
+
+    <record id="action_planchas_comercial" model="ir.actions.act_window">
+        <field name="name">Planchas</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_planchas_list_comercial"/>
+        <field name="search_view_id" ref="view_planchas_search"/>
+        <field name="context">{'search_default_disponibles': 1,
+                               'display_complete': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sin planchas disponibles</p>
+            <p>Aqui ves cada plancha con sus medidas y su estado, y registras
+               reservas y ventas.</p>
+        </field>
+    </record>
+
+    <!-- Inventario > Planchas (primer lugar, es la tabla central) -->
+    <menuitem id="menu_planchas_root" name="Planchas"
+              parent="stock.menu_stock_root" sequence="2"
+              groups="stock.group_stock_user"/>
+    <menuitem id="menu_planchas_operaciones" name="Tabla de Operaciones"
+              parent="menu_planchas_root" sequence="1"
+              action="action_planchas_operaciones"/>
+
+    <!-- Ventas > Planchas (vista comercial, sin costos) -->
+    <menuitem id="menu_planchas_comercial" name="Planchas"
+              parent="sale.sale_menu_root" sequence="15"
+              action="action_planchas_comercial"
+              groups="sales_team.group_sale_salesman"/>
+
+</odoo>
