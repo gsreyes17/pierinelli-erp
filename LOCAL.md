@@ -34,7 +34,36 @@ cmd /c ".venv\Scripts\python.exe odoo\odoo-bin shell -c odoo.conf -d odoo < seed
 # 4) Arrancar
 .venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf
 ```
-El paso 3 debe terminar con `SEED COMPLETO (version 6)`.
+El paso 3 debe terminar con `SEED COMPLETO` (con la versión vigente de `SEED_VERSION`).
+
+## Instalar en otro disco / otra máquina (desde cero)
+
+`odoo/`, `.venv/` y `odoo.conf` **no viajan por git** — se recrean así:
+
+```powershell
+# 1) El proyecto
+git clone https://github.com/gsreyes17/pierinelli-erp.git Pierinelli
+cd Pierinelli
+
+# 2) Núcleo Odoo 19 (--depth 1 ahorra ~2 GB)
+git clone --branch 19.0 --depth 1 https://github.com/odoo/odoo.git odoo
+
+# 3) Entorno Python (requiere Python 3.11)
+py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r odoo\requirements.txt
+
+# 4) odoo.conf: copiarlo de la instalación anterior (tiene credenciales,
+#    está en .gitignore). Si no existe, crear uno con db_host/db_user/
+#    db_password de tu Postgres local y addons_path = odoo/addons,custom_addons
+
+# 5) BD + datos: seguir "Cargar todo desde cero" (arriba)
+```
+
+Requisitos del sistema (una sola vez por máquina): PostgreSQL, Python 3.11 y
+`winget install wkhtmltopdf.wkhtmltox` para los PDF.
+> La BD vive en Postgres (C:) y **sobrevive** a un cambio de disco del proyecto,
+> pero sus adjuntos/imágenes viven en `.odoo_data/` junto al proyecto. Lo simple:
+> recrear la BD con el seed en la instalación nueva.
 
 ## Usuarios de ejemplo (referencia de permisos)
 Todos con contraseña **`pierinelli`**. El `admin` conserva tu contraseña.
