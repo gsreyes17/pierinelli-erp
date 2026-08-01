@@ -12,12 +12,15 @@ from odoo import api, models
 
 # Posicion de cada sede en el SVG del mapa (coordenadas 0..100 en x/y sobre el
 # viewBox del mapa del Peru). Se identifican por el codigo de almacen.
+# Posiciones sobre el mapa (viewBox 0 0 260 380). x/y = pin en la ciudad real
+# (proyeccion lon/lat -> SVG); lx/ly = donde va la etiqueta (las 3 sedes de
+# Lima comparten ciudad, asi que sus etiquetas se separan con lineas guia).
 SEDE_GEO = {
-    'UG':   {'ciudad': 'Miraflores, Lima',   'x': 30.5, 'y': 62.0},
-    'PRIN': {'ciudad': 'Zarate, Lima',       'x': 31.5, 'y': 60.5},
-    'VES':  {'ciudad': 'Villa El Salvador',  'x': 31.0, 'y': 64.0},
-    'TRU':  {'ciudad': 'Trujillo',           'x': 26.0, 'y': 41.0},
-    'AQP':  {'ciudad': 'Arequipa',           'x': 45.0, 'y': 82.0},
+    'UG':   {'ciudad': 'Miraflores, Lima',  'x': 90.5,  'y': 250.5, 'lx': 26,  'ly': 226},
+    'PRIN': {'ciudad': 'Zarate, Lima',      'x': 93.5,  'y': 246.0, 'lx': 26,  'ly': 246},
+    'VES':  {'ciudad': 'Villa El Salvador', 'x': 91.5,  'y': 255.5, 'lx': 26,  'ly': 266},
+    'TRU':  {'ciudad': 'Trujillo',          'x': 50.6,  'y': 169.5, 'lx': 10,  'ly': 152},
+    'AQP':  {'ciudad': 'Arequipa',          'x': 203.3, 'y': 338.6, 'lx': 136, 'ly': 318},
 }
 
 
@@ -42,7 +45,8 @@ class WarehouseDashboard(models.AbstractModel):
             m2 = sum(quants.mapped('quantity'))
             valor = sum(q.quantity * (q.product_id.standard_price or 0.0) for q in quants)
             prods = len(set(quants.mapped('product_id').ids))
-            geo = SEDE_GEO.get(w.code, {'ciudad': '', 'x': 50, 'y': 50})
+            geo = SEDE_GEO.get(w.code, {'ciudad': '', 'x': 130, 'y': 190,
+                                        'lx': 100, 'ly': 170})
             sedes.append({
                 'id': w.id,
                 'code': w.code,
@@ -50,6 +54,8 @@ class WarehouseDashboard(models.AbstractModel):
                 'ciudad': geo['ciudad'],
                 'x': geo['x'],
                 'y': geo['y'],
+                'lx': geo['lx'],
+                'ly': geo['ly'],
                 'm2': round(m2, 1),
                 'valor': round(valor, 2),
                 'productos': prods,

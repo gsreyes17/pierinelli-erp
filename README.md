@@ -17,6 +17,8 @@ y dashboard "Panorama de Almacenes". Con datos de ejemplo reproducibles.
 | Documento | Para qué |
 |---|---|
 | **[PLAN_INVENTARIO_V2.md](PLAN_INVENTARIO_V2.md)** | El plan aprobado del modelo por plancha: decisiones, fases y limitaciones. |
+| **[ALCANCE_PEDIDO_VS_BONUS.md](ALCANCE_PEDIDO_VS_BONUS.md)** | Qué pidió el cliente vs. qué damos de valor agregado. |
+| **[CONTEXTO_PROYECTO.md](CONTEXTO_PROYECTO.md)** | Síntesis completa del proyecto para retomar contexto. |
 | **[AVANCES_V2.md](AVANCES_V2.md)** | Registro de lo ya implementado del plan, bloque por bloque. |
 | **[GUIA.md](GUIA.md)** | Guión de demo y cómo usar cada módulo. |
 | **[GUIA_ALMACENES.md](GUIA_ALMACENES.md)** | Manual del inventario multi-sede. |

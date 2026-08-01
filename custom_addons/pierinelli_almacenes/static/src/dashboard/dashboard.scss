@@ -102,17 +102,30 @@
         letter-spacing: 1px; color: $ink; margin-bottom: 8px; text-align: left;
         border-bottom: 2px solid $gold; padding-bottom: 6px;
     }
-    .o_pier_map { width: 100%; max-height: 420px; }
+    .o_pier_map { width: 100%; max-height: 440px; }
     .o_pier_map_land {
-        fill: #ece7db; stroke: $gold; stroke-width: .5;
+        fill: #ece7db; stroke: $gold; stroke-width: 1.4;
+        stroke-linejoin: round;
+    }
+    .o_pier_map_ocean {
+        font-size: 9px; letter-spacing: 3px; fill: #c6bfb2;
+        font-style: italic;
     }
     .o_pier_pin { cursor: pointer; }
     .o_pier_pin_dot { fill: $ink; transition: r .15s; }
     .o_pier_pin_halo { fill: $gold; opacity: .28; transition: r .15s, opacity .15s; }
-    .o_pier_pin_lbl { font-size: 3.4px; font-weight: 700; fill: $ink; }
+    .o_pier_pin_leader {
+        stroke: $gold; stroke-width: 1.1; opacity: .55; fill: none;
+    }
+    .o_pier_pin_lbl {
+        font-size: 12px; font-weight: 700; fill: $ink;
+        paint-order: stroke; stroke: rgba(255, 255, 255, .9);
+        stroke-width: 3px;
+    }
     .o_pier_pin_active {
         .o_pier_pin_dot { fill: $gold; }
-        .o_pier_pin_halo { opacity: .5; r: 5.5; }
+        .o_pier_pin_halo { opacity: .5; r: 12px; }
+        .o_pier_pin_lbl { fill: #9C7220; }
     }
     .o_pier_map_hint { font-size: 10px; color: #aaa; margin-top: 6px; }
 
