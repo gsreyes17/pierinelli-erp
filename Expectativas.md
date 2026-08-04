@@ -31,7 +31,7 @@ y algunos detalles de descripcion:
     M. NETO
     M. BRUTO
     Cantidad - el cliente dice que es para los porcelanatos, y se va alterando acorde a la unidad de medida que quieran darle
-    UM - unidad de medida con el que miden el producto, ligado a cantidad, en este caso demostrarian la cantidad de lo que se eliga, como medida en caja(se vende por caja cerrada), m2 y unidades.
+    UM - unidad de medida con el que miden el producto, ligado a cantidad, en este caso demostrarian la cantidad de lo que se elija, como medida en caja(se vende por caja cerrada) o m2.
     Estado - indica si esta disponible, vendido o si esta reservado.
     SUB FAMILIA - subfamilia del producto, por ejemplo del porcelanato sale vitacer, emotion, atlas etc.
     FAMILIA - familia del producto, por ejemplo porcelatano

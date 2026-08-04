@@ -97,14 +97,17 @@
         <field name="name">stock.lot.list.planchas.operaciones</field>
         <field name="model">stock.lot</field>
         <field name="arch" type="xml">
+            <!-- Mismas columnas y MISMO ORDEN que la tabla global del ERP
+                 anterior (Expectativas.md). "Cantidad"/"UM" del ERP viejo se
+                 mapean a Stock (m²) + Piezas y Formato de venta. -->
             <list string="Planchas" default_order="product_id, name"
                   decoration-muted="estado == 'vendida'"
                   decoration-warning="condicion == 'hueso'">
-                <field name="name" string="Nro. plancha"/>
-                <field name="product_id" string="Descripcion del material"/>
-                <field name="tipo_material" optional="show"/>
-                <field name="location_id" string="Almacen/Ubicacion" optional="show"/>
+                <field name="almacen_id" optional="show"/>
+                <field name="codigo_sap" optional="show"/>
                 <field name="ubicacion_ref" optional="show"/>
+                <field name="product_id" string="Descripcion del material"/>
+                <field name="name" string="Codigo interno"/>
                 <field name="condicion" optional="show"
                        decoration-danger="condicion == 'hueso'"
                        decoration-info="condicion == 'oferta'"
@@ -115,25 +118,32 @@
                 <field name="m2_neto" optional="show"/>
                 <field name="m2_bruto" optional="hide"/>
                 <field name="m2_disponible" string="Stock (m²)" optional="show"/>
-                <field name="modo_venta" optional="show" widget="badge"/>
+                <field name="piezas_disponibles" string="Piezas" optional="show"/>
+                <field name="modo_venta" string="UM / Formato" optional="show"
+                       widget="badge"/>
                 <field name="m2_por_pieza" optional="hide"/>
-                <field name="piezas_disponibles" optional="hide"/>
                 <field name="estado" widget="badge" optional="show"
                        decoration-success="estado == 'disponible'"
                        decoration-warning="estado == 'reservada'"/>
+                <field name="subfamilia_id" optional="show"/>
+                <field name="familia_id" optional="hide"/>
+                <field name="tipo_material" optional="hide"/>
+                <field name="observaciones" optional="hide"/>
                 <field name="cliente_reserva_id" optional="show"/>
                 <field name="asesor_id" optional="show" widget="many2one_avatar_user"/>
-                <field name="reserva_inicio" optional="hide"/>
-                <field name="reserva_fin" optional="show"/>
                 <field name="comprobante" optional="hide"/>
                 <field name="fecha_comprobante" optional="hide"/>
+                <field name="reserva_inicio" optional="hide"/>
+                <field name="reserva_fin" optional="show"/>
                 <field name="ref_importacion" optional="hide"/>
                 <field name="fecha_ingreso" optional="show"/>
                 <field name="antiguedad_dias" optional="show"/>
                 <field name="costo_kardex" optional="hide"
                        groups="stock.group_stock_user"/>
+                <field name="codigo_barra" optional="hide"/>
+                <field name="precio_venta" optional="show"/>
+                <field name="location_id" string="Ubicacion de stock" optional="hide"/>
                 <field name="plancha_madre_id" optional="hide"/>
-                <field name="observaciones" optional="hide"/>
             </list>
         </field>
     </record>
@@ -148,11 +158,12 @@
             <list string="Planchas" default_order="product_id, name"
                   editable="bottom" open_form_view="1"
                   decoration-muted="estado == 'vendida'">
+                <field name="almacen_id" readonly="1"/>
+                <field name="ubicacion_ref" readonly="1"/>
+                <field name="codigo_sap" readonly="1" optional="show"/>
                 <field name="name" string="Nro. plancha" readonly="1"/>
                 <field name="product_id" string="Descripcion del material"
                        readonly="1"/>
-                <field name="location_id" string="Almacen" readonly="1"/>
-                <field name="ubicacion_ref" readonly="1"/>
                 <field name="condicion" widget="badge" readonly="1"
                        decoration-danger="condicion == 'hueso'"
                        decoration-info="condicion == 'oferta'"/>

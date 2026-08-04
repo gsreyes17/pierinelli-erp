@@ -91,6 +91,31 @@ class StockLot(models.Model):
         string='Estado', compute='_compute_estado', store=True, index=True)
     tipo_material = fields.Selection(
         related='product_id.tipo_material', store=True, string='Tipo material')
+
+    # --- Columnas de la tabla global del ERP anterior (Expectativas.md) ---
+    # Espejos del producto/ubicacion para que la tabla de planchas muestre
+    # TODAS las columnas que la empresa manejaba, sin ir ficha por ficha.
+    codigo_sap = fields.Char(
+        related='product_id.default_code', string='Codigo SAP')
+    # NO es related a location_id.warehouse_id: el location_id del lote queda
+    # vacio cuando el lote esta repartido en varias ubicaciones — exactamente
+    # el caso de una plancha vendida en parte (quant en Customers + sobrante en
+    # el almacen). Se calcula desde los quants INTERNOS, que es donde de verdad
+    # esta el material restante.
+    almacen_id = fields.Many2one(
+        'stock.warehouse', string='Almacen',
+        compute='_compute_almacen_id', store=True)
+    subfamilia_id = fields.Many2one(
+        related='product_id.categ_id', string='Subfamilia', store=True)
+    familia_id = fields.Many2one(
+        'product.category', related='product_id.categ_id.parent_id',
+        string='Familia', store=True)
+    precio_venta = fields.Float(
+        related='product_id.list_price', string='Precio (S//m²)')
+    codigo_barra = fields.Char(
+        'Codigo de barras',
+        help='Reservado para la futura integracion de etiquetas / lector de '
+             'codigo de barras. Hoy se puede llenar a mano si se desea.')
     ubicacion_ref = fields.Char(
         'Ubicacion referencial',
         help='Zona/rack donde buscar la plancha (ej. "Zona A · Rack 3"). '
@@ -180,6 +205,18 @@ class StockLot(models.Model):
                     'Plancha %(p)s: la pieza (%(pieza).2f m²) no cabe en la '
                     'plancha (%(total).2f m²).',
                     p=lot.name, pieza=lot.m2_por_pieza, total=lot.m2_neto))
+
+    @api.depends('quant_ids.quantity', 'quant_ids.location_id')
+    def _compute_almacen_id(self):
+        """Almacen donde queda material fisico de la plancha (quants internos
+        con stock). Si no queda nada (vendida entera), el ultimo almacen que
+        la tuvo, para que la fila no pierda la referencia."""
+        for lot in self:
+            internos = lot.quant_ids.filtered(
+                lambda q: q.location_id.usage == 'internal')
+            con_stock = internos.filtered(lambda q: q.quantity > 0)
+            quants = con_stock or internos
+            lot.almacen_id = quants[:1].location_id.warehouse_id
 
     @api.depends('m2_disponible', 'cliente_reserva_id', 'reserva_fin')
     def _compute_estado(self):

@@ -323,26 +323,133 @@ else:
 PYSHELL
 }
 
-# Guarda los adjuntos en la BD (sin disco persistente). Se hace ANTES del seed para
-# que las imagenes se escriban directo a la BD en transacciones pequenas (evita el
-# force_storage masivo que tumba la conexion SSL en Render free).
+# Guarda los adjuntos en la BD, porque Render free NO tiene disco persistente:
+# el filestore vive en el contenedor y desaparece en cada deploy/reinicio.
+#
+# Se hace por SQL y no con "odoo shell" a proposito: shell arranca el registro
+# completo (~30 s en free) solo para escribir una fila.
+#
+# CRITICO: hay que llamarlo ANTES de instalar los modulos. Todo adjunto creado
+# mientras el parametro no esta puesto se escribe en el filestore del disco; al
+# reiniciarse el contenedor esos ficheros ya no existen y la BD queda con filas
+# apuntando a la nada -> el log se llena de:
+#     FileNotFoundError: '/var/lib/odoo/filestore/<db>/xx/xxxxxxxx'
 set_attachments_db() {
     echo ">>> Configurando adjuntos en la BD ..."
-    odoo shell ${DB_ARGS} -d "${DB_NAME}" <<'PYSHELL'
-env['ir.config_parameter'].sudo().set_param('ir_attachment.location', 'db')
-env.cr.commit()
-PYSHELL
+    python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" <<'PYEOF'
+import sys, psycopg2
+host, port, user, pwd, db = sys.argv[1:6]
+c = psycopg2.connect(host=host, port=port, user=user, password=pwd, dbname=db)
+cur = c.cursor()
+cur.execute("""insert into ir_config_parameter(key, value)
+               values('ir_attachment.location', 'db')
+               on conflict(key) do update set value = excluded.value""")
+c.commit(); c.close()
+PYEOF
+}
+
+# Mueve a la BD los adjuntos que quedaron en el filestore de disco. Aun con el
+# orden corregido, la instalacion de 'base' crea unos pocos (banderas de idioma,
+# iconos de menu) ANTES de que exista ir_config_parameter. Hay que migrarlos EN
+# ESTE MISMO ARRANQUE, mientras sus ficheros todavia existen: tras un redeploy
+# ya no estarian (y los iconos de menu no se regeneran solos, a diferencia de
+# los bundles de assets).
+migrate_disk_attachments() {
+    python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" <<'PYEOF'
+import os
+import sys
+
+import psycopg2
+
+host, port, user, pwd, db = sys.argv[1:6]
+RAIZ = os.environ.get('ODOO_DATA_DIR', '/var/lib/odoo')
+
+c = psycopg2.connect(host=host, port=port, user=user, password=pwd, dbname=db)
+cur = c.cursor()
+cur.execute("SELECT id, store_fname FROM ir_attachment "
+            "WHERE store_fname IS NOT NULL")
+migrados = perdidos = 0
+for att_id, fname in cur.fetchall():
+    ruta = os.path.join(RAIZ, 'filestore', db, fname)
+    try:
+        with open(ruta, 'rb') as f:
+            datos = f.read()
+    except OSError:
+        perdidos += 1
+        continue
+    cur.execute("UPDATE ir_attachment SET db_datas = %s, store_fname = NULL "
+                "WHERE id = %s", (psycopg2.Binary(datos), att_id))
+    migrados += 1
+c.commit(); c.close()
+if migrados or perdidos:
+    print(">>> Adjuntos migrados del disco a la BD: %d (ilegibles: %d)"
+          % (migrados, perdidos))
+PYEOF
+}
+
+# Repara las BD que ya venian de antes: borra los bundles de assets cuyo fichero
+# se perdio con el filestore efimero. Son regenerables por definicion, asi que
+# Odoo los vuelve a crear (ya en la BD) al primer acceso; sin esto, cada arranque
+# escupe un traceback por cada uno. Solo se tocan adjuntos de assets
+# (res_model='ir.ui.view', res_id=0, public, url /web/assets/...) y solo si el
+# fichero REALMENTE no esta: nunca se borra un adjunto de negocio.
+repair_filestore() {
+    python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" <<'PYEOF'
+import os
+import sys
+
+import psycopg2
+
+host, port, user, pwd, db = sys.argv[1:6]
+RAIZ = os.environ.get('ODOO_DATA_DIR', '/var/lib/odoo')
+
+try:
+    c = psycopg2.connect(host=host, port=port, user=user, password=pwd,
+                         dbname=db, connect_timeout=10)
+except Exception as e:
+    print(">>> Reparacion de filestore omitida (sin conexion): %s" % e)
+    sys.exit(0)
+
+cur = c.cursor()
+cur.execute("""SELECT id, store_fname FROM ir_attachment
+                WHERE res_model = 'ir.ui.view' AND res_id = 0
+                  AND public = true AND url LIKE '/web/assets/%%'
+                  AND store_fname IS NOT NULL""")
+huerfanos = [
+    fila[0] for fila in cur.fetchall()
+    if not os.path.exists(os.path.join(RAIZ, 'filestore', db, fila[1]))
+]
+
+if huerfanos:
+    cur.execute("DELETE FROM ir_attachment WHERE id = ANY(%s)", (huerfanos,))
+    c.commit()
+    print(">>> Filestore: %d bundles de assets huerfanos eliminados "
+          "(Odoo los regenera solo)." % len(huerfanos))
+c.close()
+PYEOF
 }
 
 if [ "$INIT" != "yes" ]; then
-    echo ">>> Inicializando '${DB_NAME}': modulos + idioma (puede tardar) ..."
-    odoo ${DB_ARGS} -d "${DB_NAME}" -i "${MODULES}" --load-language=es_419 --stop-after-init
+    # 'base' primero y solo: crea ir_config_parameter para poder mandar los
+    # adjuntos a la BD ANTES de que la instalacion de los demas modulos genere
+    # los primeros ficheros en el filestore efimero (ver set_attachments_db).
+    echo ">>> Preparando '${DB_NAME}': modulo base ..."
+    odoo ${DB_ARGS} -d "${DB_NAME}" -i base --stop-after-init
     set_attachments_db
+    echo ">>> Instalando modulos + idioma (puede tardar) ..."
+    odoo ${DB_ARGS} -d "${DB_NAME}" -i "${MODULES}" --load-language=es_419 --stop-after-init
+    migrate_disk_attachments
     run_seed
     set_version
     set_reset_token
     echo ">>> Inicializacion completa."
 else
+    # BD anterior al cambio de orden: primero rescatar lo que aun exista en el
+    # disco de ESTE contenedor, luego limpiar los assets cuyo fichero ya se
+    # perdio (Odoo los regenera en la BD).
+    set_attachments_db
+    migrate_disk_attachments
+    repair_filestore
     # Limpieza de restos de hebrea_website (no-op si la BD ya esta limpia)
     cleanup_hebrea
     if [ "$(website_state)" = "installed" ]; then
@@ -352,7 +459,6 @@ else
     if [ "$STORED" != "$CODE_VERSION" ]; then
         echo ">>> Codigo nuevo (${CODE_VERSION}, antes '${STORED}') -> instalando/actualizando modulos ..."
         odoo ${DB_ARGS} -d "${DB_NAME}" -i "${MODULES}" -u "${MODULES}" --stop-after-init
-        set_attachments_db
         run_seed
         set_version
         set_reset_token
