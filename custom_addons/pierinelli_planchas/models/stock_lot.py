@@ -89,6 +89,14 @@ class StockLot(models.Model):
          ('reservada', 'Reservada'),
          ('vendida', 'Vendida')],
         string='Estado', compute='_compute_estado', store=True, index=True)
+    aptitud_comercial = fields.Selection(
+        [('vendible', 'Vendible'), ('liquidacion', 'Liquidacion'),
+         ('muestra', 'Muestra / no vendible'),
+         ('pendiente', 'Pendiente de revision')],
+        string='Aptitud comercial', default='vendible', required=True,
+        tracking=True, index=True,
+        help='Los retazos pequenos quedan pendientes hasta que Operaciones '
+             'defina si se venden en liquidacion o se usan como muestra.')
     tipo_material = fields.Selection(
         related='product_id.tipo_material', store=True, string='Tipo material')
 
@@ -140,6 +148,8 @@ class StockLot(models.Model):
     # ------------------------------------------------------------------
     cliente_reserva_id = fields.Many2one(
         'res.partner', string='Cliente', tracking=True)
+    reserva_pedido_id = fields.Many2one(
+        'sale.order', string='Pedido de reserva', readonly=True, copy=False)
     asesor_id = fields.Many2one(
         'res.users', string='Asesor', tracking=True,
         help='Vendedor que realizo la ultima accion (reserva o venta).')
@@ -283,6 +293,7 @@ class StockLot(models.Model):
             if lot.estado == 'vendida':
                 raise UserError(_(
                     'La plancha %s ya no tiene stock disponible.') % lot.name)
+            lot._check_disponible_comercial()
             lot.write({
                 'reserva_inicio': hoy,
                 'reserva_fin': hoy + timedelta(days=DIAS_RESERVA),
@@ -303,6 +314,7 @@ class StockLot(models.Model):
                 'cliente_reserva_id': False,
                 'reserva_inicio': False,
                 'reserva_fin': False,
+                'reserva_pedido_id': False,
             })
 
     # ------------------------------------------------------------------
@@ -314,12 +326,25 @@ class StockLot(models.Model):
         for lot in lots:
             dims = [d for d in (lot.largo, lot.alto) if d]
             if lot.plancha_madre_id and dims and min(dims) < RETAZO_MIN_M:
+                lot.aptitud_comercial = 'pendiente'
                 lot.message_post(body=_(
                     'Retazo pequenio: una dimension quedo por debajo de '
                     '%(min).2f m tras el corte. Considerar pasarlo a merma '
                     'o liquidacion en lugar de stock vendible.',
                     min=RETAZO_MIN_M))
         return lots
+
+    def _check_disponible_comercial(self):
+        """Una plancha natural requiere foto; un retazo pendiente no se ofrece."""
+        for lot in self:
+            if lot.tipo_material == 'natural' and not lot.image_1920:
+                raise UserError(_(
+                    'La plancha natural %s no puede reservarse ni venderse '
+                    'sin su foto individual.') % lot.name)
+            if lot.aptitud_comercial not in ('vendible', 'liquidacion'):
+                raise UserError(_(
+                    'La plancha %s no esta disponible comercialmente. '
+                    'Operaciones debe definir primero el destino del retazo.') % lot.name)
 
     # ------------------------------------------------------------------
     #  Tareas automaticas (crons)
@@ -359,5 +384,6 @@ class StockLot(models.Model):
             'cliente_reserva_id': False,
             'reserva_inicio': False,
             'reserva_fin': False,
+            'reserva_pedido_id': False,
         })
         return True

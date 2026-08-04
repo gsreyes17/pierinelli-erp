@@ -16,7 +16,7 @@ DB_PASSWORD="${DB_PASSWORD:-odoo}"
 DB_NAME="${DB_NAME:-pierinelli}"
 HTTP_PORT="${PORT:-8069}"
 CODE_VERSION="${RENDER_GIT_COMMIT:-${CODE_VERSION:-manual}}"
-MODULES="pierinelli_branding,pierinelli_data,pierinelli_pe,pierinelli_reportes,pierinelli_almacenes,pierinelli_planchas,web_responsive,mrp,crm,account_edi"
+MODULES="pierinelli_branding,pierinelli_data,pierinelli_pe,pierinelli_reportes,pierinelli_almacenes,pierinelli_planchas,web_responsive,mrp,crm,account_edi,stock_landed_costs"
 SEED_PATH="/usr/local/bin/seed_pe.py"
 
 DB_ARGS="--db_host=${DB_HOST} --db_port=${DB_PORT} --db_user=${DB_USER} --db_password=${DB_PASSWORD}"
@@ -429,6 +429,58 @@ c.close()
 PYEOF
 }
 
+# Los tableros estandar de Odoo guardan su definicion JSON como un adjunto.
+# Algunas BDs creadas antes de configurar ``ir_attachment.location = db``
+# conservan ese adjunto en el filestore efimero de Render. A diferencia de los
+# bundles, si se elimina sin mas el tablero queda sin JSON y responde 500.
+# Reponemos solamente los cuatro tableros distribuidos por Odoo desde los JSON
+# que ya vienen dentro de la imagen; no se toca ningun tablero creado por un
+# usuario ni adjuntos de negocio.
+repair_standard_dashboards() {
+    odoo shell ${DB_ARGS} -d "${DB_NAME}" <<'PYSHELL'
+import base64
+import os
+
+from odoo.tools import file_open
+
+dashboard_sources = {
+    'spreadsheet_dashboard_account.dashboard_invoicing':
+        'spreadsheet_dashboard_account/data/files/invoicing_dashboard.json',
+    'spreadsheet_dashboard_stock_account.spreadsheet_dashboard_warehouse_metrics':
+        'spreadsheet_dashboard_stock_account/data/files/warehouse_metrics_dashboard.json',
+    'spreadsheet_dashboard_sale.spreadsheet_dashboard_sales':
+        'spreadsheet_dashboard_sale/data/files/sales_dashboard.json',
+    'spreadsheet_dashboard_sale.spreadsheet_dashboard_product':
+        'spreadsheet_dashboard_sale/data/files/product_dashboard.json',
+}
+
+data_dir = '/var/lib/odoo'
+repaired = []
+for xmlid, source in dashboard_sources.items():
+    dashboard = env.ref(xmlid, raise_if_not_found=False)
+    if not dashboard:
+        continue
+    attachment = env['ir.attachment'].search([
+        ('res_model', '=', 'spreadsheet.dashboard'),
+        ('res_field', '=', 'spreadsheet_binary_data'),
+        ('res_id', '=', dashboard.id),
+    ], limit=1)
+    missing = not attachment or (
+        attachment.store_fname and not attachment.db_datas and
+        not os.path.exists(os.path.join(data_dir, 'filestore', env.cr.dbname,
+                                        attachment.store_fname))
+    )
+    if missing:
+        with file_open(source, 'rb') as stream:
+            dashboard.write({'spreadsheet_binary_data': base64.b64encode(stream.read())})
+        repaired.append(dashboard.name)
+
+if repaired:
+    env.cr.commit()
+    print('>>> Tableros estandar reparados en PostgreSQL: %s' % ', '.join(repaired))
+PYSHELL
+}
+
 if [ "$INIT" != "yes" ]; then
     # 'base' primero y solo: crea ir_config_parameter para poder mandar los
     # adjuntos a la BD ANTES de que la instalacion de los demas modulos genere
@@ -450,6 +502,7 @@ else
     set_attachments_db
     migrate_disk_attachments
     repair_filestore
+    repair_standard_dashboards
     # Limpieza de restos de hebrea_website (no-op si la BD ya esta limpia)
     cleanup_hebrea
     if [ "$(website_state)" = "installed" ]; then

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_picking_form_registrar_planchas" model="ir.ui.view">
+        <field name="name">stock.picking.form.registrar.planchas</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_registrar_planchas_recepcion" type="object"
+                        string="Registrar planchas recibidas" class="btn-primary"
+                        invisible="picking_type_code != 'incoming' or state in ('done', 'cancel')"
+                        groups="stock.group_stock_user"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_recepcion_planchas_form" model="ir.ui.view">
+        <field name="name">pierinelli.recepcion.planchas.form</field>
+        <field name="model">pierinelli.recepcion.planchas</field>
+        <field name="arch" type="xml">
+            <form string="Registrar planchas recibidas">
+                <sheet>
+                    <field name="picking_id"/>
+                    <p class="text-muted">Una fila representa planchas con las mismas medidas. Agrega filas si una llegada contiene medidas distintas. El total por producto debe coincidir con la recepcion.</p>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="move_id"/>
+                            <field name="product_id"/>
+                            <field name="cantidad_planchas"/>
+                            <field name="largo"/>
+                            <field name="alto"/>
+                            <field name="espesor"/>
+                            <field name="m2_por_plancha" readonly="1"/>
+                            <field name="m2_total" readonly="1"/>
+                            <field name="m2_recibidos" readonly="1"/>
+                            <field name="condicion"/>
+                            <field name="ubicacion_ref"/>
+                            <field name="ref_importacion"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button name="action_registrar" type="object" string="Registrar en la recepcion" class="btn-primary"/>
+                    <button string="Cancelar" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

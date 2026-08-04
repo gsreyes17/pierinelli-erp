@@ -35,6 +35,7 @@ class SaleOrderLine(models.Model):
         'stock.lot', string='Plancha',
         domain="[('product_id', '=', product_id),"
                " ('m2_disponible', '>', 0),"
+               " ('aptitud_comercial', 'in', ('vendible', 'liquidacion')),"
                " ('modo_venta', '=', unidad_venta)]",
         help='Plancha concreta que se aparta para este cliente. Vacio = '
              'el sistema elige cualquiera al entregar.')
@@ -55,6 +56,9 @@ class SaleOrderLine(models.Model):
         currency_field='currency_id',
         help='Precio unitario por m² multiplicado por los m² de cada losa. '
              'Es informativo: lo que se factura sigue siendo el precio por m².')
+    requiere_corte = fields.Boolean(
+        'Requiere corte',
+        help='No permite entregar esta linea hasta ejecutar su Orden de Corte.')
 
     @api.depends('price_unit', 'm2_por_pieza', 'unidad_venta')
     def _compute_precio_por_pieza(self):
@@ -108,10 +112,16 @@ class SaleOrderLine(models.Model):
                 line.cantidad_piezas * line.plancha_id.m2_por_pieza, 2)
 
     def _plancha_warehouse(self):
-        """Almacen donde esta fisicamente la plancha (via su ubicacion)."""
+        """Almacen donde esta fisicamente la plancha (desde los quants)."""
         self.ensure_one()
-        location = self.plancha_id.location_id
-        return location.warehouse_id if location else False
+        warehouses = self.plancha_id.quant_ids.filtered(
+            lambda q: q.location_id.usage == 'internal' and q.quantity > 0
+        ).mapped('location_id.warehouse_id')
+        if len(warehouses) > 1:
+            raise UserError(_(
+                'La plancha %s esta repartida entre sedes. Regularizala antes '
+                'de prometerla en un pedido.') % self.plancha_id.name)
+        return warehouses[:1]
 
     def _forzar_reserva_plancha(self):
         """Reemplaza la reserva automatica del picking por la plancha elegida."""
@@ -125,12 +135,17 @@ class SaleOrderLine(models.Model):
                     and q.quantity > 0)[:1]
                 if not quant:
                     continue
+                if move.product_uom_qty > plancha.m2_disponible + 0.01:
+                    raise UserError(_(
+                        'El pedido solicita %(pedido).2f m² de %(plancha)s, '
+                        'pero solo hay %(stock).2f m².',
+                        pedido=move.product_uom_qty, plancha=plancha.name,
+                        stock=plancha.m2_disponible))
                 move.move_line_ids.unlink()
                 move.move_line_ids = [(0, 0, {
                     'product_id': move.product_id.id,
                     'lot_id': plancha.id,
-                    'quantity': min(move.product_uom_qty,
-                                    plancha.m2_disponible),
+                    'quantity': move.product_uom_qty,
                     'location_id': quant.location_id.id,
                     'location_dest_id': move.location_dest_id.id,
                 })]
@@ -177,15 +192,24 @@ class SaleOrder(models.Model):
 
     def action_confirm(self):
         lineas_con_plancha = self.order_line.filtered('plancha_id')
+        cantidades = {}
+        for line in lineas_con_plancha:
+            cantidades[line.plancha_id.id] = cantidades.get(line.plancha_id.id, 0.0) + line.product_uom_qty
         # Validaciones ANTES de confirmar (si algo falla, no se crea nada)
         for line in lineas_con_plancha:
             plancha = line.plancha_id
+            plancha._check_disponible_comercial()
             if plancha.m2_disponible <= 0:
                 raise UserError(_(
                     'La plancha %s ya no tiene stock disponible. '
                     'Elige otra.') % plancha.name)
+            if cantidades[plancha.id] > plancha.m2_disponible + 0.01:
+                raise UserError(_(
+                    'Las lineas del pedido suman %(pedido).2f m² de %(plancha)s, '
+                    'pero solo hay %(stock).2f m².', pedido=cantidades[plancha.id],
+                    plancha=plancha.name, stock=plancha.m2_disponible))
             if (plancha.cliente_reserva_id
-                    and plancha.cliente_reserva_id != line.order_id.partner_id
+                    and plancha.reserva_pedido_id != line.order_id
                     and (not plancha.reserva_fin
                          or plancha.reserva_fin >= fields.Date.context_today(self))):
                 raise UserError(_(
@@ -214,6 +238,7 @@ class SaleOrder(models.Model):
             # 1) Reserva comercial en la ficha de la plancha (trazabilidad)
             plancha.write({
                 'cliente_reserva_id': line.order_id.partner_id.id,
+                'reserva_pedido_id': line.order_id.id,
                 'asesor_id': (line.order_id.user_id.id
                               or self.env.user.id),
                 'reserva_inicio': hoy,

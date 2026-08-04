@@ -42,6 +42,7 @@
                     <group>
                         <field name="tipo_material"/>
                         <field name="condicion"/>
+                        <field name="aptitud_comercial"/>
                         <field name="largo"/>
                         <field name="alto"/>
                         <field name="espesor"/>
@@ -73,6 +74,7 @@
                 <group name="reserva_venta" string="Reserva / Venta">
                     <group>
                         <field name="cliente_reserva_id"/>
+                        <field name="reserva_pedido_id"/>
                         <field name="asesor_id"/>
                         <field name="reserva_inicio"/>
                         <field name="reserva_fin"/>
@@ -113,6 +115,7 @@
                        decoration-info="condicion == 'oferta'"
                        decoration-warning="condicion == 'liquidacion'"
                        widget="badge"/>
+                <field name="aptitud_comercial" optional="show" widget="badge"/>
                 <field name="largo" optional="show"/>
                 <field name="alto" optional="show"/>
                 <field name="m2_neto" optional="show"/>
@@ -167,6 +170,7 @@
                 <field name="condicion" widget="badge" readonly="1"
                        decoration-danger="condicion == 'hueso'"
                        decoration-info="condicion == 'oferta'"/>
+                <field name="aptitud_comercial" widget="badge" readonly="1" optional="show"/>
                 <field name="largo" readonly="1"/>
                 <field name="alto" readonly="1"/>
                 <field name="m2_neto" string="Neto" readonly="1"/>

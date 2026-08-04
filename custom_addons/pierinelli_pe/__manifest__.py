@@ -16,7 +16,7 @@ habilitado y un OSE / modulo EDI de Enterprise u OCA). Es una simulacion funcion
     'author': 'Pierinelli',
     'website': 'https://pierinelli.com',
     'license': 'LGPL-3',
-    'depends': ['pierinelli_data', 'l10n_pe', 'purchase'],
+    'depends': ['pierinelli_data', 'l10n_pe', 'purchase', 'stock_landed_costs'],
     'data': [],
     'installable': True,
     'application': False,

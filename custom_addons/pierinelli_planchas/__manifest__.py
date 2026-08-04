@@ -35,6 +35,7 @@ Cada plancha fisica es un lote (stock.lot) de su producto:
         'views/stock_lot_views.xml',
         'views/sale_order_views.xml',
         'views/alta_planchas_views.xml',
+        'views/recepcion_planchas_views.xml',
         'views/orden_corte_views.xml',
         'views/stock_quant_views.xml',
         'report/orden_corte_report.xml',

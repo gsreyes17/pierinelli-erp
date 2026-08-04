@@ -15,6 +15,7 @@
                 <field name="unidad_venta" optional="show"/>
                 <field name="plancha_id" optional="show"
                        options="{'no_create': True}"/>
+                <field name="requiere_corte" optional="show"/>
                 <field name="plancha_m2" optional="hide"/>
                 <!-- Losas pre-cortadas: se captura en piezas y el sistema
                      convierte a m² (lo que realmente mueve el stock). -->

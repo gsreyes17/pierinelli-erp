@@ -9,3 +9,5 @@ access_orden_corte_linea_sale,pierinelli.orden.corte.linea.vendedor,model_pierin
 access_merma_stock,pierinelli.merma.stock,model_pierinelli_merma,stock.group_stock_user,1,1,1,0
 access_merma_sale,pierinelli.merma.vendedor.lectura,model_pierinelli_merma,sales_team.group_sale_salesman,1,0,0,0
 access_registrar_merma_stock,pierinelli.registrar.merma.stock,model_pierinelli_registrar_merma,stock.group_stock_user,1,1,1,1
+access_recepcion_planchas_stock,pierinelli.recepcion.planchas.stock,model_pierinelli_recepcion_planchas,stock.group_stock_user,1,1,1,1
+access_recepcion_planchas_linea_stock,pierinelli.recepcion.planchas.linea.stock,model_pierinelli_recepcion_planchas_linea,stock.group_stock_user,1,1,1,1

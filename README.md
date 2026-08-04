@@ -22,6 +22,7 @@ y dashboard "Panorama de Almacenes". Con datos de ejemplo reproducibles.
 | **[AVANCES_V2.md](AVANCES_V2.md)** | Registro de lo ya implementado del plan, bloque por bloque. |
 | **[GUIA.md](GUIA.md)** | Guión de demo y cómo usar cada módulo. |
 | **[GUIA_ALMACENES.md](GUIA_ALMACENES.md)** | Manual del inventario multi-sede. |
+| **[GUIA_OPERATIVA_FLUJO.md](GUIA_OPERATIVA_FLUJO.md)** | Operación diaria: compra, recepción por planchas, corte, entrega, factura y costos de importación. |
 | **[LOCAL.md](LOCAL.md)** | Ejecutar en local (Windows) + usuarios de ejemplo. |
 | **[RENDER.md](RENDER.md)** | Desplegar en la nube (Render / Docker / VPS). |
 
