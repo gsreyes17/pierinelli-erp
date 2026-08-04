@@ -52,8 +52,49 @@ reportes PDF generándose.
 > diseño que la empresa elija después).
 
 ## Empezar de cero (BD limpia en Render)
-Si cambiaste módulos/seed y quieres reinicializar limpio: **recrea la base PostgreSQL** en Render
-(o cambia `DB_NAME` en el blueprint). En el siguiente arranque el entrypoint inicializa todo desde cero.
+
+Para borrar los datos viejos **sin borrar la base en Render** (borrarla cambiaría el
+hostname y las credenciales, y habría que reconectar el servicio):
+
+1. Servicio **pierinelli-odoo** → **Environment** → añade una variable:
+   `RESET_DB` = `1`
+2. **Save changes** → Render redespliega solo. En los logs verás:
+   ```
+   >>> RESET_DB='1' (antes 'None'): BORRANDO el contenido de 'pierinelli' ...
+   >>> Base vaciada. Se reinstalara todo desde cero en este mismo arranque.
+   >>> Inicializando 'pierinelli': modulos + idioma ...
+   ```
+
+**`RESET_DB` es un token, no un interruptor.** El valor aplicado queda guardado en la
+propia BD y solo vuelve a borrar cuando **cambia**. Así, dejarse la variable puesta no
+destruye los datos en cada deploy — algo que sí pasaría con un simple on/off. Para
+limpiar otra vez, cambia el valor (`RESET_DB=2`).
+
+> No hace `DROP DATABASE`: en Render el rol no es dueño del clúster y además está
+> conectado a esa base. Recrea el esquema `public`, que la deja igual de vacía.
+
+---
+
+## Si el deploy falla
+
+### `could not translate host name "dpg-xxxxxxxx-a" ... Name or service not known`
+
+El contenedor **no encuentra** la base. No es usuario ni contraseña. En orden de
+probabilidad:
+
+1. **Regiones distintas.** El hostname interno que inyecta el blueprint solo resuelve
+   entre servicios de la **misma región**. Compara la región de `pierinelli-db` y de
+   `pierinelli-odoo` en el dashboard; si difieren, recrea el servicio en la región de
+   la base (o al revés). `render.yaml` ya fija `region: oregon` en ambos.
+2. **La base expiró o fue borrada.** El PostgreSQL free de Render caduca a los ~30 días.
+   Si ya no está en el dashboard, crea una nueva y vuelve a aplicar el blueprint.
+3. **El servicio web se creó a mano**, no por el blueprint, así que `DB_HOST` y compañía
+   no se rellenan solas. Aplica el Blueprint o define las 5 variables a mano.
+
+Si necesitas cruzar regiones a propósito, pon `DB_HOST` manualmente al hostname
+**externo** de la base (`dpg-xxxxxxxx-a.<region>-postgres.render.com`).
+
+El entrypoint distingue los dos casos y lo dice en los logs en vez de fallar mudo.
 
 ---
 

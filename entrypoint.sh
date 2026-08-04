@@ -23,22 +23,184 @@ DB_ARGS="--db_host=${DB_HOST} --db_port=${DB_PORT} --db_user=${DB_USER} --db_pas
 
 echo ">>> Esperando PostgreSQL en ${DB_HOST}:${DB_PORT} ..."
 python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" <<'PYEOF'
-import sys, time, psycopg2
+import socket
+import sys
+import time
+
+import psycopg2
+
 host, port, user, pwd, db = sys.argv[1:6]
+
 # En Render el usuario solo accede a SU base; probamos con la base del proyecto
 # y como respaldo con 'postgres'.
-last = None
+ultimo = None
+fallo_dns = False
+
 for _ in range(60):
+    # Separar "no resuelve el nombre" de "no conecta / credenciales": son
+    # problemas distintos y el mensaje generico no dejaba saber cual era.
+    try:
+        socket.getaddrinfo(host, None)
+        fallo_dns = False
+    except socket.gaierror as e:
+        fallo_dns, ultimo = True, e
+        time.sleep(2)
+        continue
+
     for dbname in (db, "postgres"):
         try:
             psycopg2.connect(host=host, port=port, user=user, password=pwd,
-                             dbname=dbname, connect_timeout=3).close()
-            print("PostgreSQL listo (%s)" % dbname); sys.exit(0)
+                             dbname=dbname, connect_timeout=5).close()
+            print("PostgreSQL listo (%s)" % dbname)
+            sys.exit(0)
         except Exception as e:
-            last = e
+            ultimo = e
     time.sleep(2)
-print("ERROR: no se pudo conectar a PostgreSQL: %s" % last); sys.exit(1)
+
+print("")
+print("=" * 68)
+if fallo_dns:
+    print("ERROR: el hostname '%s' NO RESUELVE." % host)
+    print("No es un problema de usuario ni de contrasena: el contenedor no")
+    print("encuentra la base. Causas, de mas a menos probable:")
+    print("")
+    print("  1. LA BASE Y EL SERVICIO WEB ESTAN EN REGIONES DISTINTAS.")
+    print("     El hostname interno (dpg-xxxxxxxx-a) solo resuelve dentro de")
+    print("     la MISMA region. Comprueba la region de los dos en Render y")
+    print("     ponlas iguales (ver 'region' en render.yaml).")
+    print("")
+    print("  2. La base fue borrada o expiro (el Postgres free de Render")
+    print("     caduca a los ~30 dias). Si ya no aparece en el dashboard,")
+    print("     crea una nueva y vuelve a aplicar el blueprint.")
+    print("")
+    print("  3. El servicio web se creo a mano y no por el blueprint, asi")
+    print("     que DB_HOST no se rellena solo.")
+    print("")
+    print("  ALTERNATIVA si necesitas cruzar regiones: en el dashboard, pon")
+    print("  DB_HOST manualmente al hostname EXTERNO de la base, con la forma")
+    print("  dpg-xxxxxxxx-a.<region>-postgres.render.com")
+else:
+    print("ERROR: el hostname resuelve pero no se pudo conectar.")
+    print("Revisa usuario, contrasena, puerto y que la base este activa.")
+print("Ultimo error: %s" % ultimo)
+print("=" * 68)
+sys.exit(1)
 PYEOF
+
+# ============================================================
+#  Reset opcional de la BD (RESET_DB)
+# ------------------------------------------------------------
+#  Para volver a empezar con datos limpios SIN borrar la base en Render (que
+#  cambiaria el hostname y las credenciales). Se pone RESET_DB con cualquier
+#  valor en las variables de entorno del servicio.
+#
+#  Funciona como TOKEN, no como interruptor: el valor usado queda guardado en
+#  la BD y solo se borra cuando CAMBIA. Asi, dejarse RESET_DB=1 puesto no
+#  destruye los datos en cada deploy; para borrar otra vez se pone otro valor
+#  (RESET_DB=2). Sin esto, olvidarse la variable puesta seria una bomba.
+#
+#  No se hace DROP DATABASE porque en Render el rol no es dueno del cluster y
+#  ademas estaria conectado a ella.
+#
+#  TAMPOCO se hace "DROP SCHEMA public CASCADE": Odoo tiene ~900 tablas y ese
+#  CASCADE las borra en UNA transaccion, tomando un lock por objeto. Postgres
+#  se queda sin tabla de locks y aborta con:
+#      OutOfMemory: out of shared memory
+#      HINT: You might need to increase max_locks_per_transaction
+#  En Render ese parametro es gestionado y no se puede subir. Por eso se borra
+#  POR LOTES, cada lote en su propia transaccion (autocommit).
+# ============================================================
+if [ -n "${RESET_DB}" ]; then
+    python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" "$RESET_DB" <<'PYEOF'
+import sys
+
+import psycopg2
+from psycopg2 import sql
+
+host, port, user, pwd, db, token = sys.argv[1:7]
+
+try:
+    con = psycopg2.connect(host=host, port=port, user=user, password=pwd,
+                           dbname=db, connect_timeout=10)
+except Exception as e:
+    print(">>> RESET_DB omitido (no se pudo conectar): %s" % e)
+    sys.exit(0)
+
+con.autocommit = True
+cur = con.cursor()
+
+# ¿Ya se aplico este mismo token? Entonces no hay nada que borrar.
+anterior = None
+try:
+    cur.execute("SELECT value FROM ir_config_parameter "
+                "WHERE key = 'pierinelli.reset_token'")
+    fila = cur.fetchone()
+    anterior = fila[0] if fila else None
+except Exception:
+    con.rollback()  # la tabla aun no existe: base vacia
+
+if anterior == token:
+    print(">>> RESET_DB='%s' ya aplicado antes; no se borra nada." % token)
+    con.close()
+    sys.exit(0)
+
+print(">>> RESET_DB='%s' (antes '%s'): BORRANDO el contenido de '%s' ..."
+      % (token, anterior, db))
+
+LOTE = 50          # objetos por transaccion: holgado para max_locks_per_transaction
+MAX_VUELTAS = 40   # tope de seguridad para no girar indefinidamente
+
+
+def listar(consulta):
+    cur.execute(consulta)
+    return [fila[0] for fila in cur.fetchall()]
+
+
+def borrar_en_lotes(nombres, tipo):
+    """DROP por lotes; cada lote es su propia transaccion (autocommit)."""
+    for i in range(0, len(nombres), LOTE):
+        grupo = nombres[i:i + LOTE]
+        cur.execute(sql.SQL("DROP {} IF EXISTS {} CASCADE").format(
+            sql.SQL(tipo),
+            sql.SQL(", ").join(sql.Identifier("public", n) for n in grupo)))
+
+
+SQL_TABLAS = "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+SQL_VISTAS = ("SELECT table_name FROM information_schema.views "
+              "WHERE table_schema = 'public'")
+SQL_SECUENCIAS = ("SELECT sequence_name FROM information_schema.sequences "
+                  "WHERE sequence_schema = 'public'")
+SQL_TIPOS = ("SELECT t.typname FROM pg_type t "
+             "JOIN pg_namespace n ON n.oid = t.typnamespace "
+             "WHERE n.nspname = 'public' AND t.typtype = 'e'")
+
+# Las vistas primero (dependen de tablas). Luego tablas, repitiendo: un CASCADE
+# puede arrastrar objetos y cambiar lo que queda.
+borrar_en_lotes(listar(SQL_VISTAS), "VIEW")
+
+total = 0
+for vuelta in range(MAX_VUELTAS):
+    tablas = listar(SQL_TABLAS)
+    if not tablas:
+        break
+    total += len(tablas)
+    borrar_en_lotes(tablas, "TABLE")
+else:
+    print(">>> AVISO: quedaron tablas sin borrar tras %d vueltas." % MAX_VUELTAS)
+
+borrar_en_lotes(listar(SQL_SECUENCIAS), "SEQUENCE")
+borrar_en_lotes(listar(SQL_TIPOS), "TYPE")
+
+restantes = len(listar(SQL_TABLAS))
+con.close()
+if restantes:
+    print(">>> ERROR: siguen existiendo %d tablas; no se vacio la base."
+          % restantes)
+    sys.exit(1)
+print(">>> Base vaciada (%d tablas). Se reinstalara todo desde cero en este "
+      "mismo arranque." % total)
+PYEOF
+fi
 
 # ¿La BD ya esta inicializada?
 INIT=$(python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" <<'PYEOF'
@@ -78,6 +240,21 @@ c = psycopg2.connect(host=host, port=port, user=user, password=pwd, dbname=db)
 cur = c.cursor()
 cur.execute("""insert into ir_config_parameter(key, value) values('pierinelli.code_version', %s)
                on conflict(key) do update set value=excluded.value""", (ver,))
+c.commit(); c.close()
+PYEOF
+}
+
+# Deja constancia del RESET_DB ya aplicado, para que el mismo valor no vuelva a
+# borrar la base en el siguiente deploy (ver el bloque RESET_DB de mas arriba).
+set_reset_token() {
+    [ -n "${RESET_DB}" ] || return 0
+    python3 - "$DB_HOST" "$DB_PORT" "$DB_USER" "$DB_PASSWORD" "$DB_NAME" "$RESET_DB" <<'PYEOF'
+import sys, psycopg2
+host, port, user, pwd, db, token = sys.argv[1:7]
+c = psycopg2.connect(host=host, port=port, user=user, password=pwd, dbname=db)
+cur = c.cursor()
+cur.execute("""insert into ir_config_parameter(key, value) values('pierinelli.reset_token', %s)
+               on conflict(key) do update set value=excluded.value""", (token,))
 c.commit(); c.close()
 PYEOF
 }
@@ -163,6 +340,7 @@ if [ "$INIT" != "yes" ]; then
     set_attachments_db
     run_seed
     set_version
+    set_reset_token
     echo ">>> Inicializacion completa."
 else
     # Limpieza de restos de hebrea_website (no-op si la BD ya esta limpia)
@@ -177,9 +355,13 @@ else
         set_attachments_db
         run_seed
         set_version
+        set_reset_token
         echo ">>> Actualizacion completa."
     else
         echo ">>> Codigo sin cambios, omitiendo actualizacion."
+        # El token se guarda igualmente: si la BD ya estaba limpia y no hubo
+        # cambios de codigo, RESET_DB no debe re-disparar en el proximo deploy.
+        set_reset_token
     fi
 fi
 

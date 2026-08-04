@@ -5,17 +5,26 @@
 # inicializacion puede ser lenta o fallar por memoria. Si falla, sube el
 # servicio web a plan "starter" solo para el primer arranque (ver RENDER.md).
 
+# IMPORTANTE — LA REGION DEBE SER LA MISMA EN AMBOS SERVICIOS.
+# El blueprint inyecta el hostname INTERNO de la base (dpg-xxxxxxxx-a), y ese
+# nombre SOLO resuelve entre servicios de la misma region. Si no coinciden, el
+# contenedor falla con:
+#     could not translate host name "dpg-xxxxxxxx-a" to address:
+#     Name or service not known
+# Si cambias de region, cambiala en los DOS sitios.
 databases:
   - name: pierinelli-db
     databaseName: pierinelli
     user: odoo
     plan: free            # Postgres gratis (expira ~30 dias)
+    region: oregon
 
 services:
   - type: web
     name: pierinelli-odoo
     runtime: docker
     plan: free            # 512MB RAM, se suspende tras inactividad
+    region: oregon        # <-- debe coincidir con la de la base
     healthCheckPath: /web/health
     envVars:
       - key: DB_HOST
