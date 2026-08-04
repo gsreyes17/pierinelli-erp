@@ -159,6 +159,12 @@ inventario = cta. 201 = dashboard = reporte de almacén · Balance cuadra 0.00 �
    vender 1.5 m² de una plancha); producto-por-plancha rompe el costo promedio.
 2. **UoM siempre m²**: el factor de conversión de UoM es global en Odoo — no
    puede haber "1 plancha = X m²" variable. Las medidas viven en la ficha.
+   *Corolario (venta en losas):* por eso las **losas pre-cortadas** NO son una
+   unidad de medida sino una capa de conteo sobre los m². La plancha declara su
+   `modo_venta` (m² / piezas) y el tamaño de pieza; `piezas_disponibles` se
+   almacena para poder filtrar por SQL. La línea de venta captura piezas y
+   convierte a m², que es lo único que toca stock, AVCO y contabilidad. El
+   precio por pieza se deriva del precio por m².
 3. **Ubicación referencial = texto libre** (decisión del cliente): no se mueve
    stock entre racks, solo se necesita saber dónde buscar.
 4. **Merma en zona propia** (decisión del cliente), no subproducto MRP: sale del

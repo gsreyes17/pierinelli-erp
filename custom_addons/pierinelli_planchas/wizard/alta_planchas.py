@@ -6,6 +6,8 @@ El almacenero escribe "20 planchas de 3.40 x 1.65" y el sistema genera los
 lotes CIG1025.01 ... CIG1025.20 con sus medidas y su stock, de un golpe.
 Las que midan distinto se corrigen despues en su ficha.
 """
+import math
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -32,17 +34,33 @@ class AltaPlanchas(models.TransientModel):
         string='Condicion', default='estandar', required=True)
     ubicacion_ref = fields.Char('Ubicacion referencial')
     ref_importacion = fields.Char('Ref. importacion')
+    modo_venta = fields.Selection(
+        [('m2', 'Por m² (a medida)'),
+         ('piezas', 'Losas pre-cortadas')],
+        string='Formato de venta', default='m2', required=True,
+        help='Se aplica a todas las planchas del alta. Se puede cambiar '
+             'despues plancha por plancha.')
+    pieza_largo = fields.Float('Pieza: largo (m)', digits=(6, 2))
+    pieza_alto = fields.Float('Pieza: alto (m)', digits=(6, 2))
     m2_por_plancha = fields.Float(
         'm² por plancha', compute='_compute_m2', digits=(8, 2))
     m2_total = fields.Float('m² total', compute='_compute_m2', digits=(8, 2))
+    piezas_por_plancha = fields.Integer(
+        'Losas por plancha', compute='_compute_m2',
+        help='Cuantas losas completas salen de cada plancha.')
     codigos_preview = fields.Char(
         'Codigos a generar', compute='_compute_preview')
 
-    @api.depends('largo', 'alto', 'cantidad')
+    @api.depends('largo', 'alto', 'cantidad', 'modo_venta',
+                 'pieza_largo', 'pieza_alto')
     def _compute_m2(self):
         for wiz in self:
             wiz.m2_por_plancha = round((wiz.largo or 0) * (wiz.alto or 0), 2)
             wiz.m2_total = round(wiz.m2_por_plancha * (wiz.cantidad or 0), 2)
+            m2_pieza = (wiz.pieza_largo or 0) * (wiz.pieza_alto or 0)
+            wiz.piezas_por_plancha = (
+                int(math.floor(wiz.m2_por_plancha / m2_pieza + 1e-6))
+                if wiz.modo_venta == 'piezas' and m2_pieza > 0 else 0)
 
     @api.depends('product_id', 'cantidad')
     def _compute_preview(self):
@@ -63,6 +81,17 @@ class AltaPlanchas(models.TransientModel):
             raise UserError(_('El numero de planchas debe ser mayor a cero.'))
         if self.largo <= 0 or self.alto <= 0:
             raise UserError(_('Largo y alto deben ser mayores a cero.'))
+        if self.modo_venta == 'piezas':
+            if self.pieza_largo <= 0 or self.pieza_alto <= 0:
+                raise UserError(_(
+                    'En "Losas pre-cortadas" hay que indicar el largo y el '
+                    'alto de la pieza.'))
+            if not self.piezas_por_plancha:
+                raise UserError(_(
+                    'La pieza de %(pl).2f x %(pa).2f m no cabe en una plancha '
+                    'de %(m).2f m².',
+                    pl=self.pieza_largo, pa=self.pieza_alto,
+                    m=self.m2_por_plancha))
 
         Lot = self.env['stock.lot']
         Quant = self.env['stock.quant']
@@ -85,6 +114,9 @@ class AltaPlanchas(models.TransientModel):
                 'ubicacion_ref': self.ubicacion_ref,
                 'ref_importacion': self.ref_importacion,
                 'fecha_ingreso': hoy,
+                'modo_venta': self.modo_venta,
+                'pieza_largo': self.pieza_largo,
+                'pieza_alto': self.pieza_alto,
             })
             # La foto individual es para naturales; en artificiales todas
             # comparten la imagen del producto, que ya esta en el catalogo.

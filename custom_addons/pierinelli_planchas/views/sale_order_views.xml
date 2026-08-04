@@ -10,9 +10,19 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='order_line']/list//field[@name='product_uom_qty']"
                    position="before">
+                <!-- unidad_venta debe estar en la vista aunque se oculte: el
+                     dominio de plancha_id la referencia y sin ella no evalua. -->
+                <field name="unidad_venta" optional="show"/>
                 <field name="plancha_id" optional="show"
                        options="{'no_create': True}"/>
                 <field name="plancha_m2" optional="hide"/>
+                <!-- Losas pre-cortadas: se captura en piezas y el sistema
+                     convierte a m² (lo que realmente mueve el stock). -->
+                <field name="cantidad_piezas" optional="show"
+                       readonly="unidad_venta != 'piezas'"/>
+                <field name="m2_por_pieza" optional="hide"/>
+                <field name="piezas_disponibles" optional="hide"/>
+                <field name="precio_por_pieza" optional="hide"/>
             </xpath>
             <!-- Pedido <-> Ordenes de Corte -->
             <xpath expr="//div[@name='button_box']" position="inside">

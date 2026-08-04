@@ -27,7 +27,16 @@
         padding: 16px 22px;
         margin-bottom: 16px;
 
-        h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: .3px; }
+        // Bootstrap 5.3 aplica `h1 { color: var(--bs-heading-color) }` y Odoo fija
+        // esa variable en negro ($o-main-headings-color: $o-black), lo que PISA el
+        // `color: #fff` heredado de aqui -> titulo negro sobre fondo negro.
+        // Se redefine la variable en el propio bloque, no basta con `color`.
+        --bs-heading-color: #{$gold};
+
+        h1 {
+            margin: 0; font-size: 22px; font-weight: 700; letter-spacing: .3px;
+            color: $gold;
+        }
         .o_pier_sub { color: $gold; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
 
         .o_pier_totals { display: flex; gap: 26px; }

@@ -16,6 +16,7 @@ No modifica ningun modulo del core; todo se aplica por herencia de assets/planti
     'license': 'LGPL-3',
     'depends': ['web'],
     'data': [
+        'data/report_layout.xml',
         'views/login_templates.xml',
     ],
     'assets': {

@@ -7,12 +7,29 @@
         <field name="tag">pierinelli_almacenes.dashboard</field>
     </record>
 
-    <!-- Menú dentro de Inventario, como primera opción -->
+    <!-- Menú dentro de Inventario, como primera opción.
+         sequence 0 igual que "Información general" (stock.stock_picking_type_menu),
+         que se desplaza a 1 justo debajo. -->
     <menuitem id="menu_warehouse_dashboard"
               name="Panorama de Almacenes"
               parent="stock.menu_stock_root"
               action="action_warehouse_dashboard"
-              sequence="1"
+              sequence="0"
               groups="stock.group_stock_user"/>
+
+    <record id="stock.stock_picking_type_menu" model="ir.ui.menu">
+        <field name="sequence">1</field>
+    </record>
+
+    <!-- La app Inventario abre directamente el Panorama.
+         Odoo solo navega a la acción PROPIA del menú raíz (menu_service.selectMenu
+         retorna si no hay actionID; no desciende a los hijos), así que hay que
+         asignarla aquí. Se usa <record> y no <menuitem> a propósito: el parser de
+         menuitem reescribiría también 'name' con el nombre de la acción y
+         renombraría la app "Inventario". -->
+    <record id="stock.menu_stock_root" model="ir.ui.menu">
+        <field name="action"
+               eval="'ir.actions.client,' + str(ref('pierinelli_almacenes.action_warehouse_dashboard'))"/>
+    </record>
 
 </odoo>

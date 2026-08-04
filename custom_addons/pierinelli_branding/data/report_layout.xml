@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Diseño de documento de la compañía, pre-configurado.
+
+        Sin esto, ir_actions_report.report_action() devuelve el asistente
+        "Configura el diseño de tu documento" EN LUGAR del PDF la primera vez
+        que un administrador imprime cualquier reporte:
+
+            if self.env.is_admin() and not self.env.company.external_report_layout_id \
+                    and config and not discard_logo_check:
+                return self._action_configure_external_report_layout(report_action)
+
+        En una instalacion nueva (Render, VPS, BD recreada) eso hace que el
+        primer intento de imprimir no entregue el documento. Dejandolo fijado
+        aqui, los 17 reportes con marca y las facturas imprimen al primer clic.
+
+        noupdate: se aplica al instalar y NO se vuelve a pisar en los redeploys,
+        para respetar el diseño que la empresa elija despues.
+    -->
+    <data noupdate="1">
+        <record id="base.main_company" model="res.company">
+            <field name="external_report_layout_id" ref="web.external_layout_standard"/>
+        </record>
+    </data>
+</odoo>

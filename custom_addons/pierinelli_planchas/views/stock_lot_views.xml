@@ -48,6 +48,17 @@
                         <field name="m2_bruto"/>
                         <field name="m2_neto"/>
                         <field name="m2_disponible"/>
+                        <field name="modo_venta" widget="radio"/>
+                        <field name="pieza_largo"
+                               invisible="modo_venta != 'piezas'"
+                               required="modo_venta == 'piezas'"/>
+                        <field name="pieza_alto"
+                               invisible="modo_venta != 'piezas'"
+                               required="modo_venta == 'piezas'"/>
+                        <field name="m2_por_pieza"
+                               invisible="modo_venta != 'piezas'"/>
+                        <field name="piezas_disponibles"
+                               invisible="modo_venta != 'piezas'"/>
                     </group>
                     <group>
                         <field name="ubicacion_ref"/>
@@ -104,6 +115,9 @@
                 <field name="m2_neto" optional="show"/>
                 <field name="m2_bruto" optional="hide"/>
                 <field name="m2_disponible" string="Stock (m²)" optional="show"/>
+                <field name="modo_venta" optional="show" widget="badge"/>
+                <field name="m2_por_pieza" optional="hide"/>
+                <field name="piezas_disponibles" optional="hide"/>
                 <field name="estado" widget="badge" optional="show"
                        decoration-success="estado == 'disponible'"
                        decoration-warning="estado == 'reservada'"/>
@@ -146,6 +160,12 @@
                 <field name="alto" readonly="1"/>
                 <field name="m2_neto" string="Neto" readonly="1"/>
                 <field name="m2_disponible" string="Stock (m²)" readonly="1"/>
+                <field name="modo_venta" string="Formato" widget="badge"
+                       readonly="1" optional="show"/>
+                <field name="m2_por_pieza" string="m²/pieza" readonly="1"
+                       optional="hide"/>
+                <field name="piezas_disponibles" string="Piezas" readonly="1"
+                       optional="show"/>
                 <field name="estado" widget="badge"
                        decoration-success="estado == 'disponible'"
                        decoration-warning="estado == 'reservada'"/>
@@ -187,7 +207,17 @@
                         domain="[('tipo_material', '=', 'natural')]"/>
                 <filter name="artificiales" string="Artificiales"
                         domain="[('tipo_material', '=', 'artificial')]"/>
+                <separator/>
+                <!-- Filtrar por como se vende la plancha (m2 o losas). -->
+                <filter name="venta_m2" string="Se vende por m²"
+                        domain="[('modo_venta', '=', 'm2')]"/>
+                <filter name="venta_piezas" string="Losas pre-cortadas"
+                        domain="[('modo_venta', '=', 'piezas')]"/>
+                <filter name="con_piezas" string="Con losas disponibles"
+                        domain="[('piezas_disponibles', '>', 0)]"/>
                 <group>
+                    <filter name="group_modo_venta" string="Formato de venta"
+                            context="{'group_by': 'modo_venta'}"/>
                     <filter name="group_product" string="Producto"
                             context="{'group_by': 'product_id'}"/>
                     <filter name="group_location" string="Ubicacion"

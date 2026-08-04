@@ -36,6 +36,21 @@ Cuando el health check `/web/health` pase a verde, entra por la URL pública.
 El `entrypoint.sh` detecta el commit nuevo (`RENDER_GIT_COMMIT`) y corre `-i/-u` + el seed
 automáticamente. Para actualizar: solo `git push`.
 
+## Verificado en local con Docker
+
+El mismo `Dockerfile` + `entrypoint.sh` se probaron con un deploy limpio
+(`docker compose up --build` con volúmenes borrados), que es la ruta exacta del
+primer arranque de Render. Resultado: módulos instalados, seed completo
+(247 planchas · S/ 980,948.33), `/web/health` → `{"status": "pass"}` y los
+reportes PDF generándose.
+
+> **Ojo con el diseño de documento.** `report_action()` de Odoo devuelve el asistente
+> *"Configura el diseño de tu documento"* **en lugar del PDF** si el administrador
+> imprime y la compañía no tiene `external_report_layout_id`. En una BD nueva eso
+> pasaba siempre en el primer intento. Se dejó pre-configurado en
+> `pierinelli_branding/data/report_layout.xml` (con `noupdate`, para no pisar el
+> diseño que la empresa elija después).
+
 ## Empezar de cero (BD limpia en Render)
 Si cambiaste módulos/seed y quieres reinicializar limpio: **recrea la base PostgreSQL** en Render
 (o cambia `DB_NAME` en el blueprint). En el siguiente arranque el entrypoint inicializa todo desde cero.

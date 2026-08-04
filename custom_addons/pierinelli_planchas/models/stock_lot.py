@@ -6,10 +6,11 @@ Cada plancha fisica es un lote (stock.lot) de su producto. El producto sigue
 siendo el tipo de piedra (catalogo, precio, costo promedio); el lote es la
 plancha concreta (codigo interno, medidas, foto, ubicacion, condicion, reserva).
 """
+import math
 from datetime import timedelta
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 # Dimension minima (en metros) bajo la cual un retorno de corte se considera
 # retazo y el sistema sugiere mandarlo a merma o liquidacion (Plan V2 §7.1).
@@ -45,6 +46,32 @@ class StockLot(models.Model):
         help='Existencia fisica actual de la plancha (suma de sus quants '
              'en ubicaciones internas). Almacenado para poder ordenar y '
              'agrupar en listados grandes.')
+
+    # ------------------------------------------------------------------
+    #  Formato de venta: a granel por m2, o en losas pre-cortadas
+    # ------------------------------------------------------------------
+    #  El stock SIEMPRE se mueve en m2 (ver decision 2 del Plan V2: el factor
+    #  de conversion de UoM en Odoo es global, y cada plancha tiene distintos
+    #  m2, asi que no puede existir una unidad "losa"). Las piezas son una capa
+    #  de conteo y precio encima de los m2: no tocan quants, kardex ni AVCO.
+    modo_venta = fields.Selection(
+        [('m2', 'Por m² (a medida)'),
+         ('piezas', 'Losas pre-cortadas')],
+        string='Formato de venta', default='m2', required=True, index=True,
+        tracking=True,
+        help='Como se comercializa esta plancha. "Por m²": se corta a la '
+             'medida que pida el cliente. "Losas pre-cortadas": se vende en '
+             'piezas de un tamano fijo.')
+    pieza_largo = fields.Float('Pieza: largo (m)', digits=(6, 2))
+    pieza_alto = fields.Float('Pieza: alto (m)', digits=(6, 2))
+    m2_por_pieza = fields.Float(
+        'm² por pieza', compute='_compute_piezas', store=True, digits=(8, 4),
+        help='Superficie de cada losa pre-cortada.')
+    piezas_disponibles = fields.Integer(
+        'Piezas disponibles', compute='_compute_piezas', store=True,
+        help='Cuantas losas completas salen del stock actual. ALMACENADO a '
+             'proposito: los campos calculados no se pueden usar en dominios '
+             'SQL, y este se necesita para filtrar planchas al vender.')
 
     # ------------------------------------------------------------------
     #  Clasificacion y situacion
@@ -121,6 +148,38 @@ class StockLot(models.Model):
             lot.m2_disponible = sum(
                 q.quantity for q in lot.quant_ids
                 if q.location_id.usage == 'internal')
+
+    @api.depends('modo_venta', 'pieza_largo', 'pieza_alto', 'm2_disponible')
+    def _compute_piezas(self):
+        """m2 por losa y cuantas losas completas quedan en la plancha."""
+        for lot in self:
+            if lot.modo_venta != 'piezas':
+                lot.m2_por_pieza = 0.0
+                lot.piezas_disponibles = 0
+                continue
+            m2 = round((lot.pieza_largo or 0.0) * (lot.pieza_alto or 0.0), 4)
+            lot.m2_por_pieza = m2
+            # Solo piezas ENTERAS: si sobran 0.97 de losa, esa losa no existe,
+            # asi que se trunca (floor), no se redondea. El epsilon evita que
+            # un 15.999999 por error de coma flotante se quede en 15.
+            lot.piezas_disponibles = (
+                int(math.floor((lot.m2_disponible or 0.0) / m2 + 1e-6))
+                if m2 > 0 else 0)
+
+    @api.constrains('modo_venta', 'pieza_largo', 'pieza_alto', 'm2_neto')
+    def _check_pieza(self):
+        for lot in self:
+            if lot.modo_venta != 'piezas':
+                continue
+            if lot.pieza_largo <= 0 or lot.pieza_alto <= 0:
+                raise ValidationError(_(
+                    'Plancha %s: en "Losas pre-cortadas" hay que indicar el '
+                    'largo y el alto de la pieza.') % lot.name)
+            if lot.m2_neto and lot.m2_por_pieza > lot.m2_neto:
+                raise ValidationError(_(
+                    'Plancha %(p)s: la pieza (%(pieza).2f m²) no cabe en la '
+                    'plancha (%(total).2f m²).',
+                    p=lot.name, pieza=lot.m2_por_pieza, total=lot.m2_neto))
 
     @api.depends('m2_disponible', 'cliente_reserva_id', 'reserva_fin')
     def _compute_estado(self):

@@ -70,6 +70,37 @@ class AccountMove(models.Model):
         'Tasa aplicada (S/ por USD)', digits=(12, 4), copy=False,
         readonly=True, tracking=True)
 
+    # Estado abierto/cerrado del panel de tipo de cambio en la factura.
+    # Calculado y NO almacenado: al elegir un origen la dependencia cambia, el
+    # compute se reevalua y el panel se pliega solo (readonly=False permite que
+    # el usuario lo vuelva a abrir sin guardar el documento).
+    mostrar_opciones_tasa = fields.Boolean(
+        string='Cambiar tasa',
+        compute='_compute_mostrar_opciones_tasa',
+        readonly=False, store=False, copy=False,
+        help='Muestra u oculta las opciones de tipo de cambio. Se pliega solo '
+             'al elegir un origen.')
+
+    # Resumen de una linea ("SUNAT venta - 3.7520 S/ por USD") para que el panel
+    # plegado siga diciendo que tasa se aplico sin repetir origen_tasa en la
+    # vista (un mismo campo dos veces en un form dispara warning de Odoo).
+    resumen_tasa = fields.Char(compute='_compute_resumen_tasa')
+
+    @api.depends('origen_tasa')
+    def _compute_mostrar_opciones_tasa(self):
+        for move in self:
+            move.mostrar_opciones_tasa = not move.origen_tasa
+
+    @api.depends('origen_tasa', 'tasa_aplicada')
+    def _compute_resumen_tasa(self):
+        etiquetas = dict(self._fields['origen_tasa'].selection)
+        for move in self:
+            if move.origen_tasa and move.tasa_aplicada:
+                move.resumen_tasa = '%s · %.4f S/ por USD' % (
+                    etiquetas.get(move.origen_tasa, ''), move.tasa_aplicada)
+            else:
+                move.resumen_tasa = False
+
     @api.onchange('origen_tasa', 'invoice_date')
     def _onchange_origen_tasa(self):
         for move in self:

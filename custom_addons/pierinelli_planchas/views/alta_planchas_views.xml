@@ -35,6 +35,21 @@
                                    placeholder="IMP-2026-07"/>
                         </group>
                     </group>
+                    <group string="Como se vendera">
+                        <group>
+                            <field name="modo_venta" widget="radio"/>
+                            <field name="pieza_largo"
+                                   invisible="modo_venta != 'piezas'"
+                                   required="modo_venta == 'piezas'"/>
+                            <field name="pieza_alto"
+                                   invisible="modo_venta != 'piezas'"
+                                   required="modo_venta == 'piezas'"/>
+                        </group>
+                        <group>
+                            <field name="piezas_por_plancha"
+                                   invisible="modo_venta != 'piezas'"/>
+                        </group>
+                    </group>
                     <group>
                         <group>
                             <field name="m2_por_plancha"/>

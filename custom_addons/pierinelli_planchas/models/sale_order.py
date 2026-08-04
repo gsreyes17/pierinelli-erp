@@ -22,20 +22,90 @@ from .stock_lot import DIAS_RESERVA
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
+    # Unidad en la que el cliente quiere comprar. NO es una unidad de medida de
+    # Odoo (el stock siempre se mueve en m²); solo filtra que planchas se
+    # ofrecen y como se captura la cantidad. Ver _compute_piezas en stock_lot.
+    unidad_venta = fields.Selection(
+        [('m2', 'Por m² (a medida)'),
+         ('piezas', 'Losas pre-cortadas')],
+        string='Unidad deseada', default='m2',
+        help='Filtra las planchas segun como se vendan. Las losas '
+             'pre-cortadas se cotizan por pieza; el sistema convierte a m².')
     plancha_id = fields.Many2one(
         'stock.lot', string='Plancha',
         domain="[('product_id', '=', product_id),"
-               " ('m2_disponible', '>', 0)]",
+               " ('m2_disponible', '>', 0),"
+               " ('modo_venta', '=', unidad_venta)]",
         help='Plancha concreta que se aparta para este cliente. Vacio = '
              'el sistema elige cualquiera al entregar.')
     plancha_m2 = fields.Float(
         related='plancha_id.m2_disponible', string='m² de la plancha')
 
+    # --- Losas pre-cortadas -------------------------------------------
+    cantidad_piezas = fields.Integer(
+        'Piezas',
+        help='Cuantas losas pre-cortadas se venden. Se convierte a m² para '
+             'el stock y la contabilidad.')
+    m2_por_pieza = fields.Float(
+        related='plancha_id.m2_por_pieza', string='m² por pieza')
+    piezas_disponibles = fields.Integer(
+        related='plancha_id.piezas_disponibles', string='Piezas en stock')
+    precio_por_pieza = fields.Monetary(
+        'Precio por pieza', compute='_compute_precio_por_pieza',
+        currency_field='currency_id',
+        help='Precio unitario por m² multiplicado por los m² de cada losa. '
+             'Es informativo: lo que se factura sigue siendo el precio por m².')
+
+    @api.depends('price_unit', 'm2_por_pieza', 'unidad_venta')
+    def _compute_precio_por_pieza(self):
+        for line in self:
+            line.precio_por_pieza = (
+                (line.price_unit or 0.0) * (line.m2_por_pieza or 0.0)
+                if line.unidad_venta == 'piezas' else 0.0)
+
+    @api.onchange('unidad_venta')
+    def _onchange_unidad_venta(self):
+        """Cambiar de unidad invalida la plancha elegida si ya no encaja."""
+        if self.plancha_id and self.plancha_id.modo_venta != self.unidad_venta:
+            self.plancha_id = False
+        if self.unidad_venta != 'piezas':
+            self.cantidad_piezas = 0
+
     @api.onchange('plancha_id')
     def _onchange_plancha_id(self):
-        """Al elegir plancha se propone vender sus m² disponibles."""
-        if self.plancha_id:
+        """Al elegir plancha se propone la cantidad segun la unidad."""
+        if not self.plancha_id:
+            return
+        if self.plancha_id.modo_venta == 'piezas':
+            # Se propone la plancha completa, en losas enteras.
+            self.cantidad_piezas = self.plancha_id.piezas_disponibles
+            self._sincronizar_piezas()
+        else:
+            self.cantidad_piezas = 0
             self.product_uom_qty = self.plancha_id.m2_disponible
+
+    @api.onchange('cantidad_piezas')
+    def _onchange_cantidad_piezas(self):
+        self._sincronizar_piezas()
+
+    def _sincronizar_piezas(self):
+        """Traduce piezas -> m², que es lo que realmente mueve el stock."""
+        for line in self:
+            if line.unidad_venta != 'piezas' or not line.plancha_id:
+                continue
+            disponibles = line.plancha_id.piezas_disponibles
+            if line.cantidad_piezas > disponibles:
+                line.cantidad_piezas = disponibles
+                return {'warning': {
+                    'title': _('Piezas insuficientes'),
+                    'message': _(
+                        'La plancha %(p)s solo tiene %(n)d losas completas de '
+                        '%(m).2f m². Se ajusto la cantidad.',
+                        p=line.plancha_id.name, n=disponibles,
+                        m=line.plancha_id.m2_por_pieza),
+                }}
+            line.product_uom_qty = round(
+                line.cantidad_piezas * line.plancha_id.m2_por_pieza, 2)
 
     def _plancha_warehouse(self):
         """Almacen donde esta fisicamente la plancha (via su ubicacion)."""

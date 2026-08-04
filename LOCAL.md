@@ -11,18 +11,24 @@ El script `arrancar.ps1` asegura que **wkhtmltopdf** esté en el PATH (para los 
 y luego lanza Odoo. Equivale a `.venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf`
 más el ajuste del PATH.
 
-> **PDF en local:** requieren **wkhtmltopdf 0.12.6 (patched qt)**. Instálalo una vez con
-> `winget install wkhtmltopdf.wkhtmltox` (queda en `C:\Program Files\wkhtmltopdf\bin`).
-> En Render/Docker ya viene incluido en la imagen `odoo:19`.
+> **PDF en local:** requieren **wkhtmltopdf 0.12.6 (patched qt)**. En Render/Docker ya
+> viene en la imagen `odoo:19`; en Windows se instala una vez:
+> ```powershell
+> # El release 0.12.6-1 es el ultimo con build de Windows (los posteriores solo traen
+> # .deb/.rpm). /S = silencioso, /D = destino (debe ir al final y SIN comillas).
+> .\wkhtmltox-0.12.6-1.msvc2015-win64.exe /S /D=E:\DevTools\wkhtmltopdf
+> ```
+> Descarga: github.com/wkhtmltopdf/packaging/releases/tag/0.12.6-1
+> `arrancar.ps1` busca primero `E:\DevTools\wkhtmltopdf\bin` y luego `C:\Program Files\wkhtmltopdf\bin`.
 
 ## Cargar todo desde cero (BD limpia + datos)
 ```powershell
 # 0) Detén Odoo (Ctrl+C)
 
-# 1) Recrear la BD limpia
-$env:PGPASSWORD='Odoo'
-& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U Odoo -h localhost -d postgres -c "DROP DATABASE IF EXISTS odoo;"
-& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U Odoo -h localhost -d postgres -c "CREATE DATABASE odoo TEMPLATE template0 ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C';"
+# 1) Recrear la BD limpia  (la clave del rol 'odoo' esta en odoo.conf)
+$env:PGPASSWORD='<clave-del-rol-odoo>'
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U odoo -h localhost -d postgres -c "DROP DATABASE IF EXISTS odoo;"
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U odoo -h localhost -d postgres -c "CREATE DATABASE odoo TEMPLATE template0 ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C';"
 
 # 2) Instalar módulos + idioma
 .venv\Scripts\python.exe odoo\odoo-bin -c odoo.conf -d odoo -i pierinelli_branding,pierinelli_data,pierinelli_pe,pierinelli_reportes,pierinelli_almacenes,pierinelli_planchas,web_responsive,mrp,crm,account_edi --load-language=es_419 --stop-after-init
@@ -52,11 +58,23 @@ git clone --branch 19.0 --depth 1 https://github.com/odoo/odoo.git odoo
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r odoo\requirements.txt
 
-# 4) odoo.conf: copiarlo de la instalación anterior (tiene credenciales,
-#    está en .gitignore). Si no existe, crear uno con db_host/db_user/
-#    db_password de tu Postgres local y addons_path = odoo/addons,custom_addons
+# 4) Rol de PostgreSQL dedicado — Odoo ABORTA si db_user es el superusuario
+#    ("Using the database user 'postgres' is a security risk, aborting").
+#    Hay que crear un rol propio con CREATEDB:
+$env:PGPASSWORD='<clave-del-superusuario-postgres>'
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -h localhost -d postgres `
+  -c "CREATE ROLE odoo WITH LOGIN CREATEDB PASSWORD '<clave-del-rol-odoo>';"
 
-# 5) BD + datos: seguir "Cargar todo desde cero" (arriba)
+# 5) odoo.conf: copiarlo de la instalación anterior (tiene credenciales,
+#    está en .gitignore). Si no existe, crear uno con esta plantilla:
+#      [options]
+#      addons_path = <ruta>\odoo\addons,<ruta>\custom_addons
+#      data_dir    = <ruta>\.odoo_data
+#      db_host = localhost / db_port = 5432
+#      db_user = odoo / db_password = <clave> / db_name = odoo
+#      list_db = True / workers = 0 / limit_time_cpu = 0 / limit_time_real = 0
+
+# 6) BD + datos: seguir "Cargar todo desde cero" (arriba)
 ```
 
 Requisitos del sistema (una sola vez por máquina): PostgreSQL, Python 3.11 y
@@ -79,6 +97,9 @@ Todos con contraseña **`pierinelli`**. El `admin` conserva tu contraseña.
 > Para probar un rol: cierra sesión y entra con ese login. Verás **solo sus apps**.
 
 ## Notas
+- **Odoo rechaza el usuario `postgres`**: el core aborta el arranque si `db_user` es el
+  superusuario (`Using the database user 'postgres' is a security risk, aborting`).
+  No hay flag para desactivarlo → siempre un rol dedicado con `LOGIN CREATEDB`.
 - **PowerShell no soporta `<`** para redirigir → el seed se corre con `cmd /c "... < seed_pe.py"`
   (o `Get-Content seed_pe.py | .venv\Scripts\python.exe odoo\odoo-bin shell -c odoo.conf -d odoo`).
 - Crear una BD nueva en Windows requiere `TEMPLATE template0 ... LC_COLLATE 'C' LC_CTYPE 'C'`
