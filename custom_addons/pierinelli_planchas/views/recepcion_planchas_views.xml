@@ -23,7 +23,7 @@
                     <p class="text-muted">Una fila representa planchas con las mismas medidas. Agrega filas si una llegada contiene medidas distintas. El total por producto debe coincidir con la recepcion.</p>
                     <field name="line_ids">
                         <list editable="bottom">
-                            <field name="move_id"/>
+                            <field name="move_id" options="{'no_create': True}"/>
                             <field name="product_id"/>
                             <field name="cantidad_planchas"/>
                             <field name="largo"/>

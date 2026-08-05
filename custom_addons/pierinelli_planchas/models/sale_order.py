@@ -59,6 +59,17 @@ class SaleOrderLine(models.Model):
     requiere_corte = fields.Boolean(
         'Requiere corte',
         help='No permite entregar esta linea hasta ejecutar su Orden de Corte.')
+    dias_reserva = fields.Integer(
+        'Dias de reserva', default=DIAS_RESERVA,
+        help='Entre 1 y 7 dias. Al confirmar, define la fecha fin de la reserva.')
+
+    @api.constrains('dias_reserva')
+    def _check_dias_reserva(self):
+        for line in self:
+            if line.plancha_id and not 1 <= line.dias_reserva <= DIAS_RESERVA:
+                raise UserError(_(
+                    'La reserva de %s debe durar entre 1 y %s dias.')
+                    % (line.plancha_id.name, DIAS_RESERVA))
 
     @api.depends('price_unit', 'm2_por_pieza', 'unidad_venta')
     def _compute_precio_por_pieza(self):
@@ -242,7 +253,8 @@ class SaleOrder(models.Model):
                 'asesor_id': (line.order_id.user_id.id
                               or self.env.user.id),
                 'reserva_inicio': hoy,
-                'reserva_fin': hoy + timedelta(days=DIAS_RESERVA),
+                'reserva_dias': line.dias_reserva,
+                'reserva_fin': hoy + timedelta(days=line.dias_reserva),
             })
             plancha.message_post(body=_(
                 'Apartada por el pedido %(pedido)s para %(cliente)s '

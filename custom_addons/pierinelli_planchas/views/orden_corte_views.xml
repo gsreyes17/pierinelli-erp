@@ -141,6 +141,7 @@
                 <field name="plancha_id"/>
                 <field name="product_id"/>
                 <field name="orden_corte_id" optional="show"/>
+                <field name="plancha_reingreso_id" optional="show"/>
                 <field name="warehouse_id"/>
                 <field name="m2" sum="Total m²"/>
                 <field name="valor" sum="Total S/"/>

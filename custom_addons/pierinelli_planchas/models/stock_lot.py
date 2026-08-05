@@ -99,6 +99,10 @@ class StockLot(models.Model):
              'defina si se venden en liquidacion o se usan como muestra.')
     tipo_material = fields.Selection(
         related='product_id.tipo_material', store=True, string='Tipo material')
+    tiene_foto_individual = fields.Boolean(
+        'Foto individual', compute='_compute_tiene_foto_individual', store=True,
+        help='Indica si la ficha tiene una foto propia de esta plancha. Es '
+             'obligatoria para vender materiales naturales.')
 
     # --- Columnas de la tabla global del ERP anterior (Expectativas.md) ---
     # Espejos del producto/ubicacion para que la tabla de planchas muestre
@@ -155,6 +159,9 @@ class StockLot(models.Model):
         help='Vendedor que realizo la ultima accion (reserva o venta).')
     reserva_inicio = fields.Date('Ini. reserva')
     reserva_fin = fields.Date('Fin reserva')
+    reserva_dias = fields.Integer(
+        'Dias de reserva', default=DIAS_RESERVA,
+        help='Entre 1 y 7 dias. La fecha fin se calcula automaticamente.')
     comprobante = fields.Char('Nro. comprobante', tracking=True)
     fecha_comprobante = fields.Date('F. comprobante')
 
@@ -247,6 +254,22 @@ class StockLot(models.Model):
             lot.antiguedad_dias = (
                 (hoy - lot.fecha_ingreso).days if lot.fecha_ingreso else 0)
 
+    @api.depends('image_1920')
+    def _compute_tiene_foto_individual(self):
+        for lot in self:
+            lot.tiene_foto_individual = bool(lot.image_1920)
+
+    def action_ver_imagen_plancha(self):
+        """Abre la imagen original fuera del formulario para inspeccionarla."""
+        self.ensure_one()
+        if not self.image_1920:
+            raise UserError(_('La plancha %s todavia no tiene foto individual.') % self.name)
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/image/stock.lot/%s/image_1920?unique=%s' % (self.id, self.write_date),
+            'target': 'new',
+        }
+
     # ------------------------------------------------------------------
     #  Codigo interno: PREFIJO + MMAA + . + correlativo
     # ------------------------------------------------------------------
@@ -294,9 +317,13 @@ class StockLot(models.Model):
                 raise UserError(_(
                     'La plancha %s ya no tiene stock disponible.') % lot.name)
             lot._check_disponible_comercial()
+            dias = lot.reserva_dias or DIAS_RESERVA
+            if not 1 <= dias <= DIAS_RESERVA:
+                raise UserError(_(
+                    'La reserva debe durar entre 1 y %s dias.') % DIAS_RESERVA)
             lot.write({
                 'reserva_inicio': hoy,
-                'reserva_fin': hoy + timedelta(days=DIAS_RESERVA),
+                'reserva_fin': hoy + timedelta(days=dias),
                 'asesor_id': self.env.user.id,
             })
             lot.message_post(body=_(
@@ -315,6 +342,8 @@ class StockLot(models.Model):
                 'reserva_inicio': False,
                 'reserva_fin': False,
                 'reserva_pedido_id': False,
+                'reserva_dias': DIAS_RESERVA,
+                'asesor_id': False,
             })
 
     # ------------------------------------------------------------------
@@ -345,6 +374,59 @@ class StockLot(models.Model):
                 raise UserError(_(
                     'La plancha %s no esta disponible comercialmente. '
                     'Operaciones debe definir primero el destino del retazo.') % lot.name)
+
+    def write(self, vals):
+        """Completa las fechas antes de que corran las restricciones.
+
+        En listas editables Odoo guarda una celda por vez; el onchange del
+        navegador no siempre llega antes del constraint. Este refuerzo hace que
+        cambiar cliente, inicio o dias sea una unica reserva consistente.
+        """
+        reservation_fields = {'cliente_reserva_id', 'reserva_inicio', 'reserva_dias'}
+        if not reservation_fields.intersection(vals):
+            return super().write(vals)
+        result = True
+        for lot in self:
+            values = dict(vals)
+            cliente_id = values.get('cliente_reserva_id', lot.cliente_reserva_id.id)
+            if cliente_id:
+                inicio = fields.Date.to_date(
+                    values.get('reserva_inicio') or lot.reserva_inicio
+                    or fields.Date.context_today(lot))
+                dias = values['reserva_dias'] if 'reserva_dias' in values \
+                    else (lot.reserva_dias or DIAS_RESERVA)
+                # La fecha final siempre depende del inicio y del plazo; no se
+                # acepta una fecha digitada manualmente que rompa la regla.
+                values['reserva_inicio'] = inicio
+                values['reserva_fin'] = inicio + timedelta(days=dias)
+            result = super(StockLot, lot).write(values) and result
+        return result
+
+    @api.onchange('cliente_reserva_id', 'reserva_inicio', 'reserva_dias')
+    def _onchange_reserva_fechas(self):
+        """La fecha final no se digita: deriva del plazo permitido."""
+        for lot in self:
+            if lot.cliente_reserva_id:
+                lot.reserva_inicio = lot.reserva_inicio or fields.Date.context_today(lot)
+                dias = min(max(lot.reserva_dias or DIAS_RESERVA, 1), DIAS_RESERVA)
+                lot.reserva_dias = dias
+                lot.reserva_fin = lot.reserva_inicio + timedelta(days=dias)
+
+    @api.constrains('cliente_reserva_id', 'reserva_inicio', 'reserva_fin', 'reserva_dias')
+    def _check_reserva_duracion(self):
+        for lot in self:
+            if not lot.cliente_reserva_id:
+                continue
+            if not lot.reserva_inicio or not lot.reserva_fin:
+                raise ValidationError(_('Toda reserva debe tener fecha de inicio y fin.'))
+            if not 1 <= lot.reserva_dias <= DIAS_RESERVA:
+                raise ValidationError(_(
+                    'La reserva de %s debe durar entre 1 y %s dias.')
+                    % (lot.name, DIAS_RESERVA))
+            if lot.reserva_fin != lot.reserva_inicio + timedelta(days=lot.reserva_dias):
+                raise ValidationError(_(
+                    'La fecha fin se calcula automaticamente y no puede superar '
+                    'los %s dias de reserva.') % DIAS_RESERVA)
 
     # ------------------------------------------------------------------
     #  Tareas automaticas (crons)
@@ -385,5 +467,7 @@ class StockLot(models.Model):
             'reserva_inicio': False,
             'reserva_fin': False,
             'reserva_pedido_id': False,
+            'reserva_dias': DIAS_RESERVA,
+            'asesor_id': False,
         })
         return True

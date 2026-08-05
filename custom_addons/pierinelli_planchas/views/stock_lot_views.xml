@@ -13,6 +13,9 @@
             <!-- Barra de acciones: reservar / liberar + estado -->
             <xpath expr="//sheet" position="before">
                 <header>
+                    <button name="action_ver_imagen_plancha" type="object"
+                            string="Ver imagen grande" icon="fa-expand"
+                            invisible="not tiene_foto_individual"/>
                     <button name="action_reservar" type="object"
                             string="Reservar (7 dias)" class="btn-primary"
                             invisible="estado != 'disponible'"/>
@@ -77,7 +80,8 @@
                         <field name="reserva_pedido_id"/>
                         <field name="asesor_id"/>
                         <field name="reserva_inicio"/>
-                        <field name="reserva_fin"/>
+                        <field name="reserva_dias"/>
+                        <field name="reserva_fin" readonly="1"/>
                     </group>
                     <group>
                         <field name="comprobante"/>
@@ -115,6 +119,8 @@
                        decoration-info="condicion == 'oferta'"
                        decoration-warning="condicion == 'liquidacion'"
                        widget="badge"/>
+                <field name="tipo_material" string="Material" optional="show" widget="badge"/>
+                <field name="tiene_foto_individual" string="Foto propia" optional="show"/>
                 <field name="aptitud_comercial" optional="show" widget="badge"/>
                 <field name="largo" optional="show"/>
                 <field name="alto" optional="show"/>
@@ -130,7 +136,7 @@
                        decoration-warning="estado == 'reservada'"/>
                 <field name="subfamilia_id" optional="show"/>
                 <field name="familia_id" optional="hide"/>
-                <field name="tipo_material" optional="hide"/>
+                <field name="tipo_material" optional="show"/>
                 <field name="observaciones" optional="hide"/>
                 <field name="cliente_reserva_id" optional="show"/>
                 <field name="asesor_id" optional="show" widget="many2one_avatar_user"/>
@@ -187,7 +193,8 @@
                 <field name="cliente_reserva_id"/>
                 <field name="asesor_id" widget="many2one_avatar_user"/>
                 <field name="reserva_inicio"/>
-                <field name="reserva_fin"/>
+                <field name="reserva_dias"/>
+                <field name="reserva_fin" readonly="1"/>
                 <field name="comprobante"/>
                 <field name="fecha_comprobante" optional="hide"/>
                 <field name="observaciones"/>

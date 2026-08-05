@@ -34,8 +34,12 @@ class RecepcionPlanchas(models.TransientModel):
             raise UserError(_('La recepcion ya no puede modificarse.'))
         by_move = {}
         for line in self.line_ids:
+            if not line.move_id:
+                raise ValidationError(_(
+                    'Selecciona el Producto de la recepcion en cada fila antes de registrar.'))
             if line.cantidad_planchas <= 0 or line.largo <= 0 or line.alto <= 0:
-                raise ValidationError(_('Cada fila debe indicar numero de planchas, largo y alto validos.'))
+                raise ValidationError(_(
+                    'Cada fila debe indicar numero de planchas, largo y alto validos.'))
             by_move.setdefault(line.move_id.id, self.env['pierinelli.recepcion.planchas.linea'])
             by_move[line.move_id.id] |= line
         Lot = self.env['stock.lot']
@@ -83,11 +87,17 @@ class RecepcionPlanchasLinea(models.TransientModel):
     _description = 'Detalle de planchas recibidas'
 
     wizard_id = fields.Many2one('pierinelli.recepcion.planchas', required=True, ondelete='cascade')
-    move_id = fields.Many2one('stock.move', required=True, readonly=True)
+    # Estos campos no son ``required`` a nivel SQL porque Odoo guarda una fila
+    # temporal al empezar a editarla. Se validan juntos al pulsar Registrar.
+    move_id = fields.Many2one(
+        'stock.move', string='Producto de la recepcion',
+        domain="[('picking_id', '=', wizard_id.picking_id)]",
+        help='Al agregar una fila, selecciona aqui el producto de la recepcion '
+             'al que pertenecen esas planchas.')
     product_id = fields.Many2one(related='move_id.product_id', readonly=True)
-    cantidad_planchas = fields.Integer('Planchas', default=1, required=True)
-    largo = fields.Float('Largo (m)', digits=(6, 2), required=True)
-    alto = fields.Float('Alto (m)', digits=(6, 2), required=True)
+    cantidad_planchas = fields.Integer('Planchas', default=1)
+    largo = fields.Float('Largo (m)', digits=(6, 2))
+    alto = fields.Float('Alto (m)', digits=(6, 2))
     espesor = fields.Float('Espesor (cm)', digits=(4, 1), default=2.0)
     m2_por_plancha = fields.Float('m2 por plancha', compute='_compute_m2', store=True)
     m2_total = fields.Float('m2 total', compute='_compute_m2', store=True)

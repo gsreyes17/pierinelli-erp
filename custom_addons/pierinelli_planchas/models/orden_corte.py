@@ -312,6 +312,11 @@ class Merma(models.Model):
         related='plancha_id.product_id', string='Material', store=True)
     orden_corte_id = fields.Many2one(
         'pierinelli.orden.corte', string='Orden de corte')
+    plancha_reingreso_id = fields.Many2one(
+        'stock.lot', string='Plancha de reingreso', readonly=True,
+        copy=False,
+        help='Nueva plancha creada al recuperar esta merma. Conserva la '
+             'trazabilidad sin devolver el material al lote ya cortado.')
     m2 = fields.Float('m²', digits=(8, 2), required=True)
     valor = fields.Float(
         'Valor (S/)', digits=(12, 2),

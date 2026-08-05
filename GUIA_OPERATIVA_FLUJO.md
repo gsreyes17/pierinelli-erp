@@ -1,115 +1,168 @@
-# Guía operativa — Compra, planchas, corte, entrega y costo
+# Guía operativa — paso a paso
 
-Esta guía describe el flujo diario recomendado para Pierinelli. La regla
-principal es simple: **una plancha se registra una sola vez, dentro de su
-recepción de compra**. No se recibe primero en m² agregados para luego volver a
-darla de alta.
+Esta es la ruta exacta para operar el flujo diario. Regla principal: cada
+plancha se registra una sola vez, desde su recepción de compra.
 
-## 1. Preparar el material
+## 1. Preparar un producto
 
-Antes de comprar, confirme que el producto tenga código SAP, familia y
-subfamilia, precio de venta y costo configurado. Para materiales naturales,
-complete también la foto de **cada plancha** al momento de recibirla; para
-artificiales se usa la foto del producto.
+1. Abra **Inventario**.
+2. Vaya a **Productos → Productos**.
+3. Busque el material por nombre o Código SAP y ábralo.
+4. Revise Código de referencia interna, precio de venta, categoría y tipo de
+   material.
+5. En la sección de planchas, confirme el **Prefijo de plancha**. Por ejemplo,
+   `CIG` genera `CIG0826.01`, `CIG0826.02`, etc.
+6. Pulse **Guardar**.
 
-El prefijo del código interno se genera desde el nombre del producto y puede
-ajustarse en la ficha del producto. Por ejemplo, Cuarcita Iron Green usa `CIG`
-y sus planchas se numeran como `CIG0826.01`, `CIG0826.02`, etc.
+Para un material natural, la foto del producto no reemplaza la foto de cada
+plancha: esa se carga después de recibirla.
 
-## 2. Comprar y recibir planchas
+## 2. Crear una Orden de Compra
 
-1. Cree y confirme la Orden de Compra normalmente.
-2. Abra la **Recepción** generada por la orden. No la valide todavía.
-3. Pulse **Registrar planchas recibidas**.
-4. En cada fila indique cuántas planchas tienen esas mismas medidas, largo,
-   alto, espesor, condición, ubicación referencial y referencia de
-   importación. Agregue otra fila cuando cambien las medidas.
-5. El total de m² de las filas debe coincidir con el m² de la recepción por
-   producto. El asistente crea un lote por plancha y prepara las operaciones de
-   recepción, pero aún no ingresa el stock.
-6. Pulse **Registrar en la recepción** y luego valide el albarán estándar.
-7. Abra las planchas creadas desde Inventario → Planchas → Tabla de
-   Operaciones, suba la foto individual de cada material natural y complete
-   observaciones si corresponde.
+1. Abra **Compras**.
+2. Vaya a **Órdenes → Órdenes de compra**.
+3. Pulse **Nuevo**.
+4. Seleccione el proveedor.
+5. En **Productos**, agregue cada material y coloque el total comprado en m².
+   No registre aquí el número de planchas: el stock y el costo promedio se
+   controlan en m². El número de planchas y sus medidas se detallan en la
+   recepción.
+6. Pulse **Confirmar orden**.
+7. En la parte superior, pulse el botón inteligente **Recepciones**.
 
-La validación de una recepción de productos controlados por lote se bloquea si
-no se registraron sus planchas. Así se evita duplicar inventario.
+No valide la recepción todavía: primero deben registrarse las planchas físicas.
 
-> Para inventario inicial o una corrección excepcional existe Alta de Planchas.
-> No debe usarse para mercadería que ya tiene una recepción de compra.
+## 3. Registrar planchas dentro de la recepción
 
-## 3. Aplicar costos de importación
+1. En la recepción abierta, pulse **Registrar planchas recibidas**.
+2. En la ventana emergente verá una fila por producto recibido.
+3. Para cada grupo de planchas con las mismas medidas, complete:
+   - **Planchas**: cantidad de planchas iguales.
+   - **Largo**, **Alto** y **Espesor**.
+   - **Condición**: Estándar, Oferta o Liquidación.
+   - **Ubicación referencial**, por ejemplo `Rack B · Zona 2`.
+   - **Ref. importación**, por ejemplo el código del contenedor.
+4. Revise **m² por plancha** y **m² total**. El total de las filas del mismo
+   producto debe ser igual a **m² esperados**.
+5. Si cambian las medidas, pulse **Agregar una línea**. En la nueva fila,
+   seleccione primero el campo **Producto de la recepción**; luego complete
+   cantidad de planchas y sus medidas. Este paso vincula la nueva fila con el
+   material que se está recibiendo.
+6. Pulse **Registrar en la recepción**.
+7. De vuelta en el albarán, pulse **Validar** para ingresar el stock.
 
-Después de validar la recepción, agregue flete, seguro, aduana, manipuleo u
-otros gastos al costo promedio:
+El sistema bloquea una recepción con productos por lote si no se registraron
+sus planchas. No use **Inventario → Planchas → Alta de Planchas** para una
+mercadería que ya tiene recepción de compra.
 
-1. En Inventario → Operaciones → **Costos en destino**, cree un registro.
-2. Seleccione la recepción o las recepciones del contenedor.
-3. Agregue las líneas de costo y el criterio de reparto adecuado (por cantidad,
-   peso, volumen, costo actual o partes iguales).
-4. Pulse **Calcular** y revise el prorrateo.
-5. Pulse **Validar**.
+## 4. Cargar foto y revisar una plancha
 
-Odoo incorpora el costo al AVCO de los productos y genera la valorización
-contable correspondiente. Use la misma referencia de importación en las
-planchas para poder rastrear el contenedor físico y su costo.
+1. Abra **Inventario → Planchas → Tabla de Operaciones**.
+2. Busque por Código interno, Código SAP o Ref. importación.
+3. Haga clic en la fila para abrir la ficha.
+4. Cargue la foto en el recuadro de imagen superior izquierdo.
+   Para verla a detalle después, pulse **Ver imagen grande**: se abrirá en otra
+   pestaña del navegador.
+5. Complete **Observaciones** si hay veta, quiñe, despunte o fisura.
+6. Revise **Aptitud comercial**:
+   - `Vendible`: aparece para ventas.
+   - `Liquidación`: aparece para ventas identificada como tal.
+   - `Pendiente de revisión` o `Muestra / no vendible`: no puede reservarse.
+7. Pulse **Guardar**.
 
-## 4. Reservar y vender una plancha
+En la **Tabla de Operaciones** están visibles las columnas **Material**
+(Natural/Artificial) y **Foto propia**. Filtre o ordene por esta última para
+ubicar rápidamente las planchas naturales que aún necesitan fotografía.
 
-1. En Ventas, cree la cotización y agregue el producto.
-2. En la línea elija la **Plancha** concreta. El sistema solo muestra planchas
-   con stock, aptas para venta y del formato solicitado.
-3. Indique los m² o las piezas. La cantidad no puede superar el saldo de la
-   plancha.
-4. Marque **Requiere corte** si el cliente compra una medida a cortar. Déjelo
-   desmarcado si se entrega la plancha o losa tal cual.
-5. Confirme el pedido. La plancha queda reservada para ese pedido, cliente y
-   asesor por siete días, y el picking queda asignado a ese lote.
+Una plancha natural sin foto individual no puede reservarse ni venderse.
 
-Una misma plancha no puede quedar bloqueada por otro pedido vigente, incluso
-si es del mismo cliente. Si vence la reserva y no hay comprobante, el proceso
-automático la libera.
+## 5. Aplicar costos de importación
 
-Las planchas naturales sin foto individual y los retazos pendientes de revisión
-no se pueden reservar ni vender.
+1. Después de validar la recepción, abra **Inventario → Operaciones → Costos
+   en destino**.
+2. Pulse **Nuevo**.
+3. En **Transferencias**, agregue la recepción o las recepciones del contenedor.
+4. En **Líneas de costo**, agregue flete, seguro, aduana o manipuleo. Indique
+   monto y método de reparto.
+5. Pulse **Calcular**.
+6. Revise las líneas de valoración generadas.
+7. Pulse **Validar**.
 
-## 5. Corte y decisión de retazos
+Esto incorpora los gastos al costo promedio AVCO y genera su efecto contable.
 
-El orden operativo recomendado es:
+## 6. Crear una cotización y reservar una plancha
 
-```
-Pedido confirmado → Orden de Corte → Corte ejecutado → Entrega → Factura
-```
+1. Abra **Ventas**.
+2. Vaya a **Órdenes → Cotizaciones** y pulse **Nuevo**.
+3. Seleccione el cliente.
+4. En **Líneas de pedido**, agregue el producto.
+5. En la misma línea seleccione **Plancha**. Solo se muestran planchas con
+   stock y aptas para vender.
+6. Complete los m² o **Piezas** si son losas pre-cortadas.
+7. En **Días de reserva**, escriba de `1` a `7`.
+8. Marque **Requiere corte** si el cliente compra una medida a cortar. Déjelo
+   vacío si se entrega completa.
+9. Pulse **Confirmar**.
 
-1. Desde el pedido confirmado pulse **Crear Orden de Corte**.
-2. Verifique cliente, plancha y asesor; agregue las piezas con sus medidas.
-3. Indique las dimensiones del retorno y el destino de la merma: asumida por
-   el cliente o pérdida del negocio.
-4. Adjunte los planos de AutoCAD exportados a PDF e imprima **OP + Modulación**
-   cuando necesite un único documento para producción.
-5. Ejecute la orden. La parte vendida permanece vinculada al pedido, el retorno
-   crea una plancha hija y la merma pasa a la Zona de Mermas.
-6. Si el retorno tiene una dimensión menor a 0.5 m, queda como **Pendiente de
-   revisión** y no aparece como material vendible. Operaciones debe decidir:
-   Vendible, Liquidación o Muestra/no vendible. Si se desecha, use Registrar
-   Merma para dejar el motivo y el valor trazables.
+Al confirmar se bloquea esa plancha para el pedido, cliente y asesor. No se
+puede reservar más m² de los disponibles ni reutilizarla en otro pedido vigente.
 
-Una línea marcada como **Requiere corte** no puede validarse en la entrega sin
-una Orden de Corte ejecutada para ese pedido y plancha. Esto no afecta ventas
-de planchas completas.
+## 7. Consultar o liberar una reserva
 
-## 6. Entregar, facturar y cerrar
+1. Abra **Ventas → Planchas**.
+2. Pulse el filtro **Reservadas** o busque por plancha/cliente.
+3. Abra la ficha de la plancha.
+4. En **Reserva / Venta**, revise cliente, pedido, inicio y fecha final.
+5. Si el cliente desiste, pulse **Liberar reserva**.
 
-1. Desde el pedido abra la entrega. Confirme que el lote mostrado sea la
-   plancha reservada y valide el albarán.
-2. Cree y contabilice la factura según la política comercial.
-3. Al contabilizarse, el número y fecha del comprobante se escriben en la ficha
-   de la plancha. La Tabla de Operaciones conserva el historial comercial.
+El proceso automático diario libera una reserva vencida sin comprobante. Borra
+cliente, pedido, asesor y fechas, y el estado vuelve a **Disponible**. El
+historial queda en el chatter de la plancha.
 
-Para ventas en dólares, elija en la factura el origen de la tasa (SUNAT,
-corporativa o manual). El sistema registra la tasa usada.
+## 8. Crear y ejecutar una Orden de Corte
 
-## 7. Controles diarios por rol
+1. Abra el pedido confirmado en **Ventas → Órdenes → Órdenes de venta**.
+2. Pulse **Crear Orden de Corte** en la cabecera.
+3. Verifique Plancha, Cliente y Asesor.
+4. En **Cortes**, pulse **Agregar una línea** e indique pieza, cantidad, largo
+   y alto. Repita para todas las piezas.
+5. Complete **Retorno: largo** y **Retorno: alto** si sobrará material útil.
+6. Elija **Destino de la merma**: asumida por el cliente o pérdida del negocio.
+7. En **Modulación (PDF)**, adjunte los PDF exportados desde AutoCAD.
+8. Pulse **Imprimir OP + Modulación** para entregar a producción un solo PDF
+   con la orden y planos.
+9. Al finalizar el trabajo, pulse **Ejecutar corte**.
+
+El retorno recibe un código hijo. Si mide menos de 0.5 m en algún lado queda
+**Pendiente de revisión** y no se ofrece a ventas.
+
+## 9. Registrar una merma manual
+
+1. Abra **Inventario → Planchas → Registrar Merma**.
+2. Seleccione la plancha.
+3. Indique m², motivo, destino y notas.
+4. Pulse **Registrar**.
+5. Si luego resulta aprovechable, vaya a **Inventario → Planchas → Mermas**,
+   abra el registro y pulse **Reingresar**.
+
+## 10. Entregar y facturar
+
+1. Abra el pedido en **Ventas → Órdenes → Órdenes de venta**.
+2. Pulse el botón inteligente **Entrega**.
+3. Revise que las operaciones muestren la plancha reservada.
+4. Pulse **Validar**.
+
+Si la línea tenía activado **Requiere corte**, la entrega se bloquea hasta que
+la Orden de Corte correspondiente esté en estado Hecho.
+
+5. Regrese al pedido y pulse **Crear factura**.
+6. Revise la factura; si está en dólares, elija el **Origen de la tasa**.
+7. Pulse **Confirmar / Contabilizar**.
+
+Al contabilizar, el número y fecha del comprobante se copian a la ficha de la
+plancha.
+
+## 11. Controles diarios por rol
 
 | Rol | Control recomendado |
 |---|---|
@@ -123,7 +176,5 @@ corporativa o manual). El sistema registra la tasa usada.
 ## Límites conocidos
 
 - La facturación electrónica real a SUNAT requiere OSE/PSE y certificado.
-- El escaneo móvil nativo es Enterprise; un lector USB puede usarse como
-  alternativa cuando se impriman etiquetas.
-- El OCR de facturas PDF es Enterprise; en Community se recomienda importar el
-  XML de la factura electrónica.
+- El escaneo móvil nativo es Enterprise; un lector USB puede ser alternativa.
+- El OCR de facturas PDF es Enterprise; en Community se recomienda importar XML.

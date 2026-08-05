@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="pierinelli_mcp_inventario.InventoryFloatingChat">
+        <div class="o_pier_inventory_chat">
+            <section t-if="state.open" class="o_pier_inventory_chat_panel shadow">
+                <header class="o_pier_inventory_chat_header">
+                    <div>
+                        <strong>Asistente Pierinelli</strong>
+                        <small>Inventario</small>
+                    </div>
+                    <button type="button" class="btn-close" t-on-click="toggle" aria-label="Cerrar"/>
+                </header>
+                <main class="o_pier_inventory_chat_messages">
+                    <div t-foreach="state.messages" t-as="message" t-key="message.id"
+                         t-attf-class="o_pier_chat_message o_pier_chat_message_{{ message.author }}">
+                        <span t-esc="message.text"/>
+                    </div>
+                    <div t-if="state.loading" class="o_pier_chat_message o_pier_chat_message_assistant o_pier_chat_typing">
+                        Escribiendo...
+                    </div>
+                </main>
+                <form class="o_pier_inventory_chat_input" t-on-submit.prevent="send">
+                    <input type="text" t-att-value="state.draft" t-on-input="updateDraft"
+                           placeholder="Escribe tu consulta..." autocomplete="off"/>
+                    <button type="submit" t-att-disabled="state.loading" aria-label="Enviar">
+                        <i class="fa fa-paper-plane"/>
+                    </button>
+                </form>
+            </section>
+            <button type="button" class="o_pier_inventory_chat_button shadow" t-on-click="toggle"
+                    title="Asistente de inventario" aria-label="Asistente de inventario">
+                <i class="fa fa-comments"/>
+            </button>
+        </div>
+    </t>
+</templates>

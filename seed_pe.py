@@ -615,12 +615,10 @@ else:
             'base.group_user', 'stock.group_stock_user')),
         ('Rosa Delgado', 'rosa@pierinelli.com', grp(
             'base.group_user', 'account.group_account_user')),
-        ('Maestro Aquino', 'aquino@pierinelli.com', grp(
-            'base.group_user', 'mrp.group_mrp_user')),
         ('Jorge Pierinelli', 'jorge@pierinelli.com', grp(
             'base.group_user', 'sales_team.group_sale_manager',
             'stock.group_stock_manager', 'purchase.group_purchase_manager',
-            'account.group_account_manager', 'mrp.group_mrp_manager')),
+            'account.group_account_manager')),
     ]
     creados_user = 0
     for nombre, login, gids in usuarios:
