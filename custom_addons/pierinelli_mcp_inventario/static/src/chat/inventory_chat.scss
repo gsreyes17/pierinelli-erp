@@ -18,13 +18,20 @@
 .o_pier_inventory_chat_panel {
     display: flex;
     flex-direction: column;
-    width: min(350px, calc(100vw - 32px));
+    width: 350px;
     height: 430px;
     margin-bottom: 12px;
     overflow: hidden;
     border: 1px solid #ddd;
     border-radius: 14px;
     background: #f7f7f7;
+}
+
+// libsass usado por Odoo no admite min() con calc().
+@media (max-width: 382px) {
+    .o_pier_inventory_chat_panel {
+        width: calc(100vw - 32px);
+    }
 }
 
 .o_pier_inventory_chat_header {
