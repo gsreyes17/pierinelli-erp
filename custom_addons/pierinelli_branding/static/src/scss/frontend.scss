@@ -72,6 +72,16 @@ body.pierinelli-login-bg {
         &:hover { color: $pierinelli-gold; }
     }
 
+    .pierinelli-demo-help {
+        color: darken($pierinelli-gold, 8%) !important;
+        text-decoration: none;
+    }
+
+    .modal-content {
+        border: 1px solid rgba($pierinelli-gold, 0.55);
+        color: $pierinelli-black;
+    }
+
     // Logo Pierinelli (negro)
     .pierinelli-login-logo {
         max-height: 64px;

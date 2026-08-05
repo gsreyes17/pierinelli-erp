@@ -49,8 +49,7 @@ class InventoryAssistant(models.TransientModel):
         pregunta = DISPARADORES_CHAT.get(_normalizar_mensaje(mensaje))
         if not pregunta:
             return (_('Por ahora solo puedo responder consultas generales de '
-                      'inventario. Esa consulta aun no esta habilitada. '
-                      'Revisa las frases disponibles en la guia del asistente.'))
+                      'inventario. Esa clase de consultas aun no estan disponible.'))
         return self.get_answer(pregunta)
 
     def action_consultar(self):

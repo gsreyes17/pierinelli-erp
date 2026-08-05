@@ -16,6 +16,37 @@
             <attribute name="style">max-height:64px; max-width:100%; width:auto</attribute>
         </xpath>
 
+        <!-- Acceso rapido solo para la base de demostracion. -->
+        <xpath expr="//div[hasclass('text-center') and hasclass('pb-3')]" position="after">
+            <div class="text-center mb-3">
+                <button type="button" class="btn btn-link btn-sm pierinelli-demo-help"
+                        data-bs-toggle="modal" data-bs-target="#pierinelli-demo-users">
+                    <i class="fa fa-question-circle me-1"/> Usuarios de prueba
+                </button>
+            </div>
+            <div class="modal fade" id="pierinelli-demo-users" tabindex="-1"
+                 aria-labelledby="pierinelli-demo-users-title" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="pierinelli-demo-users-title">Accesos de prueba</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"/>
+                        </div>
+                        <div class="modal-body">
+                            <p class="small text-muted">Todos usan la contrasena <strong>pierinelli</strong>.</p>
+                            <ul class="list-unstyled mb-0 small">
+                                <li><code>gerente</code> - acceso general</li>
+                                <li><code>vendedor</code> - Ventas</li>
+                                <li><code>almacen</code> - Inventario</li>
+                                <li><code>compras</code> - Compras</li>
+                                <li><code>contabilidad</code> - Contabilidad</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+
     </template>
 
 </odoo>

@@ -1,5 +1,7 @@
 # Pierinelli ERP
 
+> Documentacion organizada: [docs/README.md](docs/README.md).
+
 Backend de gestión sobre **Odoo 19 Community**, personalizado para **Pierinelli**
 (revestimientos de piedra premium — cuarcita, granito, mármol, ónix, sinterizada,
 porcelánico, cuarzo, solid surface).
