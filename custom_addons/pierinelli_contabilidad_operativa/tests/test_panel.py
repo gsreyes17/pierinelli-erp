@@ -78,16 +78,18 @@ class TestPanelContable(TransactionCase):
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
         sheet = workbook.add_worksheet('Asientos')
-        headers = ['referencia', 'fecha', 'diario_codigo', 'cuenta_codigo',
-                   'glosa', 'debe', 'haber', 'tipo_operacion']
+        partner = self.env['res.partner'].create({'name': 'Contacto importación prueba',
+                                                  'vat': '20123456789'})
+        headers = ['Referencia', 'Fecha', 'Código de diario', 'Código de cuenta',
+                   'Glosa', 'Debe', 'Haber', 'Tipo de operación', 'Contacto o RUC']
         for column, header in enumerate(headers):
             sheet.write(0, column, header)
         sheet.write_row(1, 0, ['TEST-IMPORT-001', '12/08/2026', journal.code,
                                accounts[0].code, 'Debe de prueba', 100, 0,
-                               'ajuste'])
+                               'ajuste', partner.vat])
         sheet.write_row(2, 0, ['TEST-IMPORT-001', '12/08/2026', journal.code,
                                accounts[1].code, 'Haber de prueba', 0, 100,
-                               'ajuste'])
+                               'ajuste', partner.vat])
         workbook.close()
         wizard = self.env['pierinelli.importar.asientos'].create({
             'archivo': base64.b64encode(output.getvalue()),
@@ -101,3 +103,28 @@ class TestPanelContable(TransactionCase):
         self.assertEqual(move.state, 'draft')
         self.assertEqual(sum(move.line_ids.mapped('debit')),
                          sum(move.line_ids.mapped('credit')))
+        self.assertEqual(move.partner_id, partner)
+        self.assertEqual(move.line_ids.partner_id, partner)
+
+    def test_caja_chica_transfiere_beneficiario_al_asiento(self):
+        account = self.env['account.account'].search([
+            ('company_ids', 'in', self.env.company.id)], limit=1)
+        journal = self.env['account.journal'].create({
+            'name': 'Caja pruebas tercero', 'code': 'TCPA', 'type': 'cash',
+            'company_id': self.env.company.id, 'default_account_id': account.id,
+        })
+        partner = self.env['res.partner'].create({
+            'name': 'Beneficiario caja de prueba', 'vat': '20987654321'})
+        caja = self.env['pierinelli.caja.chica'].create({
+            'name': 'Caja tercero prueba', 'responsable_id': self.env.user.id,
+            'journal_id': journal.id, 'currency_id': self.env.company.currency_id.id,
+            'fondo_fijo': 0.0, 'state': 'abierta',
+        })
+        movement = self.env['pierinelli.caja.chica.movimiento'].create({
+            'caja_id': caja.id, 'partner_id': partner.id,
+            'cuenta_gasto_id': account.id, 'importe': 25.0,
+            'descripcion': 'Movilidad de prueba',
+        })
+        movement.action_contabilizar()
+        self.assertEqual(movement.move_id.partner_id, partner)
+        self.assertEqual(movement.move_id.line_ids.partner_id, partner)

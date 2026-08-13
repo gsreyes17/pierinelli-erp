@@ -164,7 +164,7 @@ Las cuentas de inventario, pérdida y recupero/seguro deben ser definidas por el
 **Estado: Operativo, con control contable.**
 
 1. Abra **Contabilidad → Contabilidad → Asientos contables**.
-2. Para una carga segura, pulse **Plantilla Excel**, descargue el archivo y lea la hoja **Instrucciones**. Elimine las filas grises de ejemplo y complete una línea por apunte.
+2. Para una carga segura, pulse **Plantilla Excel**, descargue el archivo en español y lea la hoja **Instrucciones**. Elimine las filas grises de ejemplo y complete una línea por apunte.
 3. Pulse **Importar asientos**, suba el Excel y elija **Validar e importar**. El sistema verifica antes los encabezados, diarios, cuentas, fechas y el cuadre de cada referencia; solo crea borradores.
 4. Para la importación genérica o para exportar, use el menú de acciones de la lista y seleccione **Importar registros** / **Exportar**.
 5. Para predeterminados, use **Plantillas de Asientos** (punto 6).

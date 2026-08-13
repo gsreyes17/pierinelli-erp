@@ -199,8 +199,14 @@ class CajaChicaMovimiento(models.Model):
                 'move_type': 'entry', 'journal_id': mov.caja_id.journal_id.id,
                 'date': mov.fecha, 'ref': mov.documento or mov.caja_id.name,
                 'tipo_operacion_contable': 'caja_chica',
-                'line_ids': [(0, 0, {'account_id': mov.cuenta_gasto_id.id, 'name': mov.descripcion, 'debit': mov.importe}),
-                             (0, 0, {'account_id': cuenta_caja.id, 'name': mov.descripcion, 'credit': mov.importe})],
+                'partner_id': mov.partner_id.id,
+                'line_ids': [(0, 0, {
+                    'account_id': mov.cuenta_gasto_id.id, 'name': mov.descripcion,
+                    'debit': mov.importe, 'partner_id': mov.partner_id.id,
+                }), (0, 0, {
+                    'account_id': cuenta_caja.id, 'name': mov.descripcion,
+                    'credit': mov.importe, 'partner_id': mov.partner_id.id,
+                })],
             })
             asiento.action_post()
             mov.write({'move_id': asiento.id, 'state': 'contabilizado'})

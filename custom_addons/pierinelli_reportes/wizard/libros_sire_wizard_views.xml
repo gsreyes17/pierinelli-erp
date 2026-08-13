@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_libros_sire_wizard_form" model="ir.ui.view">
+        <field name="name">pierinelli.libros.sire.wizard.form</field>
+        <field name="model">pierinelli.libros.sire.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Centro de Libros y SIRE">
+                <header>
+                    <button name="action_prepare" type="object" string="Cargar vista previa"
+                            class="btn-primary" icon="fa-refresh"/>
+                    <button name="action_export_pdf" type="object" string="PDF"
+                            class="btn-secondary" icon="fa-file-pdf-o" invisible="not prepared"/>
+                    <button name="action_export_xlsx" type="object" string="Excel"
+                            class="btn-secondary" icon="fa-file-excel-o" invisible="not prepared"/>
+                    <button name="action_export_txt" type="object" string="TXT PLE"
+                            class="btn-secondary" icon="fa-file-text-o" invisible="not prepared"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Centro de Libros y SIRE
+                            <button name="action_show_format_help" type="object" string="?"
+                                    class="btn btn-link p-0 ms-2" title="Información de formatos"/>
+                        </h1>
+                        <p class="text-muted">
+                            Información financiera, comercial y de almacén consolidada para control y toma de decisiones.
+                        </p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="report_type"/>
+                            <field name="target_move"/>
+                        </group>
+                    <group invisible="report_type != 'mayor_clasico'">
+                        <group>
+                            <field name="account_id" options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="mayor_summary" readonly="1"/>
+                        </group>
+                    </group>
+                    <group invisible="report_type != 'mayor_clasico' or not prepared" string="Resumen de la cuenta">
+                        <field name="mayor_opening_debit" readonly="1"/>
+                        <field name="mayor_opening_credit" readonly="1"/>
+                        <field name="mayor_movement_debit" readonly="1"/>
+                        <field name="mayor_movement_credit" readonly="1"/>
+                        <field name="mayor_closing_debit" readonly="1"/>
+                        <field name="mayor_closing_credit" readonly="1"/>
+                    </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <p class="text-muted" invisible="not preview_note">
+                        <field name="preview_note" nolabel="1" readonly="1"/>
+                    </p>
+                    <notebook invisible="not prepared">
+                        <page string="Vista previa" name="preview"
+                              invisible="report_type in ('diario_clasico', 'mayor_clasico', 'balance_comprobacion')">
+                            <field name="line_ids" nolabel="1">
+                                <list create="0" edit="0" delete="0">
+                                    <field name="sequence"/>
+                                    <field name="date"/>
+                                    <field name="operation"/>
+                                    <field name="series" optional="show"/>
+                                    <field name="document"/>
+                                    <field name="partner"/>
+                                    <field name="vat"/>
+                                    <field name="description"/>
+                                    <field name="quantity" sum="Cantidad"/>
+                                    <field name="currency"/>
+                                    <field name="base" sum="Base/Débito"/>
+                                    <field name="tax" sum="IGV/Crédito"/>
+                                    <field name="total" sum="Total/Saldo"/>
+                                    <field name="status"/>
+                                    <field name="extra" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Libro Diario" name="journal_preview"
+                              invisible="report_type != 'diario_clasico'">
+                            <field name="line_ids" nolabel="1">
+                                <list create="0" edit="0" delete="0"
+                                      decoration-bf="entry_start" decoration-info="entry_start">
+                                    <field name="date"/>
+                                    <field name="document" string="Asiento"/>
+                                    <field name="partner" string="Contacto / contraparte"/>
+                                    <field name="description" string="Glosa"/>
+                                    <field name="account_code" string="Cuenta"/>
+                                    <field name="account_name" string="Denominación"/>
+                                    <field name="debit" string="Debe" sum="Total Debe"/>
+                                    <field name="credit" string="Haber" sum="Total Haber"/>
+                                    <field name="tax_info" string="Impuesto aplicado"/>
+                                    <field name="tax_amount" string="Importe impuesto" sum="Total impuesto"/>
+                                    <field name="tax_account" string="Cuenta de impuesto" optional="hide"/>
+                                    <field name="detraction_info" string="Detracción / constancia" optional="hide"/>
+                                    <field name="entry_total" string="Suma Asiento"/>
+                                    <field name="entry_start" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Libro Mayor" name="ledger_preview"
+                              invisible="report_type != 'mayor_clasico'">
+                            <field name="line_ids" nolabel="1">
+                                <list create="0" edit="0" delete="0" decoration-bf="entry_start">
+                                    <field name="extra" string="Cuenta contable"/>
+                                    <field name="date"/>
+                                    <field name="document" string="Asiento"/>
+                                    <field name="description" string="Glosa"/>
+                                    <field name="debit" string="Debe" sum="Total Debe"/>
+                                    <field name="credit" string="Haber" sum="Total Haber"/>
+                                    <field name="balance_debit" string="Saldo Deudor"/>
+                                    <field name="balance_credit" string="Saldo Acreedor"/>
+                                    <field name="entry_start" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Balance de Comprobación" name="trial_preview"
+                              invisible="report_type != 'balance_comprobacion'">
+                            <field name="line_ids" nolabel="1">
+                                <list create="0" edit="0" delete="0">
+                                    <field name="extra" string="Cuenta"/>
+                                    <field name="description" string="Denominación"/>
+                                    <field name="opening_debit" string="Saldo Inicial Deudor" sum="Inicial Deudor"/>
+                                    <field name="opening_credit" string="Saldo Inicial Acreedor" sum="Inicial Acreedor"/>
+                                    <field name="debit" string="Movimientos Debe" sum="Total Debe"/>
+                                    <field name="credit" string="Movimientos Haber" sum="Total Haber"/>
+                                    <field name="closing_debit" string="Saldo Final Deudor" sum="Final Deudor"/>
+                                    <field name="closing_credit" string="Saldo Final Acreedor" sum="Final Acreedor"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Proceso de registro" name="pipeline">
+                            <h3>Información organizada de punta a punta</h3>
+                            <ol>
+                                <li><strong>Captura:</strong> factura, nota de crédito, pago, entrega o recepción.</li>
+                                <li><strong>Contabilización:</strong> documento publicado y asiento balanceado.</li>
+                                <li><strong>Revisión:</strong> RUC, fechas, documento, moneda, base, IGV y total.</li>
+                                <li><strong>Exportación:</strong> Excel/PDF para control; TXT referencial para mostrar el mapeo.</li>
+                                <li><strong>Validación oficial:</strong> estructura vigente y PVSIRE.</li>
+                                <li><strong>SIRE:</strong> comparar/complementar RCE o RVIE, generar registro y guardar CDR.</li>
+                            </ol>
+                        </page>
+                    </notebook>
+                    <field name="prepared" invisible="1"/>
+                    <field name="preview_note" invisible="1"/>
+                    <field name="mayor_summary" invisible="1"/>
+                    <field name="export_file" invisible="1"/>
+                    <field name="export_filename" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_libros_sire_help_form" model="ir.ui.view">
+        <field name="name">pierinelli.libros.sire.help.form</field>
+        <field name="model">pierinelli.libros.sire.help</field>
+        <field name="arch" type="xml">
+            <form string="Información de formatos" create="0" edit="0" delete="0">
+                <sheet>
+                    <field name="content" nolabel="1" widget="html"/>
+                </sheet>
+                <footer>
+                    <button name="action_close" type="object" string="Entendido" class="btn-primary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_libros_sire_wizard" model="ir.actions.act_window">
+        <field name="name">Centro de Libros y SIRE</field>
+        <field name="res_model">pierinelli.libros.sire.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <menuitem id="menu_libros_sire"
+              name="Libros y SIRE"
+              parent="account.menu_finance_reports"
+              action="action_libros_sire_wizard"
+              sequence="4"
+              groups="account.group_account_user,base.group_system"/>
+</odoo>

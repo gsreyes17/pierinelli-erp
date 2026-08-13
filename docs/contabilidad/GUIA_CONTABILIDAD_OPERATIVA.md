@@ -66,7 +66,7 @@ El arqueo no crea un asiento automático por sobrantes o faltantes de cobranza: 
 1. Entre a **Contabilidad -> Contabilidad -> Asientos contables**.
 2. Pulse **Plantilla Excel** y descargue `plantilla_importacion_asientos.xlsx`.
 3. Abra el archivo y lea la hoja **Instrucciones**. En la hoja **Asientos**, elimine las dos filas grises de ejemplo antes de cargar información real.
-4. Complete una fila por línea contable: `referencia`, `fecha`, `diario_codigo`, `cuenta_codigo`, `glosa`, `debe`, `haber` y, opcionalmente, `tipo_operacion`.
+4. Complete una fila por línea contable: `Referencia`, `Fecha`, `Código de diario`, `Código de cuenta`, `Glosa`, `Debe`, `Haber` y, opcionalmente, `Tipo de operación`.
 5. Todas las líneas del mismo asiento deben repetir referencia, fecha y diario. Cada referencia debe cuadrar Debe = Haber.
 6. En Odoo pulse **Importar asientos**, adjunte el Excel y pulse **Validar e importar**.
 7. Si hay un error, el sistema indica la fila y no crea ningún asiento. Si todo es correcto, abre los asientos creados en estado **Borrador**; revíselos y publíquelos solo cuando estén aprobados.

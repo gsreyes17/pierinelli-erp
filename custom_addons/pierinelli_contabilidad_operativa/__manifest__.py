@@ -1,6 +1,6 @@
 {
     'name': 'Pierinelli Contabilidad Operativa',
-    'version': '19.0.2.0.0',
+    'version': '19.0.2.1.0',
     'summary': 'Control contable, caja chica, tesoreria y cumplimiento operativo',
     'author': 'Pierinelli',
     'depends': ['account', 'analytic', 'pierinelli_reportes'],

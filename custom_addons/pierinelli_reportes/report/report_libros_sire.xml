@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_libros_sire" model="ir.actions.report">
+        <field name="name">Libro de revisión</field>
+        <field name="model">pierinelli.libros.sire.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_reportes.report_libros_sire_doc</field>
+        <field name="report_file">pierinelli_reportes.report_libros_sire_doc</field>
+        <field name="print_report_name">'BORRADOR - %s' % (object.report_type)</field>
+    </record>
+
+    <template id="report_libros_sire_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="payload" t-value="o.get_report_payload()"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <style>
+                            .sire-title { background:#111; color:#fff; padding:10px; }
+                            .sire-accent { color:#C9962F; font-weight:bold; }
+                            .sire-meta { font-size:9px; margin:7px 0; }
+                            .sire-table { width:100%; border-collapse:collapse; font-size:7px; }
+                            .sire-table th { background:#111; color:#fff; padding:4px; }
+                            .sire-table td { border-bottom:1px solid #ddd; padding:3px; }
+                            .sire-table .num { text-align:right; }
+                            .sire-total td { font-weight:bold; background:#faf1df; border-top:2px solid #C9962F; }
+                            .sire-warning { margin-top:8px; padding:6px; border:1px solid #C9962F; font-size:8px; }
+                        </style>
+                        <div class="sire-title">
+                            <div style="font-size:16px;" t-esc="payload['title']"/>
+                            <div class="sire-accent">BORRADOR DE REVISIÓN · NO PRESENTADO A SUNAT</div>
+                        </div>
+                        <div class="sire-meta">
+                            <strong t-esc="payload['company']"/>
+                            <span t-if="payload['vat']"> · RUC <t t-esc="payload['vat']"/></span>
+                            · Periodo <span t-esc="payload['period']"/>
+                        </div>
+                        <table class="sire-table">
+                            <thead>
+                                <tr>
+                                    <th t-foreach="payload['headers']" t-as="header" t-esc="header"/>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="payload['rows']" t-as="row">
+                                    <td t-foreach="row" t-as="value"
+                                        t-att-class="'num' if value_index in payload['number_columns'] else ''"
+                                        t-esc="('%.2f' % value) if value_index in payload['number_columns'] else (value or '')"/>
+                                </tr>
+                                <tr class="sire-total">
+                                    <td t-foreach="payload['total_values']" t-as="value"
+                                        t-att-class="'num' if value_index in payload['number_columns'] else ''"
+                                        t-esc="('%.2f' % value) if value_index in payload['number_columns'] and value != '' else value"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="sire-warning">
+                            Documento interno para revisión y demostración. No sustituye el archivo con
+                            estructura vigente, la validación PVSIRE, la generación RCE/RVIE ni el CDR de SUNAT.
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

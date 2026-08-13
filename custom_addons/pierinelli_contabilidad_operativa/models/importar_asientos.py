@@ -10,8 +10,12 @@ from odoo.exceptions import UserError, ValidationError
 
 
 PLANTILLA_HEADERS = [
-    'referencia', 'fecha', 'diario_codigo', 'cuenta_codigo', 'glosa',
-    'debe', 'haber', 'tipo_operacion',
+    'Referencia', 'Fecha', 'Código de diario', 'Código de cuenta', 'Glosa',
+    'Debe', 'Haber', 'Tipo de operación', 'Contacto o RUC',
+]
+PLANTILLA_HEADERS_NORMALIZED = [
+    'referencia', 'fecha', 'código de diario', 'código de cuenta', 'glosa',
+    'debe', 'haber', 'tipo de operación', 'contacto o ruc',
 ]
 
 
@@ -41,11 +45,11 @@ class DescargarPlantillaAsientos(models.TransientModel):
         # diario y cuenta antes de usar la plantilla.
         example = [
             'REEMPLAZAR-001', date.today(), 'DIARIO_CODIGO', 'CUENTA_DEBE',
-            'Glosa de ejemplo', 1000.00, 0.00, 'provision',
+            'Glosa de ejemplo', 1000.00, 0.00, 'provision', 'RUC_O_NOMBRE_EXISTENTE',
         ]
         example_credit = [
             'REEMPLAZAR-001', date.today(), 'DIARIO_CODIGO', 'CUENTA_HABER',
-            'Glosa de ejemplo', 0.00, 1000.00, 'provision',
+            'Glosa de ejemplo', 0.00, 1000.00, 'provision', 'RUC_O_NOMBRE_EXISTENTE',
         ]
         for row_number, row in enumerate((example, example_credit), start=1):
             for column, value in enumerate(row):
@@ -55,19 +59,20 @@ class DescargarPlantillaAsientos(models.TransientModel):
                     main.write(row_number, column, value, example_format)
         main.freeze_panes(1, 0)
         main.autofilter(0, 0, 0, len(PLANTILLA_HEADERS) - 1)
-        for column, width in enumerate((22, 13, 18, 18, 36, 14, 14, 18)):
+        for column, width in enumerate((22, 13, 18, 18, 36, 14, 14, 18, 30)):
             main.set_column(column, column, width)
 
         instructions.set_column(0, 0, 115)
         notes = [
             'PLANTILLA DE IMPORTACIÓN DE ASIENTOS',
             '1. Elimine las dos filas grises de ejemplo antes de importar.',
-            '2. Cada fila es una línea contable. Las líneas del mismo asiento deben tener la misma referencia, fecha y diario_codigo.',
-            '3. fecha: use dd/mm/aaaa. diario_codigo y cuenta_codigo deben existir exactamente en Odoo.',
-            '4. debe y haber son números; una línea solo debe tener importe en una de las dos columnas.',
-            '5. Cada referencia debe cuadrar: total Debe igual a total Haber. La importación crea únicamente borradores, nunca publica asientos.',
-            '6. tipo_operacion es opcional: venta, compra, anticipo, detraccion, retencion, nota_credito, caja_chica, provision, depreciacion o ajuste.',
-            '7. Primero pruebe con un asiento pequeño en una base de pruebas. Corrija cualquier error indicado antes de volver a subir el archivo.',
+            '2. Cada fila es una línea contable. Las líneas del mismo asiento deben tener la misma Referencia, Fecha y Código de diario.',
+            '3. Fecha: use dd/mm/aaaa. El Código de diario y Código de cuenta deben existir exactamente en Odoo.',
+            '4. Debe y Haber son números; una línea solo debe tener importe en una de las dos columnas.',
+            '5. Cada Referencia debe cuadrar: total Debe igual a total Haber. La importación crea únicamente borradores, nunca publica asientos.',
+            '6. Tipo de operación es opcional: venta, compra, anticipo, detraccion, retencion, nota_credito, caja_chica, provision, depreciacion o ajuste.',
+            '7. Contacto o RUC es opcional. Si se registra, debe coincidir exactamente con un contacto existente por RUC o nombre. Se asigna a las líneas y, si todo el asiento usa el mismo tercero, también a la cabecera.',
+            '8. Primero pruebe con un asiento pequeño en una base de pruebas. Corrija cualquier error indicado antes de volver a subir el archivo.',
         ]
         title_format = workbook.add_format({'bold': True, 'font_size': 14,
                                              'font_color': '#1F4E78'})
@@ -117,6 +122,19 @@ class ImportarAsientos(models.TransientModel):
             self._error(row, _('%s no puede ser negativo.') % label)
         return round(amount, 2)
 
+    def _partner_from_value(self, value, row):
+        identifier = str(value or '').strip()
+        if not identifier:
+            return self.env['res.partner']
+        partner = self.env['res.partner'].search([('vat', '=', identifier)], limit=1)
+        if not partner:
+            partner = self.env['res.partner'].search([('name', '=', identifier)], limit=1)
+        if not partner:
+            self._error(row, _(
+                'no existe el contacto o RUC %(identifier)s. Créalo primero en Contactos.') % {
+                    'identifier': identifier})
+        return partner
+
     def _parse_file(self):
         self.ensure_one()
         try:
@@ -134,7 +152,7 @@ class ImportarAsientos(models.TransientModel):
         except StopIteration:
             raise ValidationError(_('El archivo no tiene encabezados.'))
         normalized = [str(value or '').strip().lower() for value in headers]
-        if normalized[:len(PLANTILLA_HEADERS)] != PLANTILLA_HEADERS:
+        if normalized[:len(PLANTILLA_HEADERS_NORMALIZED)] != PLANTILLA_HEADERS_NORMALIZED:
             raise ValidationError(_(
                 'Los encabezados no coinciden. Descarga nuevamente la plantilla '
                 'y conserva: %s.') % ', '.join(PLANTILLA_HEADERS))
@@ -150,7 +168,7 @@ class ImportarAsientos(models.TransientModel):
             description = str(values[4] or '').strip()
             if not reference or not journal_code or not account_code or not description:
                 self._error(excel_row, _(
-                    'referencia, diario_codigo, cuenta_codigo y glosa son obligatorios.'))
+                    'Referencia, Código de diario, Código de cuenta y Glosa son obligatorios.'))
             debit = self._amount(values[5], _('Debe'), excel_row)
             credit = self._amount(values[6], _('Haber'), excel_row)
             if (debit and credit) or not (debit or credit):
@@ -160,13 +178,14 @@ class ImportarAsientos(models.TransientModel):
             if operation_type and operation_type not in dict(
                     self.env['account.move']._fields['tipo_operacion_contable'].selection):
                 self._error(excel_row, _(
-                    'tipo_operacion no es válido. Déjalo vacío o usa uno de los valores de la plantilla.'))
+                    'Tipo de operación no es válido. Déjalo vacío o usa uno de los valores de la plantilla.'))
             lines.append({
                 'row': excel_row, 'reference': reference,
                 'date': self._date_value(values[1], excel_row),
                 'journal_code': journal_code, 'account_code': account_code,
                 'name': description, 'debit': debit, 'credit': credit,
                 'operation_type': operation_type or False,
+                'partner_identifier': str(values[8] or '').strip(),
             })
         if not lines:
             raise ValidationError(_('No hay líneas para importar.'))
@@ -178,6 +197,7 @@ class ImportarAsientos(models.TransientModel):
         company = self.env.company
         journals = {}
         accounts = {}
+        partners = {}
         grouped = {}
         for line in lines:
             journal = journals.get(line['journal_code'])
@@ -204,6 +224,10 @@ class ImportarAsientos(models.TransientModel):
                 self._error(line['row'], _(
                     'no existe la cuenta %(code)s para la compañía actual.') %
                     {'code': line['account_code']})
+            identifier = line['partner_identifier']
+            if identifier not in partners:
+                partners[identifier] = self._partner_from_value(identifier, line['row'])
+            line['partner_id'] = partners[identifier].id
             key = (line['reference'], line['date'], journal.id,
                    line['operation_type'])
             grouped.setdefault(key, []).append((line, account))
@@ -219,13 +243,16 @@ class ImportarAsientos(models.TransientModel):
 
         moves = self.env['account.move']
         for (reference, move_date, journal_id, operation_type), move_lines in grouped.items():
+            partner_ids = {line['partner_id'] for line, account in move_lines if line['partner_id']}
             moves |= self.env['account.move'].create({
                 'move_type': 'entry', 'journal_id': journal_id,
                 'date': move_date, 'ref': reference,
                 'tipo_operacion_contable': operation_type,
+                'partner_id': partner_ids.pop() if len(partner_ids) == 1 else False,
                 'line_ids': [(0, 0, {
                     'account_id': account.id, 'name': line['name'],
                     'debit': line['debit'], 'credit': line['credit'],
+                    'partner_id': line['partner_id'],
                 }) for line, account in move_lines],
             })
         return {

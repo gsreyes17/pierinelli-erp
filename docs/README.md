@@ -29,6 +29,8 @@
 - [Implementación frente a requisitos actualizados](contabilidad/IMPLEMENTACION_REQUISITOS_2026-08-12.md): rutas exactas, cobertura y decisiones pendientes.
 - [Guía de los 20 puntos de contabilidad](contabilidad/GUIA_20_PUNTOS_CONTABILIDAD.md): estado y uso detallado de cada punto de la verificación del cliente.
 - [Pruebas SUNAT](contabilidad/SUNAT_PRUEBAS.md): ambiente Beta, credenciales necesarias y alcance de una integración real.
+- [Guía de Libros y SIRE](contabilidad/GUIA_LIBROS_SIRE_DEMO.md): rutas exactas, formatos, pipeline y demostración de venta/compra cerrada.
+- [Guion de flujos comerciales y contables](contabilidad/GUION_FLUJOS_COMERCIALES_Y_CONTABLES.md): demostración integrada de venta, compra, caja, comprobantes y libros.
 
 ## Asistente
 

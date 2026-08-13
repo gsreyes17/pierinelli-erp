@@ -13,7 +13,7 @@ import logging
 from odoo.tools import file_open
 
 _logger = logging.getLogger('pierinelli_seed')
-SEED_VERSION = '14'
+SEED_VERSION = '16'
 LANG = 'es_419'
 
 ICP = env['ir.config_parameter'].sudo()
@@ -896,6 +896,12 @@ else:
     cuenta_suministros = cuenta_demo('6560000')
     cuenta_consultoria = cuenta_demo('6321000')
     cuenta_por_pagar = cuenta_demo('4211000')
+    # PCGE: 4211 corresponde a comprobantes por recibir (no emitidas) y
+    # 4212 a comprobantes emitidos. Algunas instalaciones antiguas del plan
+    # local conservaban la denominacion de 4211 en ambas subcuentas.
+    cuenta_emitidas = cuenta_demo('4212000')
+    if cuenta_emitidas:
+        cuenta_emitidas.name = 'Facturas, boletas y otros comprobantes por pagar - Emitidas'
     cuenta_depreciacion = cuenta_demo('6811100')
     cuenta_depreciacion_acum = cuenta_demo('3911100')
     cuenta_faltante = cuenta_demo(
@@ -1066,6 +1072,83 @@ else:
             'linea_ids': lineas_presupuesto,
         })
         presupuesto.action_aprobar()
+
+    # --- 15) Casos demostrativos para libros 7.1 y 8.2 ---
+    # Permiten que el Centro de Libros muestre contenido aun cuando la empresa
+    # todavia no haya registrado activos ni compras a no domiciliados reales.
+    diario_compras = Journal.search([
+        ('type', '=', 'purchase'), ('company_id', '=', company.id)], limit=1)
+    cuenta_activo = cuenta_demo(
+        '3361000', 'Equipo para procesamiento de piedra - Demo', 'asset_fixed')
+    cuenta_importacion = (
+        cuenta_demo('6091000')
+        or cuenta_demo('6011000')
+        or cuenta_demo('6311000')
+        or cuenta_demo('6099000', 'Compras de importación - Demo', 'expense_direct_cost'))
+
+    try:
+        if diario_compras and cuenta_activo and not AM.search([
+                ('ref', '=', 'DEMO-7.1-ACTIVO')], limit=1):
+            activo_bill = AM.create({
+                'move_type': 'in_invoice',
+                'journal_id': diario_compras.id,
+                'partner_id': proveedor_demo.id,
+                'invoice_date': hoy_demo,
+                'ref': 'DEMO-7.1-ACTIVO',
+                'invoice_line_ids': [(0, 0, {
+                    'name': 'Pulidora industrial de cantos - Activo Demo',
+                    'account_id': cuenta_activo.id,
+                    'quantity': 1.0,
+                    'price_unit': 4800.0,
+                    'tax_ids': [(6, 0, purchase_tax.ids)] if purchase_tax else False,
+                })],
+            })
+            if factura and 'l10n_latam_document_type_id' in activo_bill._fields:
+                activo_bill.l10n_latam_document_type_id = factura.id
+            if 'l10n_latam_document_number' in activo_bill._fields:
+                activo_bill.l10n_latam_document_number = 'F009-00000471'
+            activo_bill.action_post()
+
+        proveedor_exterior = Partner.search([
+            ('name', '=', 'Marmol Design Italia SRL - Demo')], limit=1)
+        if not proveedor_exterior:
+            proveedor_exterior = Partner.create({
+                'name': 'Marmol Design Italia SRL - Demo',
+                'is_company': True,
+                'supplier_rank': 1,
+                'country_id': env.ref('base.it').id,
+                'l10n_latam_identification_type_id': env.ref('l10n_pe.it_NDTD').id,
+                'vat': 'IT-DEMO-10458963',
+                'email': 'exportaciones@proveedor-demo.invalid',
+            })
+        usd = env.ref('base.USD', raise_if_not_found=False)
+        comprobante_91 = env.ref('l10n_pe.document_type91', raise_if_not_found=False)
+        if diario_compras and cuenta_importacion and not AM.search([
+                ('ref', '=', 'DEMO-8.2-NO-DOMICILIADO')], limit=1):
+            exterior_bill = AM.create({
+                'move_type': 'in_invoice',
+                'journal_id': diario_compras.id,
+                'partner_id': proveedor_exterior.id,
+                'invoice_date': hoy_demo,
+                'currency_id': usd.id if usd else company.currency_id.id,
+                'ref': 'DEMO-8.2-NO-DOMICILIADO',
+                'invoice_line_ids': [(0, 0, {
+                    'name': 'Lote de mármol importado - muestra 8.2',
+                    'account_id': cuenta_importacion.id,
+                    'quantity': 12.5,
+                    'price_unit': 320.0,
+                    'tax_ids': [(5, 0, 0)],
+                })],
+            })
+            if comprobante_91 and 'l10n_latam_document_type_id' in exterior_bill._fields:
+                exterior_bill.l10n_latam_document_type_id = comprobante_91.id
+            if 'l10n_latam_document_number' in exterior_bill._fields:
+                exterior_bill.l10n_latam_document_number = 'INV-IT-2026-0184'
+            exterior_bill.action_post()
+        print('Casos de libros 7.1 y 8.2 verificados.')
+    except Exception as e:
+        _logger.warning('Casos demostrativos 7.1/8.2: %s', e)
+
     print('Datos contables de demostracion verificados.')
     env.cr.commit()
 

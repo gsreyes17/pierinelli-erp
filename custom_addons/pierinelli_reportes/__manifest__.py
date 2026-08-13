@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Pierinelli Reportes Financieros',
-    'version': '19.0.2.0.0',
+    'version': '19.0.3.3.0',
     'category': 'Accounting/Accounting',
     'summary': 'Estados financieros peruanos (Balance General, EE.RR., Mayor, Balance de Comprobacion)',
     'description': """
@@ -32,14 +32,16 @@ Ademas:
     'author': 'Pierinelli',
     'website': 'https://pierinelli.com',
     'license': 'LGPL-3',
-    'depends': ['account', 'pierinelli_data'],
+    'depends': ['account', 'stock_account', 'l10n_pe', 'pierinelli_data'],
     'data': [
         'security/ir.model.access.csv',
         'data/multimoneda.xml',
         'data/tipo_cambio_cron.xml',
         'views/contabilidad_extra_views.xml',
         'wizard/financial_report_wizard_views.xml',
+        'wizard/libros_sire_wizard_views.xml',
         'report/report_actions.xml',
+        'report/report_libros_sire.xml',
         'report/report_templates.xml',
         'report/report_financial_position.xml',
         'report/report_income_statement.xml',

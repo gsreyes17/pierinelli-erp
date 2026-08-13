@@ -8,3 +8,9 @@ access_tipo_cambio_actualizar_system,pierinelli.tipo.cambio.actualizar.system,mo
 access_plantilla_asiento_user,pierinelli.plantilla.asiento.contable,model_pierinelli_plantilla_asiento,account.group_account_invoice,1,1,1,1
 access_plantilla_linea_user,pierinelli.plantilla.asiento.linea.contable,model_pierinelli_plantilla_asiento_linea,account.group_account_invoice,1,1,1,1
 access_plantilla_usar_user,pierinelli.plantilla.usar.contable,model_pierinelli_plantilla_usar,account.group_account_invoice,1,1,1,1
+access_libros_sire_wizard_user,pierinelli.libros.sire.wizard.user,model_pierinelli_libros_sire_wizard,account.group_account_user,1,1,1,1
+access_libros_sire_wizard_system,pierinelli.libros.sire.wizard.system,model_pierinelli_libros_sire_wizard,base.group_system,1,1,1,1
+access_libros_sire_line_user,pierinelli.libros.sire.line.user,model_pierinelli_libros_sire_line,account.group_account_user,1,1,1,1
+access_libros_sire_line_system,pierinelli.libros.sire.line.system,model_pierinelli_libros_sire_line,base.group_system,1,1,1,1
+access_libros_sire_help_user,pierinelli.libros.sire.help.user,model_pierinelli_libros_sire_help,account.group_account_user,1,1,1,1
+access_libros_sire_help_system,pierinelli.libros.sire.help.system,model_pierinelli_libros_sire_help,base.group_system,1,1,1,1
