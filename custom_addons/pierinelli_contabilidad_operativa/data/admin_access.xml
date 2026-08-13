@@ -1,0 +1,14 @@
+<odoo>
+    <!-- El Administrador del entorno de prueba puede recorrer todos los
+         paneles y operaciones contables sin requerir un usuario adicional. -->
+    <function model="res.users" name="write">
+        <value eval="[ref('base.user_admin')]"/>
+        <value eval="{
+                'group_ids': [
+                    (4, ref('account.group_account_user')),
+                    (4, ref('account.group_account_manager')),
+                    (4, ref('analytic.group_analytic_accounting'))
+                ]
+            }"/>
+    </function>
+</odoo>

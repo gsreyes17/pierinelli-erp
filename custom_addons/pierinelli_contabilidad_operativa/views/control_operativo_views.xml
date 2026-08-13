@@ -1,0 +1,133 @@
+<odoo>
+    <record id="view_tipo_comprobante_list" model="ir.ui.view">
+        <field name="name">pierinelli.tipo.comprobante.list</field>
+        <field name="model">pierinelli.tipo.comprobante</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code"/><field name="name"/><field name="scope"/>
+                <field name="requiere_ruc"/><field name="permite_credito_fiscal"/>
+                <field name="company_id" optional="show"/><field name="active"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_tipo_comprobante_form" model="ir.ui.view">
+        <field name="name">pierinelli.tipo.comprobante.form</field>
+        <field name="model">pierinelli.tipo.comprobante</field>
+        <field name="arch" type="xml">
+            <form><sheet>
+                <group><group>
+                    <field name="code"/><field name="name"/><field name="scope"/>
+                    <field name="company_id"/><field name="active"/>
+                </group><group>
+                    <field name="requiere_ruc"/><field name="permite_credito_fiscal"/>
+                </group></group>
+                <group><field name="notas" placeholder="Regla interna o consideración del contador..."/></group>
+            </sheet></form>
+        </field>
+    </record>
+    <record id="action_tipo_comprobante" model="ir.actions.act_window">
+        <field name="name">Tipos de Comprobantes</field>
+        <field name="res_model">pierinelli.tipo.comprobante</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_tipo_comprobante" name="Tipos de Comprobantes"
+              parent="account.menu_finance_configuration" action="action_tipo_comprobante"
+              sequence="32" groups="account.group_account_manager,base.group_system"/>
+
+    <record id="view_arqueo_cobranza_list" model="ir.ui.view">
+        <field name="name">pierinelli.arqueo.cobranza.list</field>
+        <field name="model">pierinelli.arqueo.cobranza</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="fecha"/><field name="name"/><field name="journal_id"/>
+                <field name="currency_id"/><field name="importe_esperado"/>
+                <field name="efectivo_contado"/><field name="diferencia"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_arqueo_cobranza_form" model="ir.ui.view">
+        <field name="name">pierinelli.arqueo.cobranza.form</field>
+        <field name="model">pierinelli.arqueo.cobranza</field>
+        <field name="arch" type="xml">
+            <form><header>
+                <button name="action_cerrar" type="object" string="Cerrar arqueo"
+                        class="btn-primary" invisible="state != 'borrador'"/>
+                <button name="action_reabrir" type="object" string="Reabrir"
+                        invisible="state != 'cerrado'" groups="account.group_account_manager,base.group_system"/>
+                <field name="state" widget="statusbar" statusbar_visible="borrador,cerrado"/>
+            </header><sheet>
+                <div class="oe_title"><h1><field name="name"/></h1></div>
+                <group><group>
+                    <field name="fecha" readonly="state == 'cerrado'"/>
+                    <field name="journal_id" readonly="state == 'cerrado'"/>
+                    <field name="currency_id" readonly="1"/>
+                </group><group string="Conteo físico">
+                    <field name="importe_esperado" readonly="1"/>
+                    <field name="efectivo_contado" readonly="state == 'cerrado'"/>
+                    <field name="diferencia" readonly="1"/>
+                    <field name="arqueo_confirmado" readonly="state == 'cerrado'"/>
+                </group></group>
+                <group><field name="observacion" readonly="state == 'cerrado'"
+                    placeholder="Indique depósito, sobrante/faltante o sustento de la diferencia..."/></group>
+                <notebook><page string="Cobros incluidos">
+                    <field name="payment_ids" readonly="1"><list create="0" delete="0">
+                        <field name="date"/><field name="name"/><field name="partner_id"/><field name="amount"/><field name="state"/>
+                    </list></field>
+                </page></notebook>
+                <p class="text-muted">Este arqueo controla cobros registrados en el diario de efectivo. Una diferencia se documenta y se regulariza con el asiento autorizado; no genera un asiento automático.</p>
+            </sheet><chatter/></form>
+        </field>
+    </record>
+    <record id="action_arqueo_cobranza" model="ir.actions.act_window">
+        <field name="name">Arqueo Diario de Cobranzas</field>
+        <field name="res_model">pierinelli.arqueo.cobranza</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_arqueo_cobranza" name="Arqueo Diario de Cobranzas"
+              parent="account.menu_finance_entries" action="action_arqueo_cobranza"
+              sequence="27" groups="account.group_account_user,base.group_system"/>
+
+    <record id="view_cierre_contable_list" model="ir.ui.view">
+        <field name="name">pierinelli.cierre.contable.list</field>
+        <field name="model">pierinelli.cierre.contable</field>
+        <field name="arch" type="xml"><list>
+            <field name="name"/><field name="company_id"/><field name="tipo"/>
+            <field name="fecha_bloqueo"/><field name="fecha_anterior"/>
+            <field name="aplicado_por_id"/><field name="state" widget="badge"/>
+        </list></field>
+    </record>
+    <record id="view_cierre_contable_form" model="ir.ui.view">
+        <field name="name">pierinelli.cierre.contable.form</field>
+        <field name="model">pierinelli.cierre.contable</field>
+        <field name="arch" type="xml"><form><header>
+            <button name="action_aplicar" type="object" string="Aplicar bloqueo"
+                    class="btn-primary" invisible="state != 'borrador'"/>
+            <button name="action_revertir" type="object" string="Revertir bloqueo"
+                    invisible="state != 'aplicado'"/>
+            <field name="state" widget="statusbar" statusbar_visible="borrador,aplicado,revertido"/>
+        </header><sheet>
+            <div class="oe_title"><h1><field name="name"/></h1></div>
+            <group><group>
+                <field name="company_id" readonly="state != 'borrador'"/>
+                <field name="tipo" readonly="state != 'borrador'"/>
+                <field name="fecha_bloqueo" readonly="state != 'borrador'"/>
+            </group><group>
+                <field name="fecha_anterior"/><field name="fecha_aplicacion"/><field name="aplicado_por_id"/>
+            </group></group>
+            <group><field name="observacion" readonly="state != 'borrador'" placeholder="Motivo, período y aprobación del responsable..."/></group>
+            <p class="text-muted">El bloqueo se aplica a la fecha estándar de la compañía y evita registrar o modificar asientos en el período cerrado. Revertirlo es una acción excepcional y queda auditada.</p>
+        </sheet><chatter/></form></field>
+    </record>
+    <record id="action_cierre_contable" model="ir.actions.act_window">
+        <field name="name">Cierres Contables</field><field name="res_model">pierinelli.cierre.contable</field><field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_cierre_contable" name="Cierres Contables"
+              parent="account.menu_finance_entries" action="action_cierre_contable"
+              sequence="45" groups="account.group_account_manager,base.group_system"/>
+
+    <menuitem id="menu_dimensiones_analiticas" name="Dimensiones Analíticas"
+              parent="account.menu_finance_configuration"
+              action="analytic.account_analytic_plan_action" sequence="33"
+              groups="analytic.group_analytic_accounting,base.group_system"/>
+</odoo>

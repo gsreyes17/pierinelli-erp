@@ -90,6 +90,29 @@ Una plancha natural sin foto individual no puede reservarse ni venderse.
 
 Esto incorpora los gastos al costo promedio AVCO y genera su efecto contable.
 
+### Atajo: costos desde la misma recepción o transferencia
+
+Para evitar crear el costeo desde cero, también puede registrarlo directamente
+en la operación que recibió o trasladó el material:
+
+1. Abra **Inventario -> Operaciones -> Recepciones** para una importación, o
+   **Inventario -> Operaciones -> Transferencias** para mover material entre
+   locales.
+2. Abra la recepción o transferencia y valide la operación física.
+3. Entre a la pestaña **Costos adicionales**.
+4. Agregue una línea por concepto: **Flete / viaje**, **Seguridad de traslado**,
+   **Seguro de carga**, **Aduana / importación**, **Carga, descarga o maniobra**
+   u **Otro costo**. Indique el importe, detalle y método de reparto.
+5. Un usuario con permiso **Inventario: Administrador** pulsa **Preparar
+   costeo**. El sistema lleva los conceptos y la transferencia al costeo
+   estándar automáticamente.
+6. En la pantalla abierta pulse **Calcular**, revise el reparto y pulse
+   **Validar**.
+
+El reparto **Por cantidad / m²** es el recomendado para planchas. No registre
+el mismo gasto en este atajo y también en un costo en destino manual: se
+duplicaría el valor del inventario.
+
 ## 6. Crear una cotización y reservar una plancha
 
 1. Abra **Ventas**.

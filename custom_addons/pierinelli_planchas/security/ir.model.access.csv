@@ -11,3 +11,4 @@ access_merma_sale,pierinelli.merma.vendedor.lectura,model_pierinelli_merma,sales
 access_registrar_merma_stock,pierinelli.registrar.merma.stock,model_pierinelli_registrar_merma,stock.group_stock_user,1,1,1,1
 access_recepcion_planchas_stock,pierinelli.recepcion.planchas.stock,model_pierinelli_recepcion_planchas,stock.group_stock_user,1,1,1,1
 access_recepcion_planchas_linea_stock,pierinelli.recepcion.planchas.linea.stock,model_pierinelli_recepcion_planchas_linea,stock.group_stock_user,1,1,1,1
+access_costo_adicional_stock_user,pierinelli.costo.adicional.stock.user,model_pierinelli_costo_adicional,stock.group_stock_user,1,1,1,1

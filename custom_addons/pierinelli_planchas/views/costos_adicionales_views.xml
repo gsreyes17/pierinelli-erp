@@ -1,0 +1,42 @@
+<odoo>
+    <record id="view_picking_form_costos_adicionales" model="ir.ui.view">
+        <field name="name">stock.picking.form.costos.adicionales</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_preparar_costeo" type="object" string="Preparar costeo"
+                        class="btn-secondary" groups="stock.group_stock_manager"
+                        invisible="state != 'done' or not costo_adicional_ids or landed_cost_id"/>
+                <button name="action_ver_costeo" type="object" string="Ver costeo"
+                        class="btn-secondary" groups="stock.group_stock_manager"
+                        invisible="not landed_cost_id"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <field name="landed_cost_id" invisible="1"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Costos adicionales"
+                      invisible="picking_type_code not in ('incoming', 'internal')">
+                    <p class="text-muted">
+                        Registre flete, seguridad, seguro u otros costos. Después de validar la operación,
+                        pulse <strong>Preparar costeo</strong> para revisar, calcular y validar el costo en destino.
+                    </p>
+                    <field name="costo_adicional_ids" readonly="state == 'cancel' or landed_cost_id">
+                        <list editable="bottom">
+                            <field name="concepto"/>
+                            <field name="detalle"/>
+                            <field name="importe"/>
+                            <field name="metodo_reparto"/>
+                            <field name="currency_id" column_invisible="True"/>
+                        </list>
+                    </field>
+                    <group class="oe_subtotal_footer oe_right">
+                        <field name="currency_id" invisible="1"/>
+                        <field name="costo_adicional_total" readonly="1"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

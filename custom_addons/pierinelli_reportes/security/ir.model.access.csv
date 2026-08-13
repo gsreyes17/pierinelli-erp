@@ -3,6 +3,8 @@ access_financial_report_wizard_user,pierinelli.financial.report.wizard.user,mode
 access_financial_report_wizard_readonly,pierinelli.financial.report.wizard.readonly,model_pierinelli_financial_report_wizard,account.group_account_readonly,1,1,1,1
 access_tipo_cambio_user,pierinelli.tipo.cambio.contable,model_pierinelli_tipo_cambio,account.group_account_invoice,1,1,1,1
 access_tipo_cambio_sale,pierinelli.tipo.cambio.vendedor,model_pierinelli_tipo_cambio,sales_team.group_sale_salesman,1,0,0,0
+access_tipo_cambio_actualizar_manager,pierinelli.tipo.cambio.actualizar.manager,model_pierinelli_tipo_cambio_actualizar,account.group_account_manager,1,1,1,1
+access_tipo_cambio_actualizar_system,pierinelli.tipo.cambio.actualizar.system,model_pierinelli_tipo_cambio_actualizar,base.group_system,1,1,1,1
 access_plantilla_asiento_user,pierinelli.plantilla.asiento.contable,model_pierinelli_plantilla_asiento,account.group_account_invoice,1,1,1,1
 access_plantilla_linea_user,pierinelli.plantilla.asiento.linea.contable,model_pierinelli_plantilla_asiento_linea,account.group_account_invoice,1,1,1,1
 access_plantilla_usar_user,pierinelli.plantilla.usar.contable,model_pierinelli_plantilla_usar,account.group_account_invoice,1,1,1,1

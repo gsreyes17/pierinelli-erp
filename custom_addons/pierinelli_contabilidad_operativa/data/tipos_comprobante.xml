@@ -1,0 +1,32 @@
+<odoo noupdate="1">
+    <record id="tipo_comprobante_factura" model="pierinelli.tipo.comprobante">
+        <field name="name">Factura</field><field name="code">01</field>
+        <field name="scope">compra</field><field name="requiere_ruc">True</field>
+        <field name="permite_credito_fiscal">True</field>
+    </record>
+    <record id="tipo_comprobante_boleta" model="pierinelli.tipo.comprobante">
+        <field name="name">Boleta de venta</field><field name="code">03</field>
+        <field name="scope">compra</field>
+    </record>
+    <record id="tipo_comprobante_nota_credito" model="pierinelli.tipo.comprobante">
+        <field name="name">Nota de crédito</field><field name="code">07</field>
+        <field name="scope">venta</field>
+    </record>
+    <record id="tipo_comprobante_nota_debito" model="pierinelli.tipo.comprobante">
+        <field name="name">Nota de débito</field><field name="code">08</field>
+        <field name="scope">venta</field>
+    </record>
+    <record id="tipo_comprobante_recibo_honorarios" model="pierinelli.tipo.comprobante">
+        <field name="name">Recibo por honorarios</field><field name="code">RHE</field>
+        <field name="scope">compra</field><field name="requiere_ruc">True</field>
+    </record>
+    <record id="tipo_comprobante_movilidad" model="pierinelli.tipo.comprobante">
+        <field name="name">Planilla de movilidad</field><field name="code">PM</field>
+        <field name="scope">caja</field>
+        <field name="notas">Sustento interno; validar topes y requisitos con el contador.</field>
+    </record>
+    <record id="tipo_comprobante_importacion" model="pierinelli.tipo.comprobante">
+        <field name="name">DAM / importación</field><field name="code">DAM</field>
+        <field name="scope">compra</field>
+    </record>
+</odoo>

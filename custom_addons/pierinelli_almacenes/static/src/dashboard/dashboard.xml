@@ -11,6 +11,9 @@
             </div>
 
             <div t-else="">
+                <div t-if="state.error" class="alert alert-warning m-3" role="alert">
+                    No se pudo cargar la información de almacenes. Vuelve a abrir el tablero en unos segundos.
+                </div>
                 <!-- Encabezado -->
                 <div class="o_pier_header">
                     <div>

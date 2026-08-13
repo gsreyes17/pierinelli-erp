@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="action_tipo_cambio_actualizar" model="ir.actions.act_window">
+        <field name="name">Actualizar desde SUNAT</field>
+        <field name="res_model">pierinelli.tipo.cambio.actualizar</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
     <!-- ============ TIPOS DE CAMBIO ============ -->
     <record id="view_tipo_cambio_list" model="ir.ui.view">
         <field name="name">pierinelli.tipo.cambio.list</field>
@@ -8,12 +15,19 @@
         <field name="arch" type="xml">
             <list editable="top" default_order="fecha desc, origen"
                   decoration-info="origen == 'sunat'">
+                <header>
+                    <button name="%(action_tipo_cambio_actualizar)d" type="action"
+                            string="Actualizar desde SUNAT" class="btn-primary"
+                            groups="account.group_account_manager,base.group_system"/>
+                </header>
                 <field name="fecha"/>
                 <field name="origen" widget="badge"
                        decoration-info="origen == 'sunat'"
                        decoration-warning="origen == 'corporativa'"/>
                 <field name="compra"/>
                 <field name="venta"/>
+                <field name="actualizado_automaticamente" optional="show"/>
+                <field name="fecha_actualizacion" optional="hide"/>
                 <field name="notas" optional="show"/>
             </list>
         </field>
@@ -66,6 +80,22 @@
         </field>
     </record>
 
+    <record id="view_tipo_cambio_actualizar_form" model="ir.ui.view">
+        <field name="name">pierinelli.tipo.cambio.actualizar.form</field>
+        <field name="model">pierinelli.tipo.cambio.actualizar</field>
+        <field name="arch" type="xml">
+            <form string="Actualizar tipo de cambio SUNAT">
+                <group>
+                    <p>Se consultará la publicación diaria oficial de SUNAT y se registrará la última fecha disponible. Si ya existe una tasa SUNAT ingresada manualmente para esa fecha, se conserva.</p>
+                    <p class="text-muted">SUNAT puede no publicar una tasa en días no hábiles. El ingreso manual permanece disponible como respaldo.</p>
+                </group>
+                <footer>
+                    <button name="action_actualizar" type="object" string="Consultar SUNAT" class="btn-primary"/>
+                    <button string="Cancelar" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
     <menuitem id="menu_tipo_cambio" name="Tipos de Cambio"
               parent="account.menu_finance_configuration"
               action="action_tipo_cambio" sequence="30"

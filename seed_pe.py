@@ -13,7 +13,7 @@ import logging
 from odoo.tools import file_open
 
 _logger = logging.getLogger('pierinelli_seed')
-SEED_VERSION = '13'
+SEED_VERSION = '14'
 LANG = 'es_419'
 
 ICP = env['ir.config_parameter'].sudo()
@@ -850,6 +850,223 @@ else:
             except Exception as e:
                 _logger.warning('Trazabilidad %s: %s', cplaca, e)
         print('Trazabilidad: placas', placas_ok, '| piezas producidas', piezas_ok)
+    env.cr.commit()
+
+    # --- 13) Acceso del Administrador a toda la operacion del ERP ---
+    # El usuario Administrador debe poder revisar y operar los flujos creados
+    # para Contabilidad sin depender de un perfil adicional.
+    admin = env.ref('base.user_admin', raise_if_not_found=False)
+    grupos_admin = grp(
+        'sales_team.group_sale_manager',
+        'stock.group_stock_manager',
+        'purchase.group_purchase_manager',
+            'account.group_account_user',
+            'account.group_account_manager',
+            'analytic.group_analytic_accounting',
+    )
+    if admin and grupos_admin:
+        admin.write({'group_ids': [(4, group_id) for group_id in grupos_admin]})
+        print('Administrador habilitado para Ventas, Compras, Inventario y Contabilidad.')
+
+    # --- 14) Demostracion de tesoreria, presupuestos y control tributario ---
+    # Cada registro usa nombres o referencias DEMO unicos, de modo que el seed
+    # se pueda ejecutar en local y Render sin duplicar movimientos.
+    Acc = env['account.account']
+    Journal = env['account.journal']
+    Caja = env['pierinelli.caja.chica']
+    CajaMovimiento = env['pierinelli.caja.chica.movimiento']
+    Tributo = env['pierinelli.control.tributario']
+    Presupuesto = env['pierinelli.presupuesto.financiero']
+    AM = env['account.move']
+    hoy_demo = datetime.now().date()
+    inicio_mes_demo = hoy_demo.replace(day=1)
+
+    def cuenta_demo(code, name=None, account_type=None):
+        account = Acc.search([('code', '=', code)], limit=1)
+        if not account and name and account_type:
+            account = Acc.create({
+                'code': code, 'name': name, 'account_type': account_type,
+                'company_ids': [(4, company.id)],
+            })
+        return account
+
+    cuenta_caja = cuenta_demo('1020000') or cuenta_demo('1010000')
+    cuenta_banco = cuenta_demo('1041001') or cuenta_demo('1041000')
+    cuenta_movilidad = cuenta_demo('6311200')
+    cuenta_suministros = cuenta_demo('6560000')
+    cuenta_consultoria = cuenta_demo('6321000')
+    cuenta_por_pagar = cuenta_demo('4211000')
+    cuenta_depreciacion = cuenta_demo('6811100')
+    cuenta_depreciacion_acum = cuenta_demo('3911100')
+    cuenta_faltante = cuenta_demo(
+        '6599900', 'Diferencias de caja - Faltantes', 'expense')
+    cuenta_sobrante = cuenta_demo(
+        '7599900', 'Diferencias de caja - Sobrantes', 'income_other')
+    diario_banco = Journal.search([
+        ('type', '=', 'bank'), ('default_account_id', '!=', False)], limit=1)
+    diario_general = Journal.search([('type', '=', 'general')], limit=1)
+    diario_caja = Journal.search([('code', '=', 'CCH')], limit=1)
+    if not diario_caja and cuenta_caja:
+        diario_caja = Journal.create({
+            'name': 'Caja Chica Demo', 'code': 'CCH', 'type': 'cash',
+            'company_id': company.id, 'default_account_id': cuenta_caja.id,
+        })
+
+    responsable_caja = Users.search([('login', '=', 'contabilidad')], limit=1) or admin
+    proveedor_demo = proveedores[0] if proveedores else Partner.search(
+        [('supplier_rank', '>', 0)], limit=1)
+    cajas_demo = 0
+    if all((diario_caja, diario_banco, cuenta_faltante, cuenta_sobrante,
+            cuenta_movilidad, cuenta_suministros)):
+        caja_cerrada = Caja.search([('name', '=', 'Caja Chica Demo - Cerrada')], limit=1)
+        if not caja_cerrada:
+            caja_cerrada = Caja.create({
+                'name': 'Caja Chica Demo - Cerrada',
+                'responsable_id': responsable_caja.id,
+                'journal_id': diario_caja.id,
+                'journal_reposicion_id': diario_banco.id,
+                'cuenta_faltante_id': cuenta_faltante.id,
+                'cuenta_sobrante_id': cuenta_sobrante.id,
+                'currency_id': company.currency_id.id,
+                'fondo_fijo': 2000.0,
+                'fecha_apertura': inicio_mes_demo,
+            })
+            caja_cerrada.action_abrir()
+            movimientos = [
+                (cuenta_movilidad, 185.0, 'MOV-DEMO-001', 'Planilla de movilidad comercial'),
+                (cuenta_suministros, 240.0, 'B001-458', 'Suministros de oficina'),
+                (cuenta_movilidad, 60.0, 'B001-461', 'Traslado de muestras a obra'),
+            ]
+            for cuenta, importe, documento, descripcion in movimientos:
+                movimiento = CajaMovimiento.create({
+                    'caja_id': caja_cerrada.id, 'fecha': inicio_mes_demo,
+                    'partner_id': proveedor_demo.id if proveedor_demo else False,
+                    'cuenta_gasto_id': cuenta.id, 'importe': importe,
+                    'documento': documento, 'descripcion': descripcion,
+                })
+                movimiento.action_contabilizar()
+            caja_cerrada.action_reponer()
+            # Se simula un faltante aprobado de S/ 10 para mostrar el ajuste.
+            caja_cerrada.write({
+                'arqueo_real': 1990.0, 'arqueo_confirmado': True,
+            })
+            caja_cerrada.action_ajustar_arqueo()
+            caja_cerrada.action_cerrar()
+            cajas_demo += 1
+
+        caja_abierta = Caja.search([('name', '=', 'Caja Chica Demo - Abierta')], limit=1)
+        if not caja_abierta:
+            caja_abierta = Caja.create({
+                'name': 'Caja Chica Demo - Abierta',
+                'responsable_id': responsable_caja.id,
+                'journal_id': diario_caja.id,
+                'journal_reposicion_id': diario_banco.id,
+                'cuenta_faltante_id': cuenta_faltante.id,
+                'cuenta_sobrante_id': cuenta_sobrante.id,
+                'currency_id': company.currency_id.id,
+                'fondo_fijo': 1500.0,
+                'fecha_apertura': hoy_demo,
+            })
+            caja_abierta.action_abrir()
+            for cuenta, importe, documento, descripcion in [
+                (cuenta_movilidad, 95.0, 'MOV-DEMO-002', 'Movilidad de visita a cliente'),
+                (cuenta_suministros, 130.0, 'F001-087', 'Materiales de embalaje'),
+            ]:
+                movimiento = CajaMovimiento.create({
+                    'caja_id': caja_abierta.id, 'fecha': hoy_demo,
+                    'partner_id': proveedor_demo.id if proveedor_demo else False,
+                    'cuenta_gasto_id': cuenta.id, 'importe': importe,
+                    'documento': documento, 'descripcion': descripcion,
+                })
+                movimiento.action_contabilizar()
+            cajas_demo += 1
+    print('Cajas chicas de demostracion creadas:', cajas_demo)
+
+    def asiento_demo(ref, fecha, tipo, lineas):
+        move = AM.search([('ref', '=', ref)], limit=1)
+        if not move and diario_general:
+            move = AM.create({
+                'move_type': 'entry', 'journal_id': diario_general.id,
+                'date': fecha, 'ref': ref, 'tipo_operacion_contable': tipo,
+                'line_ids': [(0, 0, values) for values in lineas],
+            })
+            move.action_post()
+        return move
+
+    if all((cuenta_consultoria, cuenta_por_pagar)):
+        asiento_demo('DEMO-PROVISION-AGOSTO', inicio_mes_demo, 'provision', [
+            {'account_id': cuenta_consultoria.id, 'name': 'Provision servicio contable', 'debit': 3500.0},
+            {'account_id': cuenta_por_pagar.id, 'name': 'Provision servicio contable', 'credit': 3500.0},
+        ])
+    if all((cuenta_depreciacion, cuenta_depreciacion_acum)):
+        asiento_demo('DEMO-DEPRECIACION-AGOSTO', inicio_mes_demo, 'depreciacion', [
+            {'account_id': cuenta_depreciacion.id, 'name': 'Depreciacion mensual demostrativa', 'debit': 1250.0},
+            {'account_id': cuenta_depreciacion_acum.id, 'name': 'Depreciacion mensual demostrativa', 'credit': 1250.0},
+        ])
+    if all((cuenta_suministros, cuenta_por_pagar)) and not AM.search([('ref', '=', 'DEMO-ASIENTO-BORRADOR')], limit=1):
+        AM.create({
+            'move_type': 'entry', 'journal_id': diario_general.id,
+            'date': hoy_demo, 'ref': 'DEMO-ASIENTO-BORRADOR',
+            'tipo_operacion_contable': 'ajuste',
+            'line_ids': [
+                (0, 0, {'account_id': cuenta_suministros.id, 'name': 'Ajuste pendiente de aprobar', 'debit': 420.0}),
+                (0, 0, {'account_id': cuenta_por_pagar.id, 'name': 'Ajuste pendiente de aprobar', 'credit': 420.0}),
+            ],
+        })
+
+    factura_cliente_demo = AM.search([
+        ('move_type', '=', 'out_invoice'), ('state', '=', 'posted')],
+        order='invoice_date desc, id desc', limit=1)
+    factura_proveedor_demo = AM.search([
+        ('move_type', '=', 'in_invoice'), ('state', '=', 'posted')],
+        order='invoice_date desc, id desc', limit=1)
+    if factura_cliente_demo:
+        factura_cliente_demo.numero_externo = factura_cliente_demo.numero_externo or 'FEXT-DEMO-001'
+        if not Tributo.search([('notas', '=', 'DEMO-DETRACCION-001')], limit=1):
+            Tributo.create({
+                'move_id': factura_cliente_demo.id, 'tipo': 'detraccion',
+                'porcentaje': 4.0, 'base': 5000.0, 'fecha': hoy_demo,
+                'constancia': 'CONST-DEMO-DET-001', 'estado': 'pendiente',
+                'notas': 'DEMO-DETRACCION-001',
+            })
+    if factura_proveedor_demo:
+        factura_proveedor_demo.numero_externo = factura_proveedor_demo.numero_externo or 'FEXT-DEMO-002'
+        if not Tributo.search([('notas', '=', 'DEMO-RETENCION-001')], limit=1):
+            Tributo.create({
+                'move_id': factura_proveedor_demo.id, 'tipo': 'retencion',
+                'porcentaje': 3.0, 'base': 3200.0, 'fecha': hoy_demo,
+                'constancia': 'RET-DEMO-001', 'estado': 'pagado',
+                'notas': 'DEMO-RETENCION-001',
+            })
+
+    referidor_demo = Partner.search([('name', '=', 'Arquitecta Referidora Demo')], limit=1)
+    if not referidor_demo:
+        referidor_demo = Partner.create({
+            'name': 'Arquitecta Referidora Demo', 'email': 'referidos@demo.pe',
+            'customer_rank': 1,
+        })
+    for cliente in clientes[:3]:
+        if not cliente.referidor_id:
+            cliente.referidor_id = referidor_demo.id
+
+    lineas_presupuesto = []
+    for cuenta, importe in (
+            (cuenta_movilidad, 5000.0), (cuenta_suministros, 6000.0),
+            (cuenta_consultoria, 9000.0), (cuenta_depreciacion, 2500.0)):
+        if cuenta:
+            lineas_presupuesto.append((0, 0, {
+                'cuenta_id': cuenta.id, 'presupuestado': importe,
+            }))
+    if lineas_presupuesto and not Presupuesto.search([
+            ('name', '=', 'Presupuesto Operativo - DEMO')], limit=1):
+        presupuesto = Presupuesto.create({
+            'name': 'Presupuesto Operativo - DEMO',
+            'fecha_inicio': inicio_mes_demo,
+            'fecha_fin': hoy_demo.replace(day=28),
+            'linea_ids': lineas_presupuesto,
+        })
+        presupuesto.action_aprobar()
+    print('Datos contables de demostracion verificados.')
     env.cr.commit()
 
     ICP.set_param('pierinelli.seed_pe_version', SEED_VERSION)

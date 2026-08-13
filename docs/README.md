@@ -21,6 +21,15 @@
 - [Entorno local](despliegue/LOCAL.md)
 - [Render, Docker y VPS](despliegue/RENDER.md)
 
+## Contabilidad
+
+- [Guia de contabilidad operativa](contabilidad/GUIA_CONTABILIDAD_OPERATIVA.md): caja chica, arqueo, reposicion, tributos y asientos tipo.
+- [Centro Financiero y presupuestos](contabilidad/CENTRO_FINANCIERO.md)
+- [Verificacion solicitada por el cliente](contabilidad/VERIFICACION_CLIENTE_RESPUESTA.md): cobertura actual, rutas y pendientes de integracion.
+- [Implementación frente a requisitos actualizados](contabilidad/IMPLEMENTACION_REQUISITOS_2026-08-12.md): rutas exactas, cobertura y decisiones pendientes.
+- [Guía de los 20 puntos de contabilidad](contabilidad/GUIA_20_PUNTOS_CONTABILIDAD.md): estado y uso detallado de cada punto de la verificación del cliente.
+- [Pruebas SUNAT](contabilidad/SUNAT_PRUEBAS.md): ambiente Beta, credenciales necesarias y alcance de una integración real.
+
 ## Asistente
 
 - [Dialogos habilitados](asistente/DIALOGOS.md)

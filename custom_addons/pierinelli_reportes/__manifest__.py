@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Pierinelli Reportes Financieros',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'category': 'Accounting/Accounting',
     'summary': 'Estados financieros peruanos (Balance General, EE.RR., Mayor, Balance de Comprobacion)',
     'description': """
@@ -36,6 +36,7 @@ Ademas:
     'data': [
         'security/ir.model.access.csv',
         'data/multimoneda.xml',
+        'data/tipo_cambio_cron.xml',
         'views/contabilidad_extra_views.xml',
         'wizard/financial_report_wizard_views.xml',
         'report/report_actions.xml',

@@ -25,7 +25,7 @@ Cada plancha fisica es un lote (stock.lot) de su producto:
     'author': 'Pierinelli',
     'website': 'https://pierinelli.com',
     'license': 'LGPL-3',
-    'depends': ['stock', 'sale_management', 'pierinelli_data',
+    'depends': ['stock', 'stock_landed_costs', 'sale_management', 'pierinelli_data',
                 'pierinelli_reportes'],
     'data': [
         'security/ir.model.access.csv',
@@ -36,6 +36,7 @@ Cada plancha fisica es un lote (stock.lot) de su producto:
         'views/sale_order_views.xml',
         'views/alta_planchas_views.xml',
         'views/recepcion_planchas_views.xml',
+        'views/costos_adicionales_views.xml',
         'views/orden_corte_views.xml',
         'views/stock_quant_views.xml',
         'report/orden_corte_report.xml',

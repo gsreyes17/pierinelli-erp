@@ -1,0 +1,14 @@
+<odoo noupdate="1">
+    <!-- Desactivado por defecto: el Administrador lo activa después de probar
+         el botón y confirmar que la consulta pública de SUNAT está disponible
+         desde su entorno Render. -->
+    <record id="cron_actualizar_tipo_cambio_sunat" model="ir.cron">
+        <field name="name">SUNAT: actualizar tipo de cambio</field>
+        <field name="model_id" ref="model_pierinelli_tipo_cambio"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_actualizar_sunat()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">False</field>
+    </record>
+</odoo>

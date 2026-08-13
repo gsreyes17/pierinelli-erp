@@ -54,6 +54,18 @@ Odoo incorpora el costo al AVCO de los productos y genera la valorización
 contable correspondiente. Use la misma referencia de importación en las
 planchas para poder rastrear el contenedor físico y su costo.
 
+### Atajo desde la recepción o traslado entre locales
+
+En lugar de abrir primero el menú de costos en destino, abra la recepción o la
+transferencia interna ya validada y entre a la pestaña **Costos adicionales**.
+Agregue flete/viaje, seguridad, seguro, aduana, maniobra u otro concepto,
+importe, detalle y criterio de reparto. El usuario **Inventario: Administrador**
+pulsa **Preparar costeo**; luego, en la pantalla que se abre, pulsa
+**Calcular** y **Validar**.
+
+Para planchas use **Por cantidad / m²**. No duplique un mismo gasto en esta
+pestaña y en un costo en destino creado manualmente.
+
 ## 4. Reservar y vender una plancha
 
 1. En Ventas, cree la cotización y agregue el producto.

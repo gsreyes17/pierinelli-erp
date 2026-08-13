@@ -1,0 +1,57 @@
+<odoo>
+    <record id="view_partner_form_referidor" model="ir.ui.view">
+        <field name="name">res.partner.form.referidor</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Referidos">
+                    <group>
+                        <field name="referidor_id" options="{'no_create_edit': False}"/>
+                    </group>
+                    <field name="referido_ids" readonly="1">
+                        <list create="0" delete="0">
+                            <field name="name"/>
+                            <field name="vat"/>
+                            <field name="email"/>
+                            <field name="phone"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_move_form_control_operativo" model="ir.ui.view">
+        <field name="name">account.move.form.control.operativo</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Control interno" groups="account.group_account_user,base.group_system">
+                    <field name="numero_externo"/>
+                    <field name="tipo_operacion_contable"/>
+                    <field name="tipo_comprobante_id"/>
+                    <field name="clasificacion_compra"
+                           invisible="move_type not in ('in_invoice', 'in_refund', 'in_receipt')"/>
+                </group>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Control tributario" groups="account.group_account_user,base.group_system">
+                    <field name="tributo_ids">
+                        <list editable="bottom">
+                            <field name="fecha"/>
+                            <field name="tipo"/>
+                            <field name="porcentaje"/>
+                            <field name="base"/>
+                            <field name="importe" readonly="1"/>
+                            <field name="constancia"/>
+                            <field name="estado" widget="badge"/>
+                            <field name="notas"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
