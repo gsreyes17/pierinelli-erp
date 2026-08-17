@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_kardex_producto_form" model="ir.ui.view">
+        <field name="name">pierinelli.kardex.producto.form</field>
+        <field name="model">pierinelli.kardex.producto</field>
+        <field name="arch" type="xml">
+            <form string="Kardex de producto">
+                <header>
+                    <button name="action_preparar" type="object"
+                            string="Ver kardex" class="btn-primary"/>
+                    <button name="action_export_xlsx" type="object"
+                            string="Excel" invisible="not preparado"/>
+                    <button name="action_export_pdf" type="object"
+                            string="PDF" invisible="not preparado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Kardex de producto</h1>
+                        <p class="text-muted">
+                            Elige producto y periodo, pulsa <b>Ver kardex</b> y
+                            revisa entradas, salidas y saldo movimiento por
+                            movimiento. El modo valorizado agrega costo unitario
+                            y saldo en soles (criterio promedio).
+                        </p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="product_id"
+                                   options="{'no_create': True}"/>
+                            <field name="warehouse_id"
+                                   options="{'no_create': True}"/>
+                            <field name="modo" widget="radio"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+                    <group invisible="not preparado" string="Resumen del periodo">
+                        <group>
+                            <field name="saldo_inicial_qty"/>
+                            <field name="total_entrada_qty"/>
+                            <field name="total_salida_qty"/>
+                            <field name="saldo_final_qty"/>
+                        </group>
+                        <group invisible="modo != 'valorizado'">
+                            <field name="saldo_inicial_valor"/>
+                            <field name="total_entrada_valor"/>
+                            <field name="total_salida_valor"/>
+                            <field name="saldo_final_valor"/>
+                        </group>
+                    </group>
+                    <notebook invisible="not preparado">
+                        <page string="Movimientos">
+                            <field name="line_ids" readonly="1">
+                                <list decoration-success="tipo == 'entrada'"
+                                      decoration-danger="tipo == 'salida'"
+                                      decoration-muted="tipo == 'traslado'">
+                                    <field name="fecha"/>
+                                    <field name="documento"/>
+                                    <field name="tipo" widget="badge"
+                                           decoration-success="tipo == 'entrada'"
+                                           decoration-danger="tipo == 'salida'"/>
+                                    <field name="detalle" optional="show"/>
+                                    <field name="lotes" optional="show"/>
+                                    <field name="entrada_qty" sum="Entradas"/>
+                                    <field name="salida_qty" sum="Salidas"/>
+                                    <field name="saldo_qty"/>
+                                    <field name="costo_unitario"
+                                           column_invisible="parent.modo != 'valorizado'"/>
+                                    <field name="entrada_valor" sum="Valor entradas"
+                                           column_invisible="parent.modo != 'valorizado'"/>
+                                    <field name="salida_valor" sum="Valor salidas"
+                                           column_invisible="parent.modo != 'valorizado'"/>
+                                    <field name="saldo_valor"
+                                           column_invisible="parent.modo != 'valorizado'"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_kardex_producto" model="ir.actions.act_window">
+        <field name="name">Kardex de Producto</field>
+        <field name="res_model">pierinelli.kardex.producto</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <menuitem id="menu_kardex_producto"
+              name="Kardex de Producto"
+              parent="stock.menu_warehouse_report"
+              action="action_kardex_producto"
+              sequence="5"
+              groups="stock.group_stock_user"/>
+
+    <!-- Boton "Kardex" en la ficha del producto: el flujo mas corto posible
+         (un clic, llega con el producto puesto y el kardex ya calculado). -->
+    <record id="view_product_template_kardex_button" model="ir.ui.view">
+        <field name="name">product.template.form.kardex</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_abrir_kardex" type="object"
+                        class="oe_stat_button" icon="fa-book"
+                        invisible="type == 'service'"
+                        groups="stock.group_stock_user">
+                    <span class="o_stat_text">Kardex</span>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

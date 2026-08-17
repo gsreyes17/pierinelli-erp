@@ -1,2 +1,3 @@
 # -*- coding: utf-8 -*-
 from . import stock_report_wizard
+from . import kardex_producto

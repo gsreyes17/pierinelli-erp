@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- El PDF lee el wizard directamente (docs = wizard), como el resto de
+         reportes de almacen. Sin AbstractModel: no necesita data adicional. -->
+    <template id="report_kardex_producto_doc">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page pierinelli-fin">
+                        <t t-call="pierinelli_reportes.financial_report_styles"/>
+                        <!-- El header compartido espera un dict 'doc' con
+                             header/company/ruc/fechas: se arma aqui mismo. -->
+                        <t t-set="doc" t-value="{'header': {
+                            'company': o.env.company.name,
+                            'ruc': o.env.company.vat or '',
+                            'date_from': o.date_from,
+                            'date_to': o.date_to,
+                            'target_move': o.warehouse_id.name and ('Almacen: %s' % o.warehouse_id.name) or 'Todas las sedes',
+                        }}"/>
+                        <t t-call="pierinelli_reportes.financial_report_header">
+                            <t t-set="title">
+                                Kardex <t t-if="o.modo == 'valorizado'">Valorizado</t><t t-else="">Físico</t>
+                            </t>
+                        </t>
+
+                        <table style="margin-bottom:10px;">
+                            <tr>
+                                <td style="width:18%;"><b>Producto</b></td>
+                                <td><span t-field="o.product_id.display_name"/></td>
+                                <td style="width:12%;"><b>Almacén</b></td>
+                                <td><span t-esc="o.warehouse_id.name or 'Todos'"/></td>
+                                <td style="width:12%;"><b>Período</b></td>
+                                <td>
+                                    <span t-field="o.date_from"/> —
+                                    <span t-field="o.date_to"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:9%;">Fecha</th>
+                                    <th style="width:13%;">Documento</th>
+                                    <th style="width:8%;">Tipo</th>
+                                    <th>Lotes / planchas</th>
+                                    <th class="num" style="width:8%;">Entrada</th>
+                                    <th class="num" style="width:8%;">Salida</th>
+                                    <th class="num" style="width:8%;">Saldo</th>
+                                    <t t-if="o.modo == 'valorizado'">
+                                        <th class="num" style="width:9%;">C. unit.</th>
+                                        <th class="num" style="width:10%;">V. entrada</th>
+                                        <th class="num" style="width:10%;">V. salida</th>
+                                        <th class="num" style="width:11%;">Saldo S/</th>
+                                    </t>
+                                </tr>
+                                <tr class="sec-title">
+                                    <td colspan="4">Saldo inicial</td>
+                                    <td class="num"></td>
+                                    <td class="num"></td>
+                                    <td class="num">
+                                        <span t-esc="'%.2f' % o.saldo_inicial_qty"/>
+                                    </td>
+                                    <t t-if="o.modo == 'valorizado'">
+                                        <td class="num" colspan="3"></td>
+                                        <td class="num">
+                                            <span t-esc="'%.2f' % o.saldo_inicial_valor"/>
+                                        </td>
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.line_ids" t-as="l">
+                                    <tr>
+                                        <td><span t-field="l.fecha"/></td>
+                                        <td><span t-esc="l.documento"/></td>
+                                        <td><span t-esc="dict(l._fields['tipo'].selection).get(l.tipo)"/></td>
+                                        <td><span t-esc="l.lotes"/></td>
+                                        <td class="num"><span t-esc="'%.2f' % l.entrada_qty if l.entrada_qty else ''"/></td>
+                                        <td class="num"><span t-esc="'%.2f' % l.salida_qty if l.salida_qty else ''"/></td>
+                                        <td class="num"><span t-esc="'%.2f' % l.saldo_qty"/></td>
+                                        <t t-if="o.modo == 'valorizado'">
+                                            <td class="num"><span t-esc="'%.4f' % l.costo_unitario"/></td>
+                                            <td class="num"><span t-esc="'%.2f' % l.entrada_valor if l.entrada_valor else ''"/></td>
+                                            <td class="num"><span t-esc="'%.2f' % l.salida_valor if l.salida_valor else ''"/></td>
+                                            <td class="num"><span t-esc="'%.2f' % l.saldo_valor"/></td>
+                                        </t>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <tfoot>
+                                <tr class="total-row">
+                                    <td colspan="4">Totales del período</td>
+                                    <td class="num"><span t-esc="'%.2f' % o.total_entrada_qty"/></td>
+                                    <td class="num"><span t-esc="'%.2f' % o.total_salida_qty"/></td>
+                                    <td class="num"><span t-esc="'%.2f' % o.saldo_final_qty"/></td>
+                                    <t t-if="o.modo == 'valorizado'">
+                                        <td class="num"></td>
+                                        <td class="num"><span t-esc="'%.2f' % o.total_entrada_valor"/></td>
+                                        <td class="num"><span t-esc="'%.2f' % o.total_salida_valor"/></td>
+                                        <td class="num"><span t-esc="'%.2f' % o.saldo_final_valor"/></td>
+                                    </t>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <p style="font-size:9px; color:#777; margin-top:8px;">
+                            Kardex por promedio: las salidas se valorizan al costo
+                            promedio del saldo en cada momento. El costo de las
+                            entradas proviene de la valorización del movimiento
+                            (stock_account) o, en su defecto, del costo promedio
+                            del producto.
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_kardex_producto" model="ir.actions.report">
+        <field name="name">Kardex de Producto</field>
+        <field name="model">pierinelli.kardex.producto</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pierinelli_almacenes.report_kardex_producto_doc</field>
+        <field name="report_file">pierinelli_almacenes.report_kardex_producto_doc</field>
+        <field name="print_report_name">'Kardex - %s' % (object.product_id.display_name)</field>
+    </record>
+
+</odoo>

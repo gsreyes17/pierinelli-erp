@@ -6,6 +6,7 @@
 - [Ejemplo de pruebas](operacion/EJEMPLO_PRUEBAS.md): datos exactos para recorrer el flujo completo.
 - [Guia de almacenes](operacion/GUIA_ALMACENES.md): operacion multi-sede.
 - [Guia de demostracion](operacion/GUIA_DEMO.md): recorrido para presentar el ERP.
+- [Chuleta de demo](operacion/CHULETA_DEMO.md): boton por boton, con frases y plan B — para tener al lado durante la presentacion.
 - [Guia operativa complementaria](operacion/GUIA_OPERATIVA.md): referencia adicional del flujo.
 
 ## Proyecto y decisiones

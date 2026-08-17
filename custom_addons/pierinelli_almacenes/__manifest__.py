@@ -30,8 +30,10 @@ Incluye ademas 7 reportes PDF de almacen con la marca Pierinelli
         'security/ir.model.access.csv',
         'views/dashboard_action.xml',
         'wizard/stock_report_wizard_views.xml',
+        'wizard/kardex_producto_views.xml',
         'report/stock_report_actions.xml',
         'report/stock_report_docs.xml',
+        'report/kardex_producto_report.xml',
     ],
     'assets': {
         'web.assets_backend': [

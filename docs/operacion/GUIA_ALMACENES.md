@@ -168,6 +168,29 @@ genera el PDF. Siete reportes con el mismo diseño que los estados financieros:
 
 📸 *Captura sugerida: el PDF de Rotación (tarjetas + ranking) y el de Stock Crítico.*
 
+### 9.2 Kardex de Producto (físico y valorizado)
+
+El kardex clásico que pide el contador, con saldo corriente movimiento a
+movimiento. Dos caminos:
+
+- **El corto:** abre la ficha de cualquier producto y pulsa el botón **Kardex**
+  (arriba, junto a las estadísticas). Llega con el producto puesto y el kardex
+  del año ya calculado.
+- **El completo:** `Inventario → Reportes → Kardex de Producto` — elige
+  producto, sede (opcional), período y modo, y pulsa **Ver kardex**.
+
+Los dos modos:
+
+| Modo | Columnas |
+|---|---|
+| **Físico** | Fecha, documento, tipo, lotes/planchas, entrada, salida y **saldo en m²** |
+| **Valorizado** | Lo anterior + costo unitario, valor de entrada/salida y **saldo en soles** (las salidas se valorizan al costo promedio del saldo, criterio AVCO) |
+
+El resumen muestra saldo inicial, totales del período y saldo final; el saldo
+final siempre cuadra con el stock a la mano de Odoo (incluye la carga inicial
+registrada directamente en inventario, valorizada al costo promedio). Desde la
+misma pantalla se exporta a **Excel** (con la marca) y **PDF**.
+
 ---
 
 ## 10. Flujo completo de ejemplo (para la demo)

@@ -152,6 +152,8 @@ Mientras tanto, use **Contabilidad → Reportes** para control interno y compare
 
 El Diario, el Mayor y el Balance de comprobación son sólidos como reportes internos. El formato 7.1 (activos) es solo una base de revisión: muestra la depreciación acumulada en 0.0 porque no hay motor de activos fijos en Community. El Registro de Costos no existe. Los archivos oficiales electrónicos son proyectos de localización/integración adicionales.
 
+Para el inventario permanente, además del formato 13.1 del wizard SIRE, existe el **Kardex de Producto físico y valorizado** (14 de agosto): `Inventario → Reportes → Kardex de Producto`, o el botón **Kardex** en la ficha del producto. Saldo corriente movimiento a movimiento, salidas valorizadas al promedio (AVCO), con vista en pantalla, Excel y PDF; el saldo final cuadra contra el stock a la mano.
+
 ### 11. Reportes de gastos por dimensiones
 
 **Estado: Operativo con uso disciplinado de analítica.**

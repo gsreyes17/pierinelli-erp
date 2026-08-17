@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_stock_report_wizard_user,pierinelli.stock.report.wizard.user,model_pierinelli_stock_report_wizard,stock.group_stock_user,1,1,1,1
+access_kardex_producto_user,pierinelli.kardex.producto.user,model_pierinelli_kardex_producto,stock.group_stock_user,1,1,1,1
+access_kardex_producto_linea_user,pierinelli.kardex.producto.linea.user,model_pierinelli_kardex_producto_linea,stock.group_stock_user,1,1,1,1
