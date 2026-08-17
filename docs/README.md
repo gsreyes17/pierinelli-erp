@@ -23,14 +23,11 @@
 
 ## Contabilidad
 
-- [Guia de contabilidad operativa](contabilidad/GUIA_CONTABILIDAD_OPERATIVA.md): caja chica, arqueo, reposicion, tributos y asientos tipo.
-- [Centro Financiero y presupuestos](contabilidad/CENTRO_FINANCIERO.md)
-- [Verificacion solicitada por el cliente](contabilidad/VERIFICACION_CLIENTE_RESPUESTA.md): cobertura actual, rutas y pendientes de integracion.
-- [Implementación frente a requisitos actualizados](contabilidad/IMPLEMENTACION_REQUISITOS_2026-08-12.md): rutas exactas, cobertura y decisiones pendientes.
-- [Guía de los 20 puntos de contabilidad](contabilidad/GUIA_20_PUNTOS_CONTABILIDAD.md): estado y uso detallado de cada punto de la verificación del cliente.
+- [Requisitos del cliente](contabilidad/verificacion_cliente.md): la palabra literal del cliente. **No editar** — es el documento contra el que se verifica todo.
+- [Estado de los requisitos](contabilidad/ESTADO_REQUISITOS.md): respuesta punto por punto (matrices por área + los 20 puntos), con la cobertura real verificada en código.
+- [Guia de contabilidad operativa](contabilidad/GUIA_CONTABILIDAD_OPERATIVA.md): panel contable, caja chica, arqueo, tributos, presupuestos, tipo de cambio, importación de asientos y flujo mensual.
+- [Demo contable](contabilidad/DEMO_CONTABLE.md): guion de demostración por escenas + catálogo de libros/SIRE, formatos y casos precargados.
 - [Pruebas SUNAT](contabilidad/SUNAT_PRUEBAS.md): ambiente Beta, credenciales necesarias y alcance de una integración real.
-- [Guía de Libros y SIRE](contabilidad/GUIA_LIBROS_SIRE_DEMO.md): rutas exactas, formatos, pipeline y demostración de venta/compra cerrada.
-- [Guion de flujos comerciales y contables](contabilidad/GUION_FLUJOS_COMERCIALES_Y_CONTABLES.md): demostración integrada de venta, compra, caja, comprobantes y libros.
 
 ## Asistente
 

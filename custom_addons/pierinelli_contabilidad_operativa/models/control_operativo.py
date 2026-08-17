@@ -164,7 +164,11 @@ class CierreContable(models.Model):
                 raise ValidationError(_(
                     'La fecha no puede ser anterior al bloqueo vigente (%s).')
                     % previous)
-            rec.company_id.write({lock_field: rec.fecha_bloqueo})
+            # sudo() imprescindible: el ACL de base solo permite escribir
+            # res.company a group_erp_manager, y esta funcion es para el
+            # responsable contable (ya validado en _check_manager). Sin esto,
+            # el contador pasa el check propio y recibe AccessError del ORM.
+            rec.company_id.sudo().write({lock_field: rec.fecha_bloqueo})
             rec.write({
                 'fecha_anterior': previous,
                 'fecha_aplicacion': fields.Date.context_today(rec),
@@ -181,5 +185,5 @@ class CierreContable(models.Model):
             if rec.company_id[lock_field] != rec.fecha_bloqueo:
                 raise UserError(_(
                     'No se puede revertir porque existe un bloqueo posterior.'))
-            rec.company_id.write({lock_field: rec.fecha_anterior})
+            rec.company_id.sudo().write({lock_field: rec.fecha_anterior})
             rec.state = 'revertido'

@@ -57,15 +57,18 @@ class PresupuestoFinancieroLinea(models.Model):
                       ('date', '>=', line.presupuesto_id.fecha_inicio), ('date', '<=', line.presupuesto_id.fecha_fin)]
             move_lines = MoveLine.search(domain)
             if line.centro_costo_id:
-                analytic_key = str(line.centro_costo_id.id)
+                analytic_id = str(line.centro_costo_id.id)
                 # analytic_distribution guarda porcentajes por cuenta analítica
-                # en JSON. Solo se toma la porción efectivamente imputada al
-                # centro de costo del presupuesto.
-                amount = sum(
-                    move_line.balance * float(
-                        (move_line.analytic_distribution or {}).get(
-                            analytic_key, 0.0)) / 100.0
-                    for move_line in move_lines)
+                # en JSON, y la clave puede ser COMPUESTA cuando la linea se
+                # distribuye entre cuentas de varios planes a la vez: {'12,15':
+                # 100.0} (asi las serializa analytic_mixin, que itera
+                # key.split(',')). Un .get(str(id)) exacto ignoraria esos
+                # importes y subreportaria el ejecutado.
+                amount = 0.0
+                for move_line in move_lines:
+                    for key, pct in (move_line.analytic_distribution or {}).items():
+                        if analytic_id in str(key).split(','):
+                            amount += move_line.balance * float(pct) / 100.0
             else:
                 amount = sum(move_lines.mapped('balance'))
             line.ejecutado = abs(amount)

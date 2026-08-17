@@ -16,8 +16,13 @@
             <list editable="top" default_order="fecha desc, origen"
                   decoration-info="origen == 'sunat'">
                 <header>
+                    <!-- display="always" es OBLIGATORIO: sin el, Odoo 19 solo
+                         muestra los botones de header de lista cuando hay filas
+                         seleccionadas, y en una tabla vacia (BD recien creada)
+                         el boton no existe para el usuario. -->
                     <button name="%(action_tipo_cambio_actualizar)d" type="action"
                             string="Actualizar desde SUNAT" class="btn-primary"
+                            display="always"
                             groups="account.group_account_manager,base.group_system"/>
                 </header>
                 <field name="fecha"/>

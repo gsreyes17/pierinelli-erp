@@ -13,7 +13,7 @@ import logging
 from odoo.tools import file_open
 
 _logger = logging.getLogger('pierinelli_seed')
-SEED_VERSION = '16'
+SEED_VERSION = '18'
 LANG = 'es_419'
 
 ICP = env['ir.config_parameter'].sudo()
@@ -411,10 +411,10 @@ else:
     Pricelist = env['product.pricelist']
     PLItem = env['product.pricelist.item']
 
-    def get_pricelist(name, percent=None):
+    def get_pricelist(name, percent=None, currency=None):
         pl = Pricelist.search([('name', '=', name)], limit=1)
         if not pl:
-            pl = Pricelist.create({'name': name, 'currency_id': company.currency_id.id})
+            pl = Pricelist.create({'name': name, 'currency_id': (currency or company.currency_id).id})
             if percent:
                 PLItem.create({'pricelist_id': pl.id, 'applied_on': '3_global',
                                'compute_price': 'percentage', 'percent_price': percent})
@@ -423,6 +423,11 @@ else:
     get_pricelist('Publico')
     get_pricelist('Profesionales (-12%)', percent=12)
     pl_proy = get_pricelist('Proyectos por volumen', percent=18)
+    usd = env.ref('base.USD', raise_if_not_found=False)
+    if usd:
+        # Lista visible para que el vendedor cambie la cotización a USD antes
+        # de escoger SUNAT o Corporativa en el panel de tipo de cambio.
+        pl_usd = get_pricelist('USD', currency=usd)
     for c in clientes[:6]:
         c.property_product_pricelist = pl_proy.id
 
@@ -435,6 +440,35 @@ else:
             Product.create({'name': nombre, 'default_code': code, 'type': 'service',
                             'list_price': precio, 'invoice_policy': 'order',
                             'taxes_id': [(6, 0, sale_tax.ids)] if sale_tax else False})
+
+    # Precios comerciales fijos en USD para la grabación. No se usa una regla
+    # global a USD con valor 0: eso dejaba cotizaciones en dólares sin precio.
+    # Cada producto vendible tiene su propia regla, editable por Comercial, y
+    # la tasa SUNAT/corporativa se usa para la equivalencia contable en PEN.
+    if usd:
+        PLItem.search([
+            ('pricelist_id', '=', pl_usd.id), ('applied_on', '=', '3_global'),
+        ]).unlink()
+        tasa_demo_usd = 3.76
+        products_usd = Product.search([('sale_ok', '=', True), ('active', '=', True)])
+        for product in products_usd:
+            item = PLItem.search([
+                ('pricelist_id', '=', pl_usd.id),
+                ('applied_on', '=', '1_product'),
+                ('product_id', '=', product.id),
+            ], limit=1)
+            values = {
+                'pricelist_id': pl_usd.id,
+                'applied_on': '1_product',
+                'product_id': product.id,
+                'compute_price': 'fixed',
+                'fixed_price': round(product.list_price / tasa_demo_usd, 2),
+            }
+            if item:
+                item.write(values)
+            else:
+                PLItem.create(values)
+        print('Lista USD: %s productos con precio comercial fijo en USD.' % len(products_usd))
     env.cr.commit()
 
     # Cliente del caso: Constructora Altavista SAC + arquitecta
@@ -1009,7 +1043,8 @@ else:
             {'account_id': cuenta_depreciacion.id, 'name': 'Depreciacion mensual demostrativa', 'debit': 1250.0},
             {'account_id': cuenta_depreciacion_acum.id, 'name': 'Depreciacion mensual demostrativa', 'credit': 1250.0},
         ])
-    if all((cuenta_suministros, cuenta_por_pagar)) and not AM.search([('ref', '=', 'DEMO-ASIENTO-BORRADOR')], limit=1):
+    if all((cuenta_suministros, cuenta_por_pagar)) and diario_general \
+            and not AM.search([('ref', '=', 'DEMO-ASIENTO-BORRADOR')], limit=1):
         AM.create({
             'move_type': 'entry', 'journal_id': diario_general.id,
             'date': hoy_demo, 'ref': 'DEMO-ASIENTO-BORRADOR',
@@ -1020,12 +1055,17 @@ else:
             ],
         })
 
+    # SIEMPRE la factura MAS ANTIGUA (id asc): en cualquier base de este
+    # proyecto la historia empieza con el seed, asi que la primera posteada es
+    # una factura demo del propio seed. Con 'desc' (como estaba antes) un
+    # re-seed sobre una base con operaciones reales decoraba la ULTIMA factura
+    # REAL del cliente con numeros FEXT-DEMO y tributos ficticios.
     factura_cliente_demo = AM.search([
         ('move_type', '=', 'out_invoice'), ('state', '=', 'posted')],
-        order='invoice_date desc, id desc', limit=1)
+        order='id asc', limit=1)
     factura_proveedor_demo = AM.search([
         ('move_type', '=', 'in_invoice'), ('state', '=', 'posted')],
-        order='invoice_date desc, id desc', limit=1)
+        order='id asc', limit=1)
     if factura_cliente_demo:
         factura_cliente_demo.numero_externo = factura_cliente_demo.numero_externo or 'FEXT-DEMO-001'
         if not Tributo.search([('notas', '=', 'DEMO-DETRACCION-001')], limit=1):

@@ -165,6 +165,22 @@ class SaleOrderLine(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
+    origen_tasa = fields.Selection(
+        [('sunat_venta', 'SUNAT venta'),
+         ('sunat_compra', 'SUNAT compra'),
+         ('corporativa', 'Corporativa'),
+         ('manual', 'Manual')],
+        string='Origen de la tasa', copy=False,
+        help='Tipo de cambio que se usará al facturar este pedido en moneda extranjera.')
+    tasa_aplicada = fields.Float(
+        'Tasa aplicada (S/ por USD)', digits=(12, 4), copy=False, readonly=True)
+    company_currency_id = fields.Many2one(
+        related='company_id.currency_id', string='Moneda de la compañía')
+    mostrar_opciones_tasa = fields.Boolean(
+        string='Cambiar tasa', compute='_compute_mostrar_opciones_tasa',
+        readonly=False, store=False, copy=False)
+    resumen_tasa = fields.Char(compute='_compute_resumen_tasa')
+
     orden_corte_ids = fields.One2many(
         'pierinelli.orden.corte', 'sale_order_id',
         string='Ordenes de corte')
@@ -174,6 +190,55 @@ class SaleOrder(models.Model):
     def _compute_orden_corte_count(self):
         for order in self:
             order.orden_corte_count = len(order.orden_corte_ids)
+
+    @api.depends('origen_tasa')
+    def _compute_mostrar_opciones_tasa(self):
+        for order in self:
+            order.mostrar_opciones_tasa = not order.origen_tasa
+
+    @api.depends('origen_tasa', 'tasa_aplicada')
+    def _compute_resumen_tasa(self):
+        labels = dict(self._fields['origen_tasa'].selection)
+        for order in self:
+            order.resumen_tasa = (
+                '%s · %.4f S/ por USD' % (labels.get(order.origen_tasa, ''),
+                                          order.tasa_aplicada)
+                if order.origen_tasa and order.tasa_aplicada else False)
+
+    @api.onchange('origen_tasa', 'date_order', 'pricelist_id')
+    def _onchange_origen_tasa(self):
+        """Guarda la tasa elegida en la cotización y la conserva al facturar."""
+        for order in self:
+            if (not order.origen_tasa or order.origen_tasa == 'manual'
+                    or order.currency_id == order.company_currency_id):
+                continue
+            origin, side = ('sunat', 'venta')
+            if order.origen_tasa == 'sunat_compra':
+                side = 'compra'
+            elif order.origen_tasa == 'corporativa':
+                origin = 'corporativa'
+            order_date = fields.Date.to_date(order.date_order) or fields.Date.context_today(order)
+            rate = self.env['pierinelli.tipo.cambio'].tasa_vigente(origin, order_date, side)
+            if not rate:
+                raise UserError(_(
+                    'No hay tasa %(origin)s registrada. Cárgala primero en '
+                    'Contabilidad → Configuración → Tipos de Cambio.') % {
+                        'origin': dict(order._fields['origen_tasa'].selection).get(order.origen_tasa)})
+            order.tasa_aplicada = rate
+
+    def _prepare_invoice(self):
+        values = super()._prepare_invoice()
+        self.ensure_one()
+        # La factura hereda la tasa exacta aprobada en la cotización; así no se
+        # recalcula con una cotización distinta si se factura en otro día.
+        if (self.currency_id != self.company_currency_id and self.origen_tasa
+                and self.origen_tasa != 'manual' and self.tasa_aplicada):
+            values.update({
+                'origen_tasa': self.origen_tasa,
+                'tasa_aplicada': self.tasa_aplicada,
+                'invoice_currency_rate': 1.0 / self.tasa_aplicada,
+            })
+        return values
 
     def action_ver_ordenes_corte(self):
         self.ensure_one()
