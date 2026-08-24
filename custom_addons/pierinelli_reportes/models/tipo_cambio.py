@@ -15,7 +15,8 @@ Nota tecnica: invoice_currency_rate de Odoo es "moneda extranjera por 1 sol"
 """
 import re
 import logging
-from datetime import datetime
+from calendar import monthrange
+from datetime import date, datetime
 
 import requests
 from lxml import html
@@ -47,7 +48,6 @@ class TipoCambio(models.Model):
                                           copy=False)
 
     SUNAT_URL = 'https://e-consulta.sunat.gob.pe/cl-at-ittipcam/tcS01Alias'
-
     _fecha_origen_unico = models.Constraint(
         'unique(fecha, origen)',
         'Ya existe una tasa de ese origen para esa fecha.',
@@ -71,7 +71,7 @@ class TipoCambio(models.Model):
         return tc.venta if lado == 'venta' else (tc.compra or tc.venta)
 
     @api.model
-    def _parse_sunat_html(self, content):
+    def _parse_sunat_html(self, content, year=None, month=None):
         """Obtiene la última fila de cotización publicada por SUNAT.
 
         SUNAT publica la tasa en una página de consulta, no en una API REST
@@ -94,11 +94,25 @@ class TipoCambio(models.Model):
                                if date_pattern.search(value)), None)
             numbers = [value.replace(',', '.') for value in values
                        if number_pattern.match(value.replace(' ', ''))]
-            if date_match and len(numbers) >= 2:
+            row_date = None
+            if date_match:
                 try:
-                    candidates.append((datetime.strptime(
-                        date_match.group(1), '%d/%m/%Y').date(), float(numbers[-2]),
-                        float(numbers[-1])))
+                    row_date = datetime.strptime(
+                        date_match.group(1), '%d/%m/%Y').date()
+                except ValueError:
+                    continue
+            elif year and month and values:
+                # La tabla mensual de SUNAT muestra solo el dia (1..31).
+                try:
+                    day = int(values[0])
+                    if 1 <= day <= monthrange(year, month)[1]:
+                        row_date = date(year, month, day)
+                except (TypeError, ValueError):
+                    continue
+            if row_date and len(numbers) >= 2:
+                try:
+                    candidates.append((row_date, float(numbers[-2]),
+                                       float(numbers[-1])))
                 except ValueError:
                     continue
         if not candidates:
@@ -109,20 +123,52 @@ class TipoCambio(models.Model):
 
     @api.model
     def _obtener_tasa_sunat(self):
+        """Consulta el mes actual mediante el formulario oficial de SUNAT.
+
+        Un GET simple devuelve solamente la portada, sin filas de cotizacion.
+        Se abre una sesion y se envia el mismo mes/anio que el usuario elige
+        en el formulario. Se intentan hasta tres meses por los dias sin tasa.
+        """
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (compatible; PierinelliERP/1.0)',
+            'Accept': 'text/html,application/xhtml+xml',
+            'Accept-Language': 'es-PE,es;q=0.9',
+        }
         try:
-            response = requests.get(
-                self.SUNAT_URL, timeout=25,
-                headers={
-                    'User-Agent': 'Mozilla/5.0 (compatible; PierinelliERP/1.0)',
-                    'Accept': 'text/html,application/xhtml+xml',
-                    'Accept-Language': 'es-PE,es;q=0.9',
-                })
+            session = requests.Session()
+            session.headers.update(headers)
+            response = session.get(self.SUNAT_URL, timeout=25)
             response.raise_for_status()
+            today = fields.Date.context_today(self)
+            year, month = today.year, today.month
+            last_error = None
+            for _attempt in range(3):
+                # El select de SUNAT usa los valores numericos 01..12. Algunas
+                # instancias del portal aceptan GET y otras requieren POST.
+                params = {'mes': f'{month:02d}', 'anho': str(year)}
+                for method in ('get', 'post'):
+                    if method == 'get':
+                        response = session.get(
+                            self.SUNAT_URL, params=params, timeout=25)
+                    else:
+                        response = session.post(
+                            self.SUNAT_URL, data=params,
+                            headers={'Referer': self.SUNAT_URL}, timeout=25)
+                    response.raise_for_status()
+                    try:
+                        return self._parse_sunat_html(
+                            response.content, year, month)
+                    except UserError as error:
+                        last_error = error
+                month -= 1
+                if not month:
+                    month, year = 12, year - 1
+            raise last_error or UserError(
+                _('SUNAT no devolvio una tasa para los meses consultados.'))
         except requests.RequestException as error:
             raise UserError(_(
                 'No se pudo consultar SUNAT. Puedes registrar la tasa '
                 'manualmente y volver a intentar más tarde. Detalle: %s') % error)
-        return self._parse_sunat_html(response.content)
 
     @api.model
     def actualizar_desde_sunat(self):

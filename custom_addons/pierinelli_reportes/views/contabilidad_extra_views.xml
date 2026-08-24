@@ -13,7 +13,7 @@
         <field name="name">pierinelli.tipo.cambio.list</field>
         <field name="model">pierinelli.tipo.cambio</field>
         <field name="arch" type="xml">
-            <list editable="top" default_order="fecha desc, origen"
+            <list default_order="fecha desc, origen"
                   decoration-info="origen == 'sunat'">
                 <header>
                     <!-- display="always" es OBLIGATORIO: sin el, Odoo 19 solo
@@ -35,6 +35,39 @@
                 <field name="fecha_actualizacion" optional="hide"/>
                 <field name="notas" optional="show"/>
             </list>
+        </field>
+    </record>
+
+    <record id="view_tipo_cambio_form" model="ir.ui.view">
+        <field name="name">pierinelli.tipo.cambio.form</field>
+        <field name="model">pierinelli.tipo.cambio</field>
+        <field name="arch" type="xml">
+            <form string="Tipo de cambio">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Tipo de cambio USD / PEN</h1>
+                        <p class="text-muted">
+                            Selecciona el origen antes de guardar: SUNAT para la
+                            referencia oficial o Corporativa para la tasa propia.
+                        </p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fecha"/>
+                            <field name="origen" widget="radio"/>
+                            <field name="notas"
+                                   placeholder="Ej. Tasa de caja aprobada"/>
+                        </group>
+                        <group string="Soles por US$ 1">
+                            <field name="compra"/>
+                            <field name="venta"/>
+                            <field name="actualizado_automaticamente" readonly="1"/>
+                            <field name="fecha_actualizacion" readonly="1"
+                                   invisible="not actualizado_automaticamente"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
         </field>
     </record>
 
@@ -76,7 +109,7 @@
     <record id="action_tipo_cambio" model="ir.actions.act_window">
         <field name="name">Tipos de Cambio</field>
         <field name="res_model">pierinelli.tipo.cambio</field>
-        <field name="view_mode">list,kanban</field>
+        <field name="view_mode">list,form,kanban</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Sin tasas registradas</p>
             <p>Registra aqui la tasa SUNAT del dia (compra y venta) y la tasa
