@@ -11,10 +11,13 @@ class StockPicking(models.Model):
         for picking in self.filtered(lambda p: p.picking_type_code == 'outgoing'):
             for move in picking.move_ids.filtered(lambda m: m.sale_line_id.requiere_corte):
                 line = move.sale_line_id
-                orden = self.env['pierinelli.orden.corte'].search_count([
-                    ('sale_order_id', '=', line.order_id.id),
+                # Se busca por SECCION: en una orden multi-plancha, el
+                # legado orden.plancha_id solo apunta a la primera y dejaria
+                # bloqueadas las entregas de las demas planchas ya cortadas.
+                orden = self.env['pierinelli.orden.corte.plancha'].search_count([
+                    ('orden_id.sale_order_id', '=', line.order_id.id),
                     ('plancha_id', '=', line.plancha_id.id),
-                    ('state', '=', 'hecho'),
+                    ('orden_id.state', '=', 'hecho'),
                 ])
                 if not orden:
                     raise UserError(_(

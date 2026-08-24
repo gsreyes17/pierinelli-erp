@@ -249,21 +249,23 @@ class SaleOrder(models.Model):
         return action
 
     def action_crear_orden_corte(self):
-        """Crea la Orden de Corte precargada desde el pedido: plancha de la
-        primera linea que tenga una apartada, cliente y asesor."""
+        """Crea la Orden de Corte con TODAS las planchas apartadas del
+        pedido, una seccion por plancha, lista para cargarle los cortes.
+        Antes precargaba solo la primera; con ventas de varias planchas no
+        habia forma de delimitar los cortes de cada una."""
         self.ensure_one()
-        linea = self.order_line.filtered('plancha_id')[:1]
+        planchas = self.order_line.filtered('plancha_id').mapped('plancha_id')
+        orden = self.env['pierinelli.orden.corte'].create({
+            'sale_order_id': self.id,
+            'partner_id': self.partner_id.id,
+            'asesor_id': self.user_id.id or self.env.user.id,
+            'plancha_ids': [(0, 0, {'plancha_id': p.id}) for p in planchas],
+        })
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'pierinelli.orden.corte',
+            'res_id': orden.id,
             'view_mode': 'form',
-            'context': {
-                'default_sale_order_id': self.id,
-                'default_partner_id': self.partner_id.id,
-                'default_asesor_id': (self.user_id.id
-                                      or self.env.user.id),
-                'default_plancha_id': linea.plancha_id.id or False,
-            },
         }
 
     def action_confirm(self):

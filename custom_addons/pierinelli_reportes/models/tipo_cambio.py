@@ -225,6 +225,26 @@ class AccountMove(models.Model):
             else:
                 move.resumen_tasa = False
 
+    @api.depends('origen_tasa', 'tasa_aplicada')
+    def _compute_invoice_currency_rate(self):
+        """La tasa ELEGIDA es la tasa del documento, pase lo que pase.
+
+        El compute del core reasigna invoice_currency_rate desde la tabla de
+        monedas de Odoo cada vez que cambia la fecha de la factura (incluida
+        la que se fija sola al publicar). Sin este override, una factura que
+        heredaba la tasa de la cotizacion terminaba posteada con la tasa por
+        defecto (1.0 si res.currency.rate esta vacia): $177 se asentaban como
+        S/ 177. Aqui la eleccion SUNAT/corporativa vuelve a imponerse tras
+        cualquier recalculo; el origen 'manual' conserva el comportamiento
+        estandar de Odoo."""
+        super()._compute_invoice_currency_rate()
+        for move in self:
+            if (move.origen_tasa and move.origen_tasa != 'manual'
+                    and move.tasa_aplicada
+                    and move.currency_id != move.company_currency_id
+                    and move.is_invoice(include_receipts=True)):
+                move.invoice_currency_rate = 1.0 / move.tasa_aplicada
+
     @api.onchange('origen_tasa', 'invoice_date')
     def _onchange_origen_tasa(self):
         for move in self:

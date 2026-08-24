@@ -11,7 +11,7 @@
                     <button name="action_confirmar" type="object"
                             string="Ejecutar corte" class="btn-primary"
                             invisible="state != 'borrador'"
-                            confirm="Se creara el retorno y la merma saldra del stock vendible. ¿Ejecutar el corte?"/>
+                            confirm="Se ejecutara el corte de TODAS las planchas de la orden: nace cada retorno y cada merma sale del stock vendible. ¿Continuar?"/>
                     <button name="action_imprimir" type="object"
                             string="Imprimir OP + Modulacion"
                             invisible="state == 'cancelada'"/>
@@ -26,17 +26,12 @@
                     </div>
                     <group>
                         <group string="Origen">
-                            <field name="plancha_id"
-                                   readonly="state != 'borrador'"
-                                   options="{'no_create': True}"/>
-                            <field name="product_id"/>
-                            <field name="m2_plancha"/>
                             <field name="fecha"
+                                   readonly="state != 'borrador'"/>
+                            <field name="sale_order_id"
                                    readonly="state != 'borrador'"/>
                         </group>
                         <group string="Cliente">
-                            <field name="sale_order_id"
-                                   readonly="state != 'borrador'"/>
                             <field name="partner_id"
                                    readonly="state != 'borrador'"/>
                             <field name="asesor_id"
@@ -44,38 +39,70 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Cortes (medidas)" name="cortes">
-                            <field name="linea_ids"
+                        <page string="Planchas a cortar" name="planchas">
+                            <field name="plancha_ids"
                                    readonly="state != 'borrador'">
-                                <list editable="bottom">
-                                    <field name="descripcion"/>
-                                    <field name="cantidad"/>
-                                    <field name="largo"/>
-                                    <field name="alto"/>
-                                    <field name="m2"/>
+                                <list>
+                                    <field name="plancha_id"/>
+                                    <field name="product_id"/>
+                                    <field name="m2_plancha"/>
+                                    <field name="m2_cortes"/>
+                                    <field name="retorno_largo" optional="show"/>
+                                    <field name="retorno_alto" optional="show"/>
+                                    <field name="m2_retorno"/>
+                                    <field name="m2_merma"/>
+                                    <field name="destino_merma" widget="badge"
+                                           decoration-warning="destino_merma == 'cliente'"
+                                           decoration-danger="destino_merma == 'negocio'"/>
+                                    <field name="plancha_retorno_id" optional="show"/>
                                 </list>
+                                <form string="Plancha de la orden">
+                                    <group>
+                                        <group string="Plancha">
+                                            <field name="plancha_id"
+                                                   options="{'no_create': True}"/>
+                                            <field name="product_id"/>
+                                            <field name="m2_plancha"/>
+                                        </group>
+                                        <group string="Retorno y merma">
+                                            <field name="retorno_largo"/>
+                                            <field name="retorno_alto"/>
+                                            <field name="m2_retorno"/>
+                                            <field name="m2_merma"/>
+                                            <field name="destino_merma" widget="radio"/>
+                                            <field name="plancha_retorno_id"/>
+                                        </group>
+                                    </group>
+                                    <separator string="Cortes (cuanto por cuanto)"/>
+                                    <field name="linea_ids">
+                                        <list editable="bottom">
+                                            <field name="descripcion"/>
+                                            <field name="cantidad"/>
+                                            <field name="largo"/>
+                                            <field name="alto"/>
+                                            <field name="m2"/>
+                                        </list>
+                                    </field>
+                                    <group class="oe_subtotal_footer">
+                                        <field name="m2_cortes"/>
+                                        <field name="m2_retorno"/>
+                                        <field name="m2_merma"
+                                               class="oe_subtotal_footer_separator"/>
+                                    </group>
+                                </form>
                             </field>
                             <group class="oe_subtotal_footer">
                                 <field name="m2_cortes"/>
                                 <field name="m2_retorno"/>
-                                <field name="m2_merma" class="oe_subtotal_footer_separator"/>
+                                <field name="m2_merma"
+                                       class="oe_subtotal_footer_separator"/>
                             </group>
-                        </page>
-                        <page string="Retorno y merma" name="retorno">
-                            <group>
-                                <group string="Retorno a stock (lo que queda utilizable)">
-                                    <field name="retorno_largo"
-                                           readonly="state != 'borrador'"/>
-                                    <field name="retorno_alto"
-                                           readonly="state != 'borrador'"/>
-                                    <field name="plancha_retorno_id"/>
-                                </group>
-                                <group string="Merma">
-                                    <field name="m2_merma"/>
-                                    <field name="destino_merma"
-                                           readonly="state != 'borrador'"/>
-                                </group>
-                            </group>
+                            <p class="text-muted">
+                                Abre cada plancha para cargar sus cortes (medidas
+                                cuanto por cuanto), el retorno que reingresa a
+                                stock y el destino de su merma: asumida por el
+                                cliente o perdida del negocio.
+                            </p>
                         </page>
                         <page string="Modulacion (planos)" name="modulacion">
                             <field name="modulacion_ids"
@@ -104,8 +131,8 @@
                   decoration-info="state == 'borrador'">
                 <field name="name"/>
                 <field name="fecha"/>
-                <field name="plancha_id"/>
-                <field name="product_id"/>
+                <field name="plancha_count" string="Planchas"/>
+                <field name="plancha_id" string="Primera plancha" optional="hide"/>
                 <field name="partner_id"/>
                 <field name="asesor_id" widget="many2one_avatar_user"/>
                 <field name="m2_cortes"/>

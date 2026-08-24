@@ -36,62 +36,76 @@
                                         <strong>Asesor:</strong> <span t-esc="o.asesor_id.name or '-'"/>
                                     </td>
                                     <td>
-                                        <strong>Plancha:</strong> <span t-esc="o.plancha_id.name"/><br/>
-                                        <strong>Material:</strong> <span t-esc="o.product_id.name"/><br/>
-                                        <strong>Medidas plancha:</strong>
-                                        <span t-field="o.plancha_id.largo"/> x
-                                        <span t-field="o.plancha_id.alto"/> m ·
-                                        <span t-field="o.plancha_id.m2_neto"/> m²
+                                        <strong>Planchas en la orden:</strong>
+                                        <span t-esc="len(o.plancha_ids)"/><br/>
+                                        <strong>Total a cortar:</strong>
+                                        <span t-field="o.m2_cortes"/> m² ·
+                                        <strong>Retorno:</strong>
+                                        <span t-field="o.m2_retorno"/> m² ·
+                                        <strong>Merma:</strong>
+                                        <span t-field="o.m2_merma"/> m²
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
 
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Pieza</th>
-                                    <th class="num" style="width:10%;">Piezas</th>
-                                    <th class="num" style="width:14%;">Largo (m)</th>
-                                    <th class="num" style="width:14%;">Alto (m)</th>
-                                    <th class="num" style="width:14%;">m²</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="o.linea_ids" t-as="l">
-                                    <td t-esc="l.descripcion"/>
-                                    <td class="num" t-esc="l.cantidad"/>
-                                    <td class="num"><span t-field="l.largo"/></td>
-                                    <td class="num"><span t-field="l.alto"/></td>
-                                    <td class="num"><span t-field="l.m2"/></td>
-                                </tr>
-                                <tr class="total-row">
-                                    <td colspan="4">TOTAL A CORTAR (VENTA)</td>
-                                    <td class="num"><span t-field="o.m2_cortes"/></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4">
-                                        Retorno a stock
-                                        <t t-if="o.plancha_retorno_id">
-                                            (nueva plancha <t t-esc="o.plancha_retorno_id.name"/>)
-                                        </t>
-                                        <t t-if="o.retorno_largo">
-                                            — <span t-field="o.retorno_largo"/> x
-                                            <span t-field="o.retorno_alto"/> m
-                                        </t>
-                                    </td>
-                                    <td class="num"><span t-field="o.m2_retorno"/></td>
-                                </tr>
-                                <tr class="grand-total">
-                                    <td colspan="4">
-                                        MERMA —
-                                        <t t-if="o.destino_merma == 'cliente'">asumida por el cliente (metro lineal)</t>
-                                        <t t-else="">perdida del negocio (corte por bloques)</t>
-                                    </td>
-                                    <td class="num"><span t-field="o.m2_merma"/></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <t t-foreach="o.plancha_ids" t-as="sec">
+                            <div style="background:#111111; color:#FFFFFF; padding:4px 8px; margin-top:10px;">
+                                <strong style="color:#C9962F;">
+                                    PLANCHA <t t-esc="sec_index + 1"/>/<t t-esc="len(o.plancha_ids)"/>
+                                    — <t t-esc="sec.plancha_id.name"/>
+                                </strong>
+                                · <t t-esc="sec.product_id.name"/>
+                                · <span t-field="sec.plancha_id.largo"/> x
+                                <span t-field="sec.plancha_id.alto"/> m
+                                (<span t-field="sec.plancha_id.m2_neto"/> m²)
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Pieza</th>
+                                        <th class="num" style="width:10%;">Piezas</th>
+                                        <th class="num" style="width:14%;">Largo (m)</th>
+                                        <th class="num" style="width:14%;">Alto (m)</th>
+                                        <th class="num" style="width:14%;">m²</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="sec.linea_ids" t-as="l">
+                                        <td t-esc="l.descripcion"/>
+                                        <td class="num" t-esc="l.cantidad"/>
+                                        <td class="num"><span t-field="l.largo"/></td>
+                                        <td class="num"><span t-field="l.alto"/></td>
+                                        <td class="num"><span t-field="l.m2"/></td>
+                                    </tr>
+                                    <tr class="total-row">
+                                        <td colspan="4">A CORTAR (VENTA)</td>
+                                        <td class="num"><span t-field="sec.m2_cortes"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4">
+                                            Retorno a stock
+                                            <t t-if="sec.plancha_retorno_id">
+                                                (nueva plancha <t t-esc="sec.plancha_retorno_id.name"/>)
+                                            </t>
+                                            <t t-if="sec.retorno_largo">
+                                                — <span t-field="sec.retorno_largo"/> x
+                                                <span t-field="sec.retorno_alto"/> m
+                                            </t>
+                                        </td>
+                                        <td class="num"><span t-field="sec.m2_retorno"/></td>
+                                    </tr>
+                                    <tr class="grand-total">
+                                        <td colspan="4">
+                                            MERMA —
+                                            <t t-if="sec.destino_merma == 'cliente'">asumida por el cliente (metro lineal)</t>
+                                            <t t-else="">perdida del negocio (corte por bloques)</t>
+                                        </td>
+                                        <td class="num"><span t-field="sec.m2_merma"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
 
                         <p t-if="o.notas" style="margin-top:8px;">
                             <strong>Notas:</strong> <span t-field="o.notas"/>

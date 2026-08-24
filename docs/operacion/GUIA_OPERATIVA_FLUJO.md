@@ -145,16 +145,22 @@ historial queda en el chatter de la plancha.
 ## 8. Crear y ejecutar una Orden de Corte
 
 1. Abra el pedido confirmado en **Ventas → Órdenes → Órdenes de venta**.
-2. Pulse **Crear Orden de Corte** en la cabecera.
-3. Verifique Plancha, Cliente y Asesor.
-4. En **Cortes**, pulse **Agregar una línea** e indique pieza, cantidad, largo
-   y alto. Repita para todas las piezas.
-5. Complete **Retorno: largo** y **Retorno: alto** si sobrará material útil.
-6. Elija **Destino de la merma**: asumida por el cliente o pérdida del negocio.
+2. Pulse **Crear Orden de Corte** en la cabecera. La orden nace con **todas
+   las planchas apartadas del pedido**, una fila por plancha en la pestaña
+   **Planchas a cortar**.
+3. Verifique Cliente y Asesor.
+4. Abra cada fila de plancha y, en **Cortes (cuánto por cuánto)**, agregue
+   pieza, cantidad, largo y alto. Repita para todas las piezas de esa plancha.
+5. En la misma fila complete **Retorno: largo** y **Retorno: alto** si sobrará
+   material útil, y elija el **Destino de la merma** de ESA plancha: asumida
+   por el cliente o pérdida del negocio (cada plancha decide el suyo).
+6. Los totales de la orden (a cortar / retorno / merma) se suman abajo.
 7. En **Modulación (PDF)**, adjunte los PDF exportados desde AutoCAD.
-8. Pulse **Imprimir OP + Modulación** para entregar a producción un solo PDF
-   con la orden y planos.
-9. Al finalizar el trabajo, pulse **Ejecutar corte**.
+8. Pulse **Imprimir OP + Modulación**: el PDF lista cada plancha con su tabla
+   de cortes, más los planos anexos, en un solo documento.
+9. Al finalizar el trabajo, pulse **Ejecutar corte**: se valida todo primero
+   y luego se ejecuta plancha por plancha (si una falla, ninguna se corta a
+   medias).
 
 El retorno recibe un código hijo. Si mide menos de 0.5 m en algún lado queda
 **Pendiente de revisión** y no se ofrece a ventas.
