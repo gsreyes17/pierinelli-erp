@@ -27,6 +27,10 @@ body.pierinelli-login-bg {
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
     }
 
+    .o_database_list {
+        max-width: 430px !important;
+    }
+
     .border-bottom,
     .border-top {
         border-color: rgba(0, 0, 0, 0.10) !important;
@@ -72,14 +76,123 @@ body.pierinelli-login-bg {
         &:hover { color: $pierinelli-gold; }
     }
 
-    .pierinelli-demo-help {
-        color: darken($pierinelli-gold, 8%) !important;
-        text-decoration: none;
+    .pierinelli-login-intro {
+        margin: -0.6rem 0 1.3rem;
+
+        .pierinelli-login-kicker {
+            display: inline-block;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            background: rgba($pierinelli-gold, 0.16);
+            color: darken($pierinelli-gold, 16%) !important;
+            font-size: 0.67rem;
+            font-weight: 700;
+            letter-spacing: 0.09em;
+        }
+
+        h1 {
+            margin: 0.55rem 0 0.25rem;
+            font-size: 1.22rem;
+            font-weight: 700;
+        }
+
+        p {
+            margin: 0;
+            color: #6b7280 !important;
+            font-size: 0.82rem;
+            line-height: 1.35;
+        }
     }
 
-    .modal-content {
-        border: 1px solid rgba($pierinelli-gold, 0.55);
-        color: $pierinelli-black;
+    .pierinelli-demo-profiles {
+        margin-top: 1.15rem;
+        border: 1px solid #e6e7e9;
+        border-radius: 0.65rem;
+        background: #fcfcfc;
+        overflow: hidden;
+
+        summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.7rem 0.8rem;
+            cursor: pointer;
+            font-size: 0.81rem;
+            font-weight: 650;
+            list-style: none;
+
+            &::-webkit-details-marker { display: none; }
+        }
+
+        &[open] summary {
+            border-bottom: 1px solid #e6e7e9;
+            background: rgba($pierinelli-gold, 0.08);
+        }
+
+        &[open] .pierinelli-summary-chevron {
+            transform: rotate(180deg);
+        }
+    }
+
+    .pierinelli-summary-chevron {
+        color: #757575 !important;
+        font-size: 0.72rem;
+        transition: transform 0.15s ease;
+    }
+
+    .pierinelli-demo-password {
+        margin: 0.75rem 0.8rem 0.55rem;
+        padding: 0.48rem 0.6rem;
+        border-radius: 0.4rem;
+        background: #f5f1e5;
+        color: #5b4a1a !important;
+        font-size: 0.76rem;
+
+        code {
+            color: #392b08;
+            font-weight: 700;
+        }
+    }
+
+    .pierinelli-demo-profile-list {
+        display: grid;
+        gap: 0.38rem;
+        padding: 0 0.8rem;
+    }
+
+    .pierinelli-demo-profile {
+        display: grid;
+        grid-template-columns: minmax(76px, 0.8fr) minmax(95px, 1fr) 1.7fr;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.55rem;
+        border: 1px solid #ececec;
+        border-radius: 0.4rem;
+        background: #fff;
+        font-size: 0.72rem;
+
+        .pierinelli-profile-role {
+            font-weight: 700;
+        }
+
+        code {
+            color: #7b5909;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+
+        small {
+            color: #69707a !important;
+            font-size: 0.68rem;
+            line-height: 1.2;
+        }
+    }
+
+    .pierinelli-demo-note {
+        margin: 0.7rem 0.8rem 0.8rem;
+        color: #6b7280 !important;
+        font-size: 0.72rem;
+        line-height: 1.35;
     }
 
     // Logo Pierinelli (negro)
@@ -87,5 +200,15 @@ body.pierinelli-login-bg {
         max-height: 64px;
         max-width: 100%;
         width: auto;
+    }
+
+    @media (max-width: 420px) {
+        .o_database_list { max-width: 100% !important; }
+
+        .pierinelli-demo-profile {
+            grid-template-columns: 1fr 1fr;
+
+            small { grid-column: 1 / -1; }
+        }
     }
 }

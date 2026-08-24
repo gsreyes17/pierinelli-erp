@@ -21,8 +21,10 @@
         <field name="res_model">account.analytic.account</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_area_list"/>
-        <field name="domain">[('plan_id', '=', ref('plan_areas'))]</field>
-        <field name="context">{'default_plan_id': ref('plan_areas')}</field>
+        <field name="domain" eval="[('plan_id', '=', ref('plan_areas'))]"/>
+        <!-- `ref()` debe resolverse al cargar los datos XML; si se deja como
+             texto llega al navegador y su evaluador no conoce esa función. -->
+        <field name="context" eval="{'default_plan_id': ref('plan_areas')}"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Crea la primera área</p>
             <p>Las áreas son los centros de costo de la empresa: Finanzas,

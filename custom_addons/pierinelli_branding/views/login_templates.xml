@@ -16,37 +16,72 @@
             <attribute name="style">max-height:64px; max-width:100%; width:auto</attribute>
         </xpath>
 
-        <!-- Acceso rapido solo para la base de demostracion. -->
+        <!-- Contexto claro para la base de demostracion. -->
         <xpath expr="//div[hasclass('text-center') and hasclass('pb-3')]" position="after">
-            <div class="text-center mb-3">
-                <button type="button" class="btn btn-link btn-sm pierinelli-demo-help"
-                        data-bs-toggle="modal" data-bs-target="#pierinelli-demo-users">
-                    <i class="fa fa-question-circle me-1"/> Usuarios de prueba
-                </button>
-            </div>
-            <div class="modal fade" id="pierinelli-demo-users" tabindex="-1"
-                 aria-labelledby="pierinelli-demo-users-title" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="pierinelli-demo-users-title">Accesos de prueba</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"/>
-                        </div>
-                        <div class="modal-body">
-                            <p class="small text-muted">Todos usan la contrasena <strong>pierinelli</strong>.</p>
-                            <ul class="list-unstyled mb-0 small">
-                                <li><code>gerente</code> - acceso general</li>
-                                <li><code>vendedor</code> - Ventas</li>
-                                <li><code>almacen</code> - Inventario</li>
-                                <li><code>compras</code> - Compras</li>
-                                <li><code>contabilidad</code> - Contabilidad</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+            <div class="pierinelli-login-intro text-center">
+                <span class="pierinelli-login-kicker">ENTORNO DE PRUEBAS</span>
+                <h1>Accede a la demo</h1>
+                <p>Ingresa con un perfil para conocer la experiencia de cada área.</p>
             </div>
         </xpath>
 
+    </template>
+
+    <!-- Perfiles visibles y simples: solo se publican en esta base demo. -->
+    <template id="pierinelli_login_demo_profiles" inherit_id="web.login"
+              name="Perfiles demo en login">
+        <xpath expr="//form[@role='form']" position="after">
+            <details class="pierinelli-demo-profiles">
+                <summary>
+                    <span><i class="fa fa-users me-1"/> Perfiles de prueba disponibles</span>
+                    <i class="fa fa-chevron-down pierinelli-summary-chevron"/>
+                </summary>
+                <div class="pierinelli-demo-password">
+                    Contraseña para todos: <code>pierinelli</code>
+                </div>
+                <div class="pierinelli-demo-profile-list">
+                    <div class="pierinelli-demo-profile">
+                        <span class="pierinelli-profile-role">Gerencia</span>
+                        <code>gerente</code>
+                        <small>Visión integral y costos</small>
+                    </div>
+                    <div class="pierinelli-demo-profile">
+                        <span class="pierinelli-profile-role">Ventas</span>
+                        <code>vendedor</code>
+                        <small>Cotizaciones, reservas y clientes</small>
+                    </div>
+                    <div class="pierinelli-demo-profile">
+                        <span class="pierinelli-profile-role">Almacén</span>
+                        <code>almacen</code>
+                        <small>Planchas, recepciones y cortes</small>
+                    </div>
+                    <div class="pierinelli-demo-profile">
+                        <span class="pierinelli-profile-role">Compras</span>
+                        <code>compras</code>
+                        <small>Proveedores, pedidos y recepciones</small>
+                    </div>
+                    <div class="pierinelli-demo-profile">
+                        <span class="pierinelli-profile-role">Contabilidad</span>
+                        <code>contabilidad</code>
+                        <small>Facturas, libros y presupuestos</small>
+                    </div>
+                </div>
+                <p class="pierinelli-demo-note mb-0">
+                    Cada perfil muestra únicamente los módulos autorizados para su función.
+                </p>
+            </details>
+        </xpath>
+    </template>
+
+    <!-- En esta demo se usa únicamente usuario y contraseña. Se filtra el
+         acceso opcional por passkey sin desinstalar ni alterar ese mecanismo
+         de seguridad para una futura configuración productiva. -->
+    <template id="pierinelli_login_hide_passkey" inherit_id="web.login_oauth"
+              name="Ocultar acceso por llave en demo" priority="90">
+        <xpath expr="//div[@t-if='auth_btns']" position="before">
+            <t t-set="auth_btns"
+               t-value="[button for button in auth_btns if button.get('list_item_class') != 'passkey_login_link']"/>
+        </xpath>
     </template>
 
 </odoo>

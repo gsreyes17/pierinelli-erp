@@ -186,6 +186,25 @@ Frases cortas según la pantalla:
 - **Ventas, compras y bancos:** “La información se conecta desde el documento
   comercial hasta el impacto financiero, sin doble registro.”
 
+### Escena 8: presupuesto y áreas
+
+El flujo detallado y el guion se encuentran en
+[FLUJO_PRESUPUESTO_Y_AREAS.md](FLUJO_PRESUPUESTO_Y_AREAS.md). Para una muestra
+rápida:
+
+1. Ir a **Contabilidad → Configuración → Áreas / Centros de Costo** y mostrar
+   el área que se controlará.
+2. Ir a **Contabilidad → Presupuestos**, abrir *Presupuesto por Áreas 2026* o
+   crear uno nuevo, y mostrar Presupuestado, Ejecutado, Saldo y porcentaje.
+3. Abrir una factura publicada con distribución analítica para sustentar el
+   importe ejecutado.
+4. En **Reporte analítico**, agrupar por área y período para explicar la
+   composición del gasto o ingreso.
+
+Qué decir: “El presupuesto no es una caja de dinero: es el monto aprobado por
+cuenta, área y período. La orden de compra compromete; la factura publicada
+ejecuta; el pago sólo liquida la deuda y no duplica el gasto.”
+
 ### Mensaje de cierre
 
 > “El sistema conecta venta, compra, almacén, caja y contabilidad. Cada
