@@ -39,14 +39,27 @@ class PresupuestoFinancieroLinea(models.Model):
 
     presupuesto_id = fields.Many2one('pierinelli.presupuesto.financiero', required=True, ondelete='cascade')
     cuenta_id = fields.Many2one('account.account', required=True, string='Cuenta contable')
-    centro_costo_id = fields.Many2one('account.analytic.account', string='Centro de costo / obra')
+    # El presupuesto se reparte por AREA (Finanzas, Marketing, Tecnologia...)
+    # y opcionalmente se acota a una obra. Son dos planes analiticos
+    # distintos, asi que una linea puede llevar ambos: "Marketing en la obra
+    # Condominio Trujillo". Internamente los dos son cuentas analiticas y el
+    # calculo del ejecutado es el mismo para ambos.
+    area_id = fields.Many2one(
+        'account.analytic.account', string='Área / centro de costo',
+        domain=lambda self: [('plan_id', '=', self.env.ref(
+            'pierinelli_contabilidad_operativa.plan_areas',
+            raise_if_not_found=False).id or 0)],
+        help='Área de la empresa a la que se carga este presupuesto.')
+    centro_costo_id = fields.Many2one(
+        'account.analytic.account', string='Obra / proyecto',
+        help='Opcional: acota la linea a una obra concreta.')
     presupuestado = fields.Monetary(required=True, currency_field='currency_id')
     ejecutado = fields.Monetary(compute='_compute_ejecutado', currency_field='currency_id')
     saldo = fields.Monetary(compute='_compute_ejecutado', currency_field='currency_id')
     porcentaje = fields.Float(compute='_compute_ejecutado')
     currency_id = fields.Many2one(related='presupuesto_id.currency_id')
 
-    @api.depends('cuenta_id', 'centro_costo_id', 'presupuesto_id.fecha_inicio', 'presupuesto_id.fecha_fin', 'presupuestado')
+    @api.depends('cuenta_id', 'area_id', 'centro_costo_id', 'presupuesto_id.fecha_inicio', 'presupuesto_id.fecha_fin', 'presupuestado')
     def _compute_ejecutado(self):
         MoveLine = self.env['account.move.line']
         for line in self:
@@ -56,18 +69,22 @@ class PresupuestoFinancieroLinea(models.Model):
             domain = [('parent_state', '=', 'posted'), ('account_id', '=', line.cuenta_id.id),
                       ('date', '>=', line.presupuesto_id.fecha_inicio), ('date', '<=', line.presupuesto_id.fecha_fin)]
             move_lines = MoveLine.search(domain)
-            if line.centro_costo_id:
-                analytic_id = str(line.centro_costo_id.id)
+            dimensiones = line.area_id | line.centro_costo_id
+            if dimensiones:
+                ids_dim = set(str(d.id) for d in dimensiones)
                 # analytic_distribution guarda porcentajes por cuenta analítica
                 # en JSON, y la clave puede ser COMPUESTA cuando la linea se
                 # distribuye entre cuentas de varios planes a la vez: {'12,15':
                 # 100.0} (asi las serializa analytic_mixin, que itera
                 # key.split(',')). Un .get(str(id)) exacto ignoraria esos
                 # importes y subreportaria el ejecutado.
+                # Con area Y obra, la linea solo cuenta el gasto imputado a
+                # AMBAS (un gasto de Marketing en otra obra no entra aqui).
                 amount = 0.0
                 for move_line in move_lines:
                     for key, pct in (move_line.analytic_distribution or {}).items():
-                        if analytic_id in str(key).split(','):
+                        claves = set(str(key).split(','))
+                        if ids_dim <= claves:
                             amount += move_line.balance * float(pct) / 100.0
             else:
                 amount = sum(move_lines.mapped('balance'))

@@ -1,0 +1,54 @@
+<odoo>
+    <!--
+        Áreas de la empresa como centros de costo.
+
+        Se modelan como un PLAN analítico propio, separado de "Obras /
+        Proyectos": así un gasto puede llevar a la vez su obra Y su área
+        (Odoo admite una cuenta de cada plan en la misma distribución), y el
+        presupuesto puede repartirse por área sin mezclarse con las obras.
+    -->
+    <record id="plan_areas" model="account.analytic.plan">
+        <field name="name">Áreas / Centros de Costo</field>
+    </record>
+
+    <record id="area_finanzas" model="account.analytic.account">
+        <field name="name">Finanzas y Contabilidad</field>
+        <field name="code">AREA-FIN</field>
+        <field name="plan_id" ref="plan_areas"/>
+    </record>
+    <record id="area_marketing" model="account.analytic.account">
+        <field name="name">Marketing</field>
+        <field name="code">AREA-MKT</field>
+        <field name="plan_id" ref="plan_areas"/>
+    </record>
+    <record id="area_tecnologia" model="account.analytic.account">
+        <field name="name">Tecnología / Sistemas</field>
+        <field name="code">AREA-TEC</field>
+        <field name="plan_id" ref="plan_areas"/>
+    </record>
+    <record id="area_comercial" model="account.analytic.account">
+        <field name="name">Comercial y Ventas</field>
+        <field name="code">AREA-COM</field>
+        <field name="plan_id" ref="plan_areas"/>
+    </record>
+    <record id="area_operaciones" model="account.analytic.account">
+        <field name="name">Operaciones y Almacén</field>
+        <field name="code">AREA-OPE</field>
+        <field name="plan_id" ref="plan_areas"/>
+    </record>
+    <record id="area_produccion" model="account.analytic.account">
+        <field name="name">Producción y Cortes</field>
+        <field name="code">AREA-PRO</field>
+        <field name="plan_id" ref="plan_areas"/>
+    </record>
+    <record id="area_rrhh" model="account.analytic.account">
+        <field name="name">Recursos Humanos</field>
+        <field name="code">AREA-RRHH</field>
+        <field name="plan_id" ref="plan_areas"/>
+    </record>
+    <record id="area_gerencia" model="account.analytic.account">
+        <field name="name">Gerencia General</field>
+        <field name="code">AREA-GER</field>
+        <field name="plan_id" ref="plan_areas"/>
+    </record>
+</odoo>

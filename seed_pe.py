@@ -635,9 +635,11 @@ else:
         ('Vendedor Showroom', 'vendedor', grp(
             'base.group_user', 'sales_team.group_sale_salesman')),
         ('Almacenero', 'almacen', grp(
-            'base.group_user', 'stock.group_stock_user')),
+            'base.group_user', 'stock.group_stock_manager',
+            'stock.group_production_lot', 'stock.group_stock_multi_locations')),
         ('Comprador', 'compras', grp(
-            'base.group_user', 'purchase.group_purchase_user')),
+            'base.group_user', 'purchase.group_purchase_user',
+            'base.group_partner_manager')),
         ('Contadora', 'contabilidad', grp(
             'base.group_user', 'account.group_account_user')),
         # --- Personas del caso "Madre Selva" (para las capturas del manual) ---
@@ -655,8 +657,19 @@ else:
             'account.group_account_manager')),
     ]
     creados_user = 0
+    ajustados_user = 0
     for nombre, login, gids in usuarios:
-        if Users.search([('login', '=', login)], limit=1):
+        existente = Users.search([('login', '=', login)], limit=1)
+        if existente:
+            # El usuario ya existe: se ASEGURAN sus grupos igualmente. Antes
+            # se hacia 'continue' y una base creada con una matriz de roles
+            # incompleta se quedaba asi para siempre (fue el caso real de la
+            # Contadora sin grupos contables). Se agregan, nunca se quitan,
+            # para no pisar permisos concedidos a mano.
+            faltantes = [g for g in gids if g not in existente.group_ids.ids]
+            if faltantes:
+                existente.write({'group_ids': [(4, g) for g in faltantes]})
+                ajustados_user += 1
             continue
         try:
             Users.with_context(no_reset_password=True).create({
@@ -666,7 +679,8 @@ else:
             creados_user += 1
         except Exception as e:
             _logger.warning('Usuario %s: %s', login, e)
-    print('Usuarios de ejemplo:', creados_user)
+    print('Usuarios de ejemplo: %d creados, %d con grupos ajustados'
+          % (creados_user, ajustados_user))
     # Al iniciar sesion, ir a la GRILLA DE APPS (no a la primera app / Discuss)
     if 'is_redirect_home' in env['res.users']._fields:
         env['res.users'].search([('share', '=', False)]).write(

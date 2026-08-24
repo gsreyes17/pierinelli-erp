@@ -33,6 +33,11 @@
 - [Demo contable](contabilidad/DEMO_CONTABLE.md): guion de demostración por escenas + catálogo de libros/SIRE, formatos y casos precargados.
 - [Pruebas SUNAT](contabilidad/SUNAT_PRUEBAS.md): ambiente Beta, credenciales necesarias y alcance de una integración real.
 
+## Administracion
+
+- [Usuarios y permisos](administracion/USUARIOS_Y_PERMISOS.md): matriz de roles, como crear usuarios y que ve cada puesto.
+- [Areas y presupuesto](administracion/AREAS_Y_PRESUPUESTO.md): centros de costo por area y reparto del presupuesto.
+
 ## Asistente
 
 - [Dialogos habilitados](asistente/DIALOGOS.md)

@@ -7,10 +7,12 @@
     'data': [
         'security/ir.model.access.csv',
         'data/admin_access.xml',
+        'data/areas_centro_costo.xml',
         'data/tipos_comprobante.xml',
         'views/contabilidad_views.xml',
         'views/accounting_extensions_views.xml',
         'views/analytic_account_views.xml',
+        'views/areas_views.xml',
         'views/presupuesto_views.xml',
         'views/control_operativo_views.xml',
         'views/importar_asientos_views.xml',
